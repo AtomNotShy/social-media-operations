@@ -1,0 +1,106 @@
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend/openapi.json"
+      - "frontend/src/api/generated/schema.ts"
+      - "scripts/check_secrets.py"
+      - ".github/workflows/backend.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/openapi.json"
+      - "frontend/src/api/generated/schema.ts"
+      - "scripts/check_secrets.py"
+      - ".github/workflows/backend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: social_ops_test
+          POSTGRES_USER: social
+          POSTGRES_PASSWORD: social
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U social -d social_ops_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: test
+      AUTH_MODE: development
+      DATABASE_URL: postgresql+psycopg://social:social@127.0.0.1:5432/social_ops_test
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          version: "0.9.26"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+      - name: Install dependencies
+        run: uv sync --frozen --dev
+      - name: Scan source for committed credentials
+        run: uv run python ../scripts/check_secrets.py
+      - name: Audit Python dependencies
+        run: |
+          uv export --quiet --frozen --no-dev --no-emit-project \
+            --format requirements-txt \
+            --output-file /tmp/social-ops-requirements.txt
+          uv run pip-audit \
+            --requirement /tmp/social-ops-requirements.txt \
+            --strict \
+            --require-hashes
+      - name: Format and lint
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+      - name: Unit and contract tests
+        run: uv run pytest
+      - name: Validate Prometheus alert rules
+        run: |
+          docker run --rm \
+            --entrypoint=/bin/promtool \
+            -v "$PWD/monitoring:/monitoring:ro" \
+            prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038 \
+            check rules /monitoring/alerts.yml
+      - name: Apply PostgreSQL migrations
+        run: uv run alembic upgrade head
+      - name: Check migration drift
+        run: uv run alembic check
+      - name: PostgreSQL concurrency integration
+        env:
+          RUN_POSTGRES_INTEGRATION: "1"
+        run: uv run pytest tests/integration/test_postgres_budget_lock.py
+      - name: PostgreSQL core query P95
+        env:
+          RUN_PERFORMANCE: "1"
+        run: uv run pytest -s tests/performance/test_core_query_p95.py
+      - name: Verify OpenAPI snapshot
+        run: |
+          uv run python -m app.cli.export_openapi /tmp/openapi.json
+          diff -u ../frontend/openapi.json /tmp/openapi.json
+      - name: Verify generated TypeScript contract
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run api:generate
+          npm run typecheck
+          git diff --exit-code -- openapi.json src/api/generated/schema.ts
+      - name: Build production image
+        run: docker build --file Dockerfile --tag social-ops-backend:ci .

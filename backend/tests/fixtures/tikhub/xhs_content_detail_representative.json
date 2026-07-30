@@ -1,0 +1,34 @@
+{
+  "code": 200,
+  "request_id": "fixture-content-detail-request",
+  "data": {
+    "code": 0,
+    "success": true,
+    "data": {
+      "note_id": "note-detail-fixture-001",
+      "title": "后厨高峰期的五个检查点",
+      "desc": "用于链接导入契约测试的去敏代表性正文。",
+      "time": 1760000000000,
+      "user": {
+        "user_id": "profile-fixture-001",
+        "nickname": "示例餐饮运营",
+        "red_id": "example_red_id",
+        "fans": "1.2万"
+      },
+      "image_list": [
+        {
+          "url_default": "https://example.invalid/detail-1.jpg"
+        },
+        {
+          "url_default": "https://example.invalid/detail-2.jpg"
+        }
+      ],
+      "interact_info": {
+        "liked_count": "2300",
+        "comment_count": "120",
+        "collected_count": "980",
+        "share_count": "41"
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "code": 200,
+  "request_id": "fixture-notes-request",
+  "data": {
+    "code": 0,
+    "success": true,
+    "data": {
+      "notes": [
+        {
+          "note_id": "note-fixture-001",
+          "cursor": "note-fixture-001",
+          "type": "normal",
+          "display_title": "餐厅高峰期如何减少漏单",
+          "time": 1760000000000,
+          "user": {
+            "user_id": "profile-fixture-001",
+            "nickname": "示例餐饮运营",
+            "red_id": "example_red_id"
+          },
+          "cover": {
+            "url_default": "https://example.invalid/cover.jpg"
+          },
+          "interact_info": {
+            "liked_count": "1.5万",
+            "comment_count": "321",
+            "collected_count": "6800",
+            "share_count": "90"
+          }
+        }
+      ]
+    }
+  }
+}

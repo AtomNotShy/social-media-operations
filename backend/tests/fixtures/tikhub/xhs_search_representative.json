@@ -1,0 +1,33 @@
+{
+  "code": 200,
+  "request_id": "fixture-search-request",
+  "data": {
+    "code": 0,
+    "success": true,
+    "data": {
+      "search_id": "fixture-search-id",
+      "search_session_id": "fixture-session-id",
+      "has_more": false,
+      "items": [
+        {
+          "note_card": {
+            "note_id": "search-note-fixture-001",
+            "type": "normal",
+            "display_title": "餐厅翻台率提升方法",
+            "time": 1760000000000,
+            "user": {
+              "user_id": "search-author-001",
+              "nickname": "餐饮运营样例"
+            },
+            "interact_info": {
+              "liked_count": "500",
+              "comment_count": "20",
+              "collected_count": "150",
+              "share_count": "8"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

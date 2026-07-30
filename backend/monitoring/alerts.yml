@@ -1,0 +1,122 @@
+groups:
+  - name: social-ops-api
+    rules:
+      - alert: SocialOpsApiHigh5xxRate
+        expr: |
+          sum(rate(social_ops_http_requests_total{status_code=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(social_ops_http_requests_total[5m])), 0.001)
+          > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Social Ops API 5xx rate is above 5%
+
+      - alert: SocialOpsDatabaseMetricsCollectionFailed
+        expr: social_ops_database_metrics_collection_success == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Social Ops cannot collect database-backed health metrics
+
+      - alert: SocialOpsQueueOldestJobTooOld
+        expr: social_ops_job_oldest_active_seconds > 900
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A Social Ops job has remained active for more than 15 minutes
+
+      - alert: SocialOpsWorkerHeartbeatStale
+        expr: social_ops_process_heartbeat_age_seconds{service="worker"} > 120
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: A Social Ops worker heartbeat is stale
+
+      - alert: SocialOpsSchedulerHeartbeatStale
+        expr: social_ops_process_heartbeat_age_seconds{service="scheduler"} > 180
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: The Social Ops scheduler heartbeat is stale
+
+  - name: social-ops-providers
+    rules:
+      - alert: SocialOpsProviderCircuitOpen
+        expr: social_ops_provider_circuits{state="open"} > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A provider endpoint circuit is open
+
+      - alert: SocialOpsProviderAuthenticationFailure
+        expr: social_ops_provider_errors_24h{error_code="PROVIDER_AUTHENTICATION_FAILED"} > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A provider rejected configured credentials
+
+      - alert: SocialOpsProviderSchemaIncompatible
+        expr: social_ops_provider_errors_24h{error_code="PROVIDER_SCHEMA_INCOMPATIBLE"} > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A provider response no longer matches the parser contract
+
+  - name: social-ops-budget
+    rules:
+      - alert: SocialOpsProviderBudget70Percent
+        expr: social_ops_provider_budget_utilization_ratio >= 0.70
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: A workspace has used at least 70% of its provider budget
+
+      - alert: SocialOpsProviderBudget90Percent
+        expr: social_ops_provider_budget_utilization_ratio >= 0.90
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: A workspace has used at least 90% of its provider budget
+
+      - alert: SocialOpsProviderBudgetExhausted
+        expr: social_ops_provider_budget_utilization_ratio >= 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A workspace provider budget is exhausted
+
+      - alert: SocialOpsAiBudget70Percent
+        expr: social_ops_ai_budget_utilization_ratio >= 0.70
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: A workspace has used at least 70% of its AI budget
+
+      - alert: SocialOpsAiBudget90Percent
+        expr: social_ops_ai_budget_utilization_ratio >= 0.90
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: A workspace has used at least 90% of its AI budget
+
+      - alert: SocialOpsAiBudgetExhausted
+        expr: social_ops_ai_budget_utilization_ratio >= 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: A workspace AI budget is exhausted

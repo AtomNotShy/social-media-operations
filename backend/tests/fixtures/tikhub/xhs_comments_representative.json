@@ -1,0 +1,28 @@
+{
+  "code": 200,
+  "request_id": "fixture-comments-request",
+  "data": {
+    "code": 0,
+    "success": true,
+    "data": {
+      "comments": [
+        {
+          "comment_id": "comment-fixture-001",
+          "content": "高峰期最怕漏单，这个方法很实用",
+          "like_count": "128",
+          "create_time": 1760000100000,
+          "user_info": {
+            "user_id": "commenter-fixture-001",
+            "nickname": "示例用户"
+          }
+        }
+      ],
+      "cursor": {
+        "cursor": "",
+        "index": 1,
+        "pageArea": "UNFOLDED"
+      },
+      "has_more": false
+    }
+  }
+}

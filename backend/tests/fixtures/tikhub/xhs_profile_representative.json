@@ -1,0 +1,33 @@
+{
+  "code": 200,
+  "request_id": "fixture-profile-request",
+  "data": {
+    "code": 0,
+    "success": true,
+    "data": {
+      "basic_info": {
+        "nickname": "示例餐饮运营",
+        "red_id": "example_red_id",
+        "desc": "用于契约测试的去敏代表性数据",
+        "images": [
+          "https://example.invalid/avatar.jpg"
+        ],
+        "note_count": "128"
+      },
+      "interactions": [
+        {
+          "type": "fans",
+          "count": "1.2万"
+        },
+        {
+          "type": "follows",
+          "count": "88"
+        },
+        {
+          "type": "interaction",
+          "count": "3.4万"
+        }
+      ]
+    }
+  }
+}

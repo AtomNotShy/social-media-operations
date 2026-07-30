@@ -1,0 +1,1 @@
+"""Social-data provider boundary."""
