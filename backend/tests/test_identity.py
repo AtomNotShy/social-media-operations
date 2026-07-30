@@ -1,3 +1,10 @@
+import uuid
+
+from sqlalchemy import select
+
+from app.db.models import ScanPolicy
+
+
 def test_me_requires_authentication(client):
     response = client.get("/api/v1/me")
 
@@ -13,6 +20,15 @@ def test_workspace_creation_adds_owner_membership(client, auth_headers, workspac
     assert response.json()["data"]["memberships"] == [
         {"workspace_id": workspace["id"], "role": "owner"}
     ]
+
+
+def test_workspace_creation_uses_daily_scan_policy(client, app, workspace):
+    with app.state.database.session_factory() as db:
+        policy = db.scalar(
+            select(ScanPolicy).where(ScanPolicy.workspace_id == uuid.UUID(workspace["id"]))
+        )
+        assert policy is not None
+        assert policy.schedule == {"interval_hours": 24}
 
 
 def test_workspace_detail_and_owner_update_are_scoped(client, auth_headers, workspace):

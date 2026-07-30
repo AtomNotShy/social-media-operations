@@ -86,11 +86,11 @@ async def process_one(
                 settings=settings,
             )
         elif job.job_type == "AI_ANALYSIS":
-            handler = AnalysisHandler(db, analysis_provider)
+            handler = AnalysisHandler(db, analysis_provider, settings=settings)
         elif job.job_type == "TRANSCRIBE":
             handler = TranscriptHandler(db, transcript_provider)
         elif job.job_type == "CONTENT_GENERATION":
-            handler = GenerationHandler(db, generation_provider)
+            handler = GenerationHandler(db, generation_provider, settings=settings)
         elif job.job_type == "COMMENT_FETCH":
             handler = CommentFetchHandler(
                 db,

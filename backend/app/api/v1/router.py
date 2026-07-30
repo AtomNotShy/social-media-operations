@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.routes import (
+    ai_settings,
     analysis,
     assets,
     comments,
@@ -26,6 +27,7 @@ from app.api.v1.routes import (
 )
 
 router = APIRouter()
+router.include_router(ai_settings.router)
 router.include_router(analysis.router)
 router.include_router(assets.router)
 router.include_router(comments.router)

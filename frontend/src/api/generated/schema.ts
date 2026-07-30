@@ -4,6 +4,91 @@
  */
 
 export interface paths {
+    "/api/v1/ai/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Ai Connection */
+        post: operations["add_ai_connection_api_v1_ai_connections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/connections/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Ai Connection */
+        patch: operations["patch_ai_connection_api_v1_ai_connections__connection_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/ai/connections/{connection_id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test Ai Connection */
+        post: operations["test_ai_connection_api_v1_ai_connections__connection_id__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/routes/{task_type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Ai Route */
+        put: operations["put_ai_route_api_v1_ai_routes__task_type__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Ai Settings */
+        get: operations["get_ai_settings_api_v1_ai_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analyses/{analysis_id}": {
         parameters: {
             query?: never;
@@ -1760,6 +1845,209 @@ export interface components {
             /** Uncertain Count */
             uncertain_count: number;
         };
+        /** AIConnectionCreate */
+        AIConnectionCreate: {
+            /** Api Key */
+            api_key?: string | null;
+            /** Base Url */
+            base_url?: string | null;
+            /**
+             * Input Cost Per Million Usd
+             * @default 0
+             */
+            input_cost_per_million_usd: number | string;
+            /**
+             * Json Mode
+             * @default true
+             */
+            json_mode: boolean;
+            /**
+             * Max Tokens
+             * @default 2000
+             */
+            max_tokens: number;
+            /** Model */
+            model: string;
+            /** Name */
+            name: string;
+            /**
+             * Output Cost Per Million Usd
+             * @default 0
+             */
+            output_cost_per_million_usd: number | string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "deepseek" | "openai" | "openai_compatible";
+            /**
+             * Temperature
+             * @default 0.2
+             */
+            temperature: number | string;
+            /**
+             * Timeout Seconds
+             * @default 60
+             */
+            timeout_seconds: number;
+            /** Use For */
+            use_for?: ("l1" | "l2" | "generation")[];
+        };
+        /** AIConnectionRead */
+        AIConnectionRead: {
+            /** Api Key Configured */
+            api_key_configured: boolean;
+            /** Api Key Masked */
+            api_key_masked: string | null;
+            /** Base Url */
+            base_url: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Json Mode */
+            json_mode: boolean;
+            /** Name */
+            name: string;
+            /** Provider */
+            provider: string;
+            /** Timeout Seconds */
+            timeout_seconds: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** AIConnectionTestRequest */
+        AIConnectionTestRequest: {
+            /** Model */
+            model?: string | null;
+        };
+        /** AIConnectionTestResult */
+        AIConnectionTestResult: {
+            /** Available Models */
+            available_models: string[];
+            /** Base Url */
+            base_url: string;
+            /** Latency Ms */
+            latency_ms: number;
+            /** Ok */
+            ok: boolean;
+            /** Provider */
+            provider: string;
+            /** Requested Model Available */
+            requested_model_available: boolean | null;
+        };
+        /** AIConnectionUpdate */
+        AIConnectionUpdate: {
+            /** Api Key */
+            api_key?: string | null;
+            /** Base Url */
+            base_url?: string | null;
+            /**
+             * Clear Api Key
+             * @default false
+             */
+            clear_api_key: boolean;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Json Mode */
+            json_mode?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Timeout Seconds */
+            timeout_seconds?: number | null;
+        };
+        /** AIModelRouteRead */
+        AIModelRouteRead: {
+            /** Configured */
+            configured: boolean;
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /** Connection Name */
+            connection_name: string;
+            /** Input Cost Per Million Usd */
+            input_cost_per_million_usd: string;
+            /** Max Tokens */
+            max_tokens: number;
+            /** Model */
+            model: string;
+            /** Output Cost Per Million Usd */
+            output_cost_per_million_usd: string;
+            /** Provider */
+            provider: string;
+            /** Task Type */
+            task_type: string;
+            /** Temperature */
+            temperature: string;
+        };
+        /** AIModelRouteUpsert */
+        AIModelRouteUpsert: {
+            /**
+             * Connection Id
+             * Format: uuid
+             */
+            connection_id: string;
+            /**
+             * Input Cost Per Million Usd
+             * @default 0
+             */
+            input_cost_per_million_usd: number | string;
+            /**
+             * Max Tokens
+             * @default 2000
+             */
+            max_tokens: number;
+            /** Model */
+            model: string;
+            /**
+             * Output Cost Per Million Usd
+             * @default 0
+             */
+            output_cost_per_million_usd: number | string;
+            /**
+             * Temperature
+             * @default 0.2
+             */
+            temperature: number | string;
+        };
+        /** AIProviderCatalogItem */
+        AIProviderCatalogItem: {
+            /** Custom Base Url */
+            custom_base_url: boolean;
+            /** Default Base Url */
+            default_base_url: string | null;
+            /** Label */
+            label: string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "deepseek" | "openai" | "openai_compatible";
+            /** Suggested Models */
+            suggested_models: string[];
+        };
+        /** AISettingsRead */
+        AISettingsRead: {
+            /** Connections */
+            connections: components["schemas"]["AIConnectionRead"][];
+            /** Providers */
+            providers: components["schemas"]["AIProviderCatalogItem"][];
+            /** Routes */
+            routes: components["schemas"]["AIModelRouteRead"][];
+        };
         /** AIUsageSummary */
         AIUsageSummary: {
             /** Cost Usd */
@@ -1792,6 +2080,8 @@ export interface components {
         };
         /** AnalysisRunRead */
         AnalysisRunRead: {
+            /** Ai Connection Id */
+            ai_connection_id: string | null;
             /** Analysis Level */
             analysis_level: string;
             /** Cost Usd */
@@ -2285,6 +2575,26 @@ export interface components {
         /** DataResponse[AIBudgetUsageSummary] */
         DataResponse_AIBudgetUsageSummary_: {
             data: components["schemas"]["AIBudgetUsageSummary"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[AIConnectionRead] */
+        DataResponse_AIConnectionRead_: {
+            data: components["schemas"]["AIConnectionRead"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[AIConnectionTestResult] */
+        DataResponse_AIConnectionTestResult_: {
+            data: components["schemas"]["AIConnectionTestResult"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[AIModelRouteRead] */
+        DataResponse_AIModelRouteRead_: {
+            data: components["schemas"]["AIModelRouteRead"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[AISettingsRead] */
+        DataResponse_AISettingsRead_: {
+            data: components["schemas"]["AISettingsRead"];
             meta: components["schemas"]["ResponseMeta"];
         };
         /** DataResponse[AIUsageSummary] */
@@ -2971,6 +3281,8 @@ export interface components {
         };
         /** GenerationRunRead */
         GenerationRunRead: {
+            /** Ai Connection Id */
+            ai_connection_id: string | null;
             /**
              * Content Project Id
              * Format: uuid
@@ -4412,6 +4724,183 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    add_ai_connection_api_v1_ai_connections_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIConnectionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AIConnectionRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_ai_connection_api_v1_ai_connections__connection_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIConnectionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AIConnectionRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_ai_connection_api_v1_ai_connections__connection_id__test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                connection_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIConnectionTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AIConnectionTestResult_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_ai_route_api_v1_ai_routes__task_type__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                task_type: "l1" | "l2" | "generation";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIModelRouteUpsert"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AIModelRouteRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ai_settings_api_v1_ai_settings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AISettingsRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_analysis_api_v1_analyses__analysis_id__get: {
         parameters: {
             query?: never;

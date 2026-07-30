@@ -295,6 +295,7 @@ export const demoAnalyses: AnalysisRun[] = [
     id: "40437748-d779-4fc0-8b6e-e934c81d3401",
     external_content_id: demoContents[0].id,
     sync_job_id: null,
+    ai_connection_id: null,
     analysis_level: "l1",
     model_provider: "demo",
     model: "content-analyst",

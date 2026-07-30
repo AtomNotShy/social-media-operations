@@ -41,6 +41,7 @@ class GenerationRunRead(BaseModel):
     content_project_id: UUID
     publish_record_id: UUID | None
     sync_job_id: UUID | None
+    ai_connection_id: UUID | None
     generation_type: str
     model_provider: str
     model: str

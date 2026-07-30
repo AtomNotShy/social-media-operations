@@ -44,8 +44,10 @@
 - OpenAPI 生成类型、统一 API Core、TanStack Query 与 URL 筛选。
 - 明确标记的契约演示数据，以及可切换到真实工作区的后端接入层。
 
-真实多平台、真实 AI/ASR/对象存储、托管 PostgreSQL 和 Staging 验收尚未完成，
-不能把本地测试通过视为 P0–P4 已正式交付。
+真实多平台、AI Provider 用户凭据 Smoke Test、真实 ASR/对象存储、托管 PostgreSQL
+和 Staging 验收尚未完成，不能把本地测试通过视为 P0–P4 已正式交付。AI 后端已具备
+DeepSeek、OpenAI 和通用 OpenAI-Compatible 接入层，但没有用户 Key 时不宣称真实调用
+已经验收。
 
 ## 当前架构决策
 

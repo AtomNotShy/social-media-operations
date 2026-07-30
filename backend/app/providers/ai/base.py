@@ -5,6 +5,14 @@ from typing import Protocol
 from app.db.models import AnalysisRun, ExternalContent, Transcript
 
 
+class AIProviderRequestError(Exception):
+    def __init__(self, code: str, message: str, *, retryable: bool) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.retryable = retryable
+
+
 @dataclass(frozen=True, slots=True)
 class AnalysisProviderResult:
     result: dict
@@ -22,4 +30,5 @@ class AnalysisProvider(Protocol):
         run: AnalysisRun,
         content: ExternalContent,
         transcript: Transcript | None,
+        metrics: dict | None = None,
     ) -> AnalysisProviderResult: ...

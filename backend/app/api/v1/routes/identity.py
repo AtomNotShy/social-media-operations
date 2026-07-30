@@ -102,7 +102,7 @@ def create_workspace(
         ScanPolicy(
             workspace_id=workspace.id,
             name="默认扫描策略",
-            schedule={"interval_hours": 6},
+            schedule={"interval_hours": 24},
             max_pages=2,
             detail_policy={"mode": "progressive"},
             metric_refresh_policy={"recent_hours": 12},

@@ -5,6 +5,8 @@ from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import Settings
+from app.core.errors import AppError
 from app.db.models import (
     ContentProject,
     GenerationRun,
@@ -15,6 +17,8 @@ from app.db.models import (
 from app.jobs.errors import JobExecutionError
 from app.modules.analysis.budget import settle_ai_budget
 from app.modules.generation.schemas import GeneratedReviewResult, GeneratedScriptResult
+from app.providers.ai.base import AIProviderRequestError
+from app.providers.ai.factory import generation_provider_for_run
 from app.providers.ai.generation import ContentGenerationProvider
 
 
@@ -23,9 +27,11 @@ class GenerationHandler:
         self,
         db: Session,
         provider: ContentGenerationProvider | None,
+        settings: Settings | None = None,
     ) -> None:
         self.db = db
         self.provider = provider
+        self.settings = settings
 
     async def handle(self, job: SyncJob) -> dict:
         run_id = self._payload_run_id(job)
@@ -41,7 +47,22 @@ class GenerationHandler:
                 message="Generation run no longer exists.",
                 retryable=False,
             )
-        if self.provider is None:
+        provider = self.provider
+        if provider is None and self.settings is not None:
+            try:
+                provider = generation_provider_for_run(
+                    self.db,
+                    run=run,
+                    settings=self.settings,
+                )
+            except AppError as exc:
+                self._fail(run, exc.code, exc.detail)
+                raise JobExecutionError(
+                    code=exc.code,
+                    message=exc.detail,
+                    retryable=exc.retryable,
+                ) from exc
+        if provider is None:
             self._fail(run, "AI_NOT_CONFIGURED", "No content generation provider is configured.")
             raise JobExecutionError(
                 code="AI_NOT_CONFIGURED",
@@ -60,7 +81,7 @@ class GenerationHandler:
         run.error_message = None
         self.db.commit()
         try:
-            output = await self.provider.generate(run=run)
+            output = await provider.generate(run=run)
             schema = (
                 GeneratedScriptResult
                 if run.generation_type == "script_draft"
@@ -89,6 +110,13 @@ class GenerationHandler:
         except JobExecutionError as exc:
             self._fail(run, exc.code, exc.message)
             raise
+        except AIProviderRequestError as exc:
+            self._fail(run, exc.code, exc.message)
+            raise JobExecutionError(
+                code=exc.code,
+                message=exc.message,
+                retryable=exc.retryable,
+            ) from exc
         except Exception as exc:
             self._fail(run, "AI_PROVIDER_ERROR", "AI generation request failed.")
             raise JobExecutionError(

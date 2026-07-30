@@ -15,6 +15,7 @@ from app.db.models import (
     TrackedProfile,
     Workspace,
 )
+from app.modules.ai_connections.service import configured_for
 from app.modules.analysis.service import request_analysis
 from app.modules.inspirations.service import upsert_external_content
 from app.modules.scoring.service import calculate_content_score
@@ -154,8 +155,12 @@ class ProfileScanHandler:
                     if (
                         score.grade in {"t1", "t2"}
                         and self.settings is not None
-                        and self.settings.ai_provider != "disabled"
-                        and self.settings.ai_model != "disabled"
+                        and configured_for(
+                            self.db,
+                            workspace_id=workspace.id,
+                            task_type="l1",
+                            settings=self.settings,
+                        )
                     ):
                         _, reused = request_analysis(
                             self.db,
@@ -173,7 +178,7 @@ class ProfileScanHandler:
                     score_errors.append(exc.code)
 
             profile.last_synced_at = datetime.now(timezone.utc)
-            profile.next_scan_at = profile.last_synced_at + timedelta(hours=6)
+            profile.next_scan_at = profile.last_synced_at + timedelta(hours=24)
             profile.sync_status = "idle"
             self.db.commit()
             return {

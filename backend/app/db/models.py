@@ -86,6 +86,49 @@ class WorkspaceMember(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user: Mapped[User] = relationship()
 
 
+class AIConnection(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "ai_connections"
+    __table_args__ = (UniqueConstraint("workspace_id", "name"),)
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    base_url: Mapped[str] = mapped_column(Text, nullable=False)
+    encrypted_api_key: Mapped[str | None] = mapped_column(Text)
+    api_key_last_four: Mapped[str | None] = mapped_column(String(4))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
+    capabilities: Mapped[dict] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+
+
+class AIModelRoute(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "ai_model_routes"
+    __table_args__ = (UniqueConstraint("workspace_id", "task_type"),)
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    task_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    connection_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("ai_connections.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    model: Mapped[str] = mapped_column(String(128), nullable=False)
+    temperature: Mapped[Decimal] = mapped_column(
+        Numeric(4, 3), default=Decimal("0.2"), nullable=False
+    )
+    max_tokens: Mapped[int] = mapped_column(Integer, default=2000, nullable=False)
+    input_cost_per_million_usd: Mapped[Decimal] = mapped_column(
+        Numeric(12, 6), default=Decimal("0"), nullable=False
+    )
+    output_cost_per_million_usd: Mapped[Decimal] = mapped_column(
+        Numeric(12, 6), default=Decimal("0"), nullable=False
+    )
+
+    connection: Mapped[AIConnection] = relationship()
+
+
 class ScanPolicy(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "scan_policies"
 
@@ -517,6 +560,9 @@ class AnalysisRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     sync_job_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("sync_jobs.id", ondelete="SET NULL"), index=True
     )
+    ai_connection_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("ai_connections.id", ondelete="SET NULL"), index=True
+    )
     analysis_level: Mapped[str] = mapped_column(String(8), nullable=False)
     model_provider: Mapped[str] = mapped_column(String(32), nullable=False)
     model: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -561,6 +607,9 @@ class GenerationRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     sync_job_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("sync_jobs.id", ondelete="SET NULL"), index=True
+    )
+    ai_connection_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("ai_connections.id", ondelete="SET NULL"), index=True
     )
     generation_type: Mapped[str] = mapped_column(String(32), nullable=False)
     model_provider: Mapped[str] = mapped_column(String(32), nullable=False)

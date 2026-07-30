@@ -1,13 +1,13 @@
 # 后端实现状态与证据边界
 
-更新日期：2026-07-30。
+更新日期：2026-07-31。
 
 ## 已实现并自动验证
 
 | 阶段 | 当前实现 |
 |---|---|
 | P0 | 小红书、抖音、Bilibili 链接导入/账号扫描 Adapter；小红书详情、评论与发现；Provider 证据、预算/缓存、任务调度与恢复 |
-| P1 | 评分证据冻结、分析/转写账本、严格结果 Schema、L2 门控、AI/ASR 预算预留与结算、模式库、趋势证据流 |
+| P1 | 评分证据冻结、分析/转写账本、DeepSeek/OpenAI/OpenAI-Compatible 真实模型适配器、工作区模型路由、加密凭据、严格结果 Schema、L2 门控、AI/ASR 预算预留与结算、模式库、趋势证据流 |
 | P2 | 自有账号、选题、项目状态机、人工/AI 脚本追加版本、S3 直传与远端校验、审核排期、人工发布、生成式复盘与看板 |
 | P3 | 保存视图、统一关键词搜索、版本化运营实验、项目分组、幂等归因事件与证据化结果 |
 | P4 | 成员权限、最后 Owner 保护、写请求审计、Provider 健康/熔断、工作区外部调用紧急停机、进程心跳、Prometheus 指标/告警、生产配置门禁、容器、CI、Secret/依赖扫描、保留与备份恢复脚本 |
@@ -15,11 +15,11 @@
 当前本地证据：
 
 - Ruff 通过。
-- 106 项后端测试通过；2 项 PostgreSQL 集成测试和 1 项 PostgreSQL 性能测试在普通套件中跳过，并在 PostgreSQL 环境单独通过。
-- SQLite 空库可从 0001 顺序升级至 0015。
-- PostgreSQL 16 容器已在线升级至 0015。
+- 112 项后端测试通过；2 项 PostgreSQL 集成测试和 1 项 PostgreSQL 性能测试在普通套件中跳过，并在 PostgreSQL 环境单独通过。
+- SQLite 空库可从 0001 顺序升级至 0017。
+- PostgreSQL 16 容器可在线升级至 0017。
 - SQLite 与 PostgreSQL 的 `alembic check` 均无模型/迁移漂移。
-- OpenAPI 可生成 100 条路径、131 个操作；文档中的 106 个操作均有自动契约覆盖，前端 TypeScript 类型检查通过。
+- OpenAPI 可生成 105 条路径、136 个操作；文档中的 111 个操作均有自动契约覆盖，前端 TypeScript 类型检查通过。
 - 非 root 生产镜像可构建并启动，API 对 PostgreSQL readiness 返回 `ok`。
 - 源码 Secret 扫描和哈希锁定依赖的 `pip-audit` 通过，当前无已知漏洞。
 - 真实 PostgreSQL 16 中写入 1000 条灵感后进行 30 次采样，列表 P95 为 55.50 ms，详情 P95 为 14.98 ms。
@@ -30,7 +30,10 @@
 - 自动化测试使用代表性去敏 Fixture，不是 TikHub 真实账户响应。
 - PostgreSQL 工作区预算行锁并发已验证；更高并发压力与托管实例性能仍未验收。
 - 抖音/Bilibili 使用官方端点契约与去敏 Fixture；尚未完成三个平台各 5 条真实内容与 10 个真实账号扫描。
-- AI、ASR 没有生产 Provider；OpenAI 凭据尚未配置。S3 Provider 已实现但未连接真实 Bucket。
+- AI 已实现 DeepSeek、OpenAI 和通用 OpenAI-Compatible Provider、真实 HTTP
+  错误映射、JSON Mode、L1/L2/内容生成模型路由及加密凭据；当前仓库没有用户
+  Provider Key，因此自动测试使用 MockTransport，仍需用户凭据完成首次付费 Smoke
+  Test。ASR 尚无生产 Provider；S3 Provider 已实现但未连接真实 Bucket。
 - 实验归因已实现；官方发布、向量语义搜索和真实多供应商切换仍属于 P3 后续。当前统一搜索是可解释关键词匹配，不冒充语义检索。
 - 14 条告警规则已由 Prometheus `promtool` 校验通过并纳入 CI。
 - 托管部署、托管备份/PITR 恢复、告警投递、Secret Store、Staging E2E 和签字验收仍属于 P4。

@@ -44,8 +44,8 @@ OIDC_ISSUER=
 OIDC_AUDIENCE=
 TIKHUB_BASE_URL=
 TIKHUB_API_KEY=
-AI_PROVIDER=
-AI_MODEL=
+AI_CREDENTIALS_ENCRYPTION_KEY=
+AI_CREDENTIALS_KEY_FILE=
 AI_L1_ESTIMATED_COST_USD=
 AI_L2_ESTIMATED_COST_USD=
 AI_GENERATION_ESTIMATED_COST_USD=
@@ -67,6 +67,9 @@ FAILED_PROVIDER_PAYLOAD_RETENTION_DAYS=
 - Secret 通过部署平台 Secret Store 注入。
 - 日志禁止打印 Secret。
 - `TIKHUB_BASE_URL` 可配置，不硬编码区域域名。
+- DeepSeek/OpenAI 等 Provider Key 由 Owner 通过 `/api/v1/ai/connections` 写入，
+  数据库只保存 AES-256-GCM 密文；生产环境的主加密密钥
+  `AI_CREDENTIALS_ENCRYPTION_KEY` 由 Secret Store 注入。
 - 启动时验证必要配置，但错误信息不得回显 Secret。
 
 ## 4. 数据库迁移

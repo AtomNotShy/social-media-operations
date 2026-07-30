@@ -26,6 +26,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1
 
 RUN groupadd --system app && useradd --system --gid app --home-dir /app app
+RUN install -d -o app -g app -m 700 /app/storage/config
 
 WORKDIR /app
 COPY --from=builder --chown=app:app /app/.venv ./.venv

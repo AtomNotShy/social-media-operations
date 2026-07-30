@@ -5,17 +5,32 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import AnalysisRun, ExternalContent, SyncJob, Transcript
+from app.core.config import Settings
+from app.core.errors import AppError
+from app.db.models import (
+    AnalysisRun,
+    ContentMetricSnapshot,
+    ExternalContent,
+    SyncJob,
+    Transcript,
+)
 from app.jobs.errors import JobExecutionError
 from app.modules.analysis.budget import settle_ai_budget
 from app.modules.analysis.schemas import AnalysisL1Result, AnalysisL2Result
-from app.providers.ai.base import AnalysisProvider
+from app.providers.ai.base import AIProviderRequestError, AnalysisProvider
+from app.providers.ai.factory import analysis_provider_for_run
 
 
 class AnalysisHandler:
-    def __init__(self, db: Session, provider: AnalysisProvider | None) -> None:
+    def __init__(
+        self,
+        db: Session,
+        provider: AnalysisProvider | None,
+        settings: Settings | None = None,
+    ) -> None:
         self.db = db
         self.provider = provider
+        self.settings = settings
 
     async def handle(self, job: SyncJob) -> dict:
         run_id = self._payload_run_id(job)
@@ -31,7 +46,22 @@ class AnalysisHandler:
                 message="Analysis run no longer exists.",
                 retryable=False,
             )
-        if self.provider is None:
+        provider = self.provider
+        if provider is None and self.settings is not None:
+            try:
+                provider = analysis_provider_for_run(
+                    self.db,
+                    run=run,
+                    settings=self.settings,
+                )
+            except AppError as exc:
+                self._fail(run, exc.code, exc.detail)
+                raise JobExecutionError(
+                    code=exc.code,
+                    message=exc.detail,
+                    retryable=exc.retryable,
+                ) from exc
+        if provider is None:
             self._fail(run, "AI_NOT_CONFIGURED", "No AI provider is configured.")
             raise JobExecutionError(
                 code="AI_NOT_CONFIGURED",
@@ -61,16 +91,42 @@ class AnalysisHandler:
             .order_by(Transcript.finished_at.desc(), Transcript.created_at.desc())
             .limit(1)
         )
+        metric_snapshot = self.db.scalar(
+            select(ContentMetricSnapshot)
+            .where(
+                ContentMetricSnapshot.workspace_id == job.workspace_id,
+                ContentMetricSnapshot.external_content_id == content.id,
+            )
+            .order_by(
+                ContentMetricSnapshot.captured_at.desc(),
+                ContentMetricSnapshot.created_at.desc(),
+            )
+            .limit(1)
+        )
+        metrics = (
+            {
+                "views": metric_snapshot.views,
+                "likes": metric_snapshot.likes,
+                "comments": metric_snapshot.comments,
+                "favorites": metric_snapshot.favorites,
+                "shares": metric_snapshot.shares,
+                "downloads": metric_snapshot.downloads,
+                **metric_snapshot.metrics,
+            }
+            if metric_snapshot is not None
+            else None
+        )
         run.status = "running"
         run.started_at = datetime.now(timezone.utc)
         run.error_code = None
         run.error_message = None
         self.db.commit()
         try:
-            output = await self.provider.analyze(
+            output = await provider.analyze(
                 run=run,
                 content=content,
                 transcript=transcript,
+                metrics=metrics,
             )
             schema = AnalysisL1Result if run.analysis_level == "l1" else AnalysisL2Result
             validated = schema.model_validate(output.result)
@@ -91,6 +147,13 @@ class AnalysisHandler:
         except JobExecutionError as exc:
             self._fail(run, exc.code, exc.message)
             raise
+        except AIProviderRequestError as exc:
+            self._fail(run, exc.code, exc.message)
+            raise JobExecutionError(
+                code=exc.code,
+                message=exc.message,
+                retryable=exc.retryable,
+            ) from exc
         except Exception as exc:
             self._fail(run, "AI_PROVIDER_ERROR", "AI provider request failed.")
             raise JobExecutionError(

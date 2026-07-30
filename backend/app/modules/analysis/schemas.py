@@ -45,6 +45,7 @@ class AnalysisRunRead(BaseModel):
     id: UUID
     external_content_id: UUID
     sync_job_id: UUID | None
+    ai_connection_id: UUID | None
     analysis_level: str
     model_provider: str
     model: str

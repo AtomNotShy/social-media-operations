@@ -12,7 +12,9 @@
 - 灵感、可复用模式、自有账号、选题、内容项目和追加式脚本版本。
 - 素材直传意图、审核排期、人工发布包、发布记录和复盘。
 - S3 兼容素材直传、远端大小/MIME/SHA-256 完成校验。
-- AI/ASR 费用预留与结算、写请求审计、依赖健康、15 个 Alembic 迁移和 OpenAPI 契约。
+- DeepSeek、OpenAI 与通用 OpenAI-Compatible 模型连接、工作区级 L1/L2/生成路由、
+  AES-256-GCM 凭据加密、连接测试和严格 JSON Schema 校验。
+- AI/ASR 费用预留与结算、写请求审计、依赖健康、17 个 Alembic 迁移和 OpenAPI 契约。
 - 结构化请求日志、低基数 Prometheus HTTP 指标和受保护的 `/metrics`。
 - 保存视图、版本化实验、幂等转化归因、证据化趋势与今日/绩效看板。
 - AI 脚本/复盘生成账本、严格 Schema、项目版本锁和追加式结果。
@@ -21,9 +23,9 @@
 测试使用代表性去敏 Fixture，不会产生 TikHub 费用。Fixture 不是用户账户的
 真实响应；首次付费 Smoke Test 仍需在预算保护下单独执行并核对真实 Schema。
 
-当前 `.env` 只配置了 TikHub 时，AI、ASR 和对象存储会保持关闭，相应付费任务
-返回明确的 `*_NOT_CONFIGURED` 错误。对象存储可配置为 `s3`；`fixture` Provider
-只允许在 `APP_ENV=test` 中使用，不能作为生产能力。
+AI Provider Key 不写入前端或项目 JSON，通过 Owner 鉴权的 `/api/v1/ai/*`
+接口保存到服务端加密存储。对象存储可配置为 `s3`；`fixture` Provider 只允许在
+`APP_ENV=test` 中使用，不能作为生产能力。
 
 ## 本地启动
 
@@ -86,6 +88,35 @@ curl -X POST \
   http://127.0.0.1:8000/api/v1/workspaces
 ```
 
+### 配置 DeepSeek
+
+先取得工作区 UUID，然后由 Owner 创建连接：
+
+```bash
+curl -X POST \
+  -H 'Authorization: Bearer dev:local-owner' \
+  -H 'X-Workspace-Id: <workspace-uuid>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name":"DeepSeek",
+    "provider":"deepseek",
+    "api_key":"<deepseek-api-key>",
+    "model":"deepseek-v4-flash",
+    "use_for":["l1","l2","generation"],
+    "json_mode":true
+  }' \
+  http://127.0.0.1:8000/api/v1/ai/connections
+```
+
+返回值只包含 `api_key_configured` 与 `api_key_masked`，不会回显完整 Key。随后调用
+`POST /api/v1/ai/connections/{connection_id}/test` 获取真实模型列表并验证凭据。
+也可以创建 `openai` 或 `openai_compatible` 连接，再通过
+`PUT /api/v1/ai/routes/{l1|l2|generation}` 为不同任务选择不同连接和模型。
+
+本地环境首次保存 Key 时会在 Docker `credentials-data` Volume 中生成仅服务端可读
+的主密钥。Staging/Production 必须通过 Secret Store 注入
+`AI_CREDENTIALS_ENCRYPTION_KEY`，不得依赖容器临时文件。
+
 ## 验证
 
 ```bash
@@ -110,6 +141,7 @@ OpenAPI/文档契约、容器启动、本地测试套件、1000 行核心查询 
 
 - PostgreSQL 并发压测和托管实例验收。
 - 三个平台各 5 条真实内容、10 个真实账号的预算内 Smoke Test。
-- 真实 AI、ASR Provider；S3 Provider 已实现但尚无用户 Bucket 凭据验收。
+- 使用用户 DeepSeek/OpenAI/兼容 Provider Key 的首次付费 Smoke Test、真实 ASR
+  Provider；S3 Provider 已实现但尚无用户 Bucket 凭据验收。
 - 托管环境 PITR、告警投递、Secret Store 和 Staging E2E。
 - 官方发布接口权限与供应商验收；MVP 当前只支持人工发布包。

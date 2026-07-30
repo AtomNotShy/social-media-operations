@@ -2,7 +2,7 @@ from app.providers.ai.base import AnalysisProviderResult
 
 
 class FixtureAnalysisProvider:
-    async def analyze(self, *, run, content, transcript):
+    async def analyze(self, *, run, content, transcript, metrics=None):
         evidence_refs = [f"content:{content.id}"]
         if transcript is not None:
             evidence_refs.append(f"transcript:{transcript.id}")

@@ -320,6 +320,43 @@ POST /scoring-policies/{policy_id}/activate
 
 激活新的评分策略只影响新评分；历史初始证据不被改写。
 
+### 7.1 AI 连接与模型路由
+
+```text
+GET   /ai/settings
+POST  /ai/connections
+PATCH /ai/connections/{connection_id}
+POST  /ai/connections/{connection_id}/test
+PUT   /ai/routes/{task_type}
+```
+
+`task_type` 为 `l1`、`l2` 或 `generation`。连接支持：
+
+- `deepseek`：固定使用 DeepSeek 官方 API 地址。
+- `openai`：固定使用 OpenAI 官方 API 地址。
+- `openai_compatible`：允许配置其他兼容 `/chat/completions` 与 `/models`
+  的服务地址；非本地环境必须使用公开 HTTPS 地址。
+
+创建 DeepSeek 连接并同时用于 L1/L2：
+
+```json
+{
+  "name": "DeepSeek Production",
+  "provider": "deepseek",
+  "api_key": "<redacted>",
+  "model": "deepseek-v4-flash",
+  "use_for": ["l1", "l2"],
+  "json_mode": true,
+  "temperature": 0.2,
+  "max_tokens": 2000
+}
+```
+
+API Key 使用服务端 AES-256-GCM 加密，读取接口只返回 `configured` 和末四位掩码。
+更新时省略或提交空 Key 会保留旧值，只有 `clear_api_key=true` 会明确清除。Provider
+调用返回的 JSON 仍需通过 L1/L2 Pydantic Schema 和来源引用校验，模型输出不能直接
+写入业务表。
+
 ## 8. 可复用模式
 
 ```text

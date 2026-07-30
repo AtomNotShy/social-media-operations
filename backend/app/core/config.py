@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     ai_l1_estimated_cost_usd: Decimal = Field(default=Decimal("0.05"), ge=0)
     ai_l2_estimated_cost_usd: Decimal = Field(default=Decimal("0.20"), ge=0)
     ai_generation_estimated_cost_usd: Decimal = Field(default=Decimal("0.15"), ge=0)
+    ai_credentials_encryption_key: SecretStr | None = None
+    ai_credentials_key_file: str = "storage/config/.credentials.key"
     asr_provider: str = "disabled"
     asr_model: str = "disabled"
     asr_estimated_cost_usd: Decimal = Field(default=Decimal("0.10"), ge=0)
@@ -70,6 +72,14 @@ class Settings(BaseSettings):
     @field_validator("metrics_bearer_token", mode="before")
     @classmethod
     def normalize_metrics_bearer_token(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        raw = value.get_secret_value() if isinstance(value, SecretStr) else str(value)
+        return raw.strip() or None
+
+    @field_validator("ai_credentials_encryption_key", mode="before")
+    @classmethod
+    def normalize_ai_credentials_encryption_key(cls, value: object) -> str | None:
         if value is None:
             return None
         raw = value.get_secret_value() if isinstance(value, SecretStr) else str(value)

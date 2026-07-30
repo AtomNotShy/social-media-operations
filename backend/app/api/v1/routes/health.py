@@ -14,6 +14,7 @@ from app.core.config import Settings
 from app.core.errors import AppError
 from app.db.migration_state import expected_schema_revision
 from app.db.models import ACTIVE_JOB_STATUSES, ProviderCircuitState, SyncJob
+from app.modules.ai_connections.service import configured_for
 from app.schemas.common import DataResponse, ResponseMeta
 
 router = APIRouter(tags=["health"])
@@ -108,7 +109,26 @@ def dependencies(
                     if item.state == "open"
                 ],
             },
-            "ai": {"provider": settings.ai_provider},
+            "ai": {
+                "configured": any(
+                    configured_for(
+                        db,
+                        workspace_id=context.workspace.id,
+                        task_type=task_type,
+                        settings=settings,
+                    )
+                    for task_type in ("l1", "l2", "generation")
+                ),
+                "routes": {
+                    task_type: configured_for(
+                        db,
+                        workspace_id=context.workspace.id,
+                        task_type=task_type,
+                        settings=settings,
+                    )
+                    for task_type in ("l1", "l2", "generation")
+                },
+            },
             "asr": {"provider": settings.asr_provider},
             "object_storage": {"provider": settings.object_storage_provider},
         },

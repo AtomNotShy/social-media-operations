@@ -1,6 +1,7 @@
 import asyncio
 import json
 import uuid
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
@@ -13,6 +14,7 @@ from app.db.models import (
     ProviderFetch,
     ProviderUsageDaily,
     SyncJob,
+    TrackedProfile,
 )
 from app.jobs.worker import process_one
 from app.providers.social.tikhub.client import TikHubHttpClient
@@ -99,6 +101,11 @@ def test_profile_scan_persists_evidence_content_metrics_and_usage(
         estimated_cost = db.scalar(select(func.sum(ProviderUsageDaily.estimated_cost_usd)))
         assert request_count == 3
         assert str(estimated_cost) == "0.003000"
+        tracked_profile = db.get(TrackedProfile, uuid.UUID(profile["id"]))
+        assert tracked_profile is not None
+        assert tracked_profile.last_synced_at is not None
+        assert tracked_profile.next_scan_at is not None
+        assert tracked_profile.next_scan_at - tracked_profile.last_synced_at == timedelta(hours=24)
 
     contents = client.get(
         f"/api/v1/tracked-profiles/{profile['id']}/contents",

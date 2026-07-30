@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.db.models import ExternalContent, SyncJob, Workspace
+from app.modules.ai_connections.service import configured_for
 from app.modules.analysis.service import request_analysis
 from app.modules.inspirations.service import upsert_external_content
 from app.modules.scoring.service import calculate_content_score
@@ -142,8 +143,12 @@ class ContentDetailHandler:
         if job.payload.get("analyze"):
             if (
                 self.settings is None
-                or self.settings.ai_provider == "disabled"
-                or self.settings.ai_model == "disabled"
+                or not configured_for(
+                    self.db,
+                    workspace_id=workspace.id,
+                    task_type="l1",
+                    settings=self.settings,
+                )
             ):
                 analysis_status = "not_configured"
             else:

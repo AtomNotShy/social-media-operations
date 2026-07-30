@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,6 +14,7 @@ def app():
         app_env="test",
         auth_mode="development",
         database_url="sqlite:///:memory:",
+        ai_credentials_encryption_key=base64.urlsafe_b64encode(b"test-key" * 4).decode(),
     )
     application = create_app(settings)
     Base.metadata.create_all(application.state.database.engine)

@@ -7,3 +7,4 @@ __pycache__/
 backend/.coverage
 backend/.venv/
 backend/backups/
+backend/storage/config/

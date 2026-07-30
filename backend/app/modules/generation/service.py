@@ -17,6 +17,7 @@ from app.db.models import (
     Topic,
 )
 from app.jobs.service import create_job
+from app.modules.ai_connections.service import ResolvedAIRoute, resolve_route
 from app.modules.analysis.budget import reserve_ai_budget
 
 
@@ -25,14 +26,19 @@ def _hash(payload: dict) -> str:
     return hashlib.sha256(encoded.encode()).hexdigest()
 
 
-def _require_ai(settings: Settings) -> None:
-    if settings.ai_provider == "disabled" or settings.ai_model == "disabled":
-        raise AppError(
-            409,
-            "AI_NOT_CONFIGURED",
-            "AI provider is not configured",
-            "Configure an approved AI provider and model before creating generation jobs.",
-        )
+def _require_ai(
+    db: Session,
+    *,
+    workspace_id: uuid.UUID,
+    settings: Settings,
+) -> ResolvedAIRoute:
+    return resolve_route(
+        db,
+        workspace_id=workspace_id,
+        task_type="generation",
+        settings=settings,
+        include_secret=False,
+    )
 
 
 def _reusable_generation(
@@ -99,7 +105,7 @@ def request_script_generation(
     requested_by: uuid.UUID,
     settings: Settings,
 ) -> tuple[GenerationRun, bool]:
-    _require_ai(settings)
+    route = _require_ai(db, workspace_id=workspace_id, settings=settings)
     project = db.scalar(
         select(ContentProject).where(
             ContentProject.workspace_id == workspace_id,
@@ -186,8 +192,9 @@ def request_script_generation(
     input_hash = _hash(
         {
             "payload": input_payload,
-            "provider": settings.ai_provider,
-            "model": settings.ai_model,
+            "provider": route.provider,
+            "model": route.model,
+            "ai_connection_id": str(route.connection_id) if route.connection_id else None,
             "prompt_version": prompt_version,
         }
     )
@@ -208,9 +215,10 @@ def request_script_generation(
     run = GenerationRun(
         workspace_id=workspace_id,
         content_project_id=project.id,
+        ai_connection_id=route.connection_id,
         generation_type="script_draft",
-        model_provider=settings.ai_provider,
-        model=settings.ai_model,
+        model_provider=route.provider,
+        model=route.model,
         prompt_version=prompt_version,
         input_hash=input_hash,
         input_payload=input_payload,
@@ -234,7 +242,7 @@ def request_review_generation(
     requested_by: uuid.UUID,
     settings: Settings,
 ) -> tuple[GenerationRun, bool]:
-    _require_ai(settings)
+    route = _require_ai(db, workspace_id=workspace_id, settings=settings)
     row = db.execute(
         select(PublishRecord, PublishPlan, ContentProject)
         .join(PublishPlan, PublishPlan.id == PublishRecord.publish_plan_id)
@@ -267,8 +275,9 @@ def request_review_generation(
     input_hash = _hash(
         {
             "payload": input_payload,
-            "provider": settings.ai_provider,
-            "model": settings.ai_model,
+            "provider": route.provider,
+            "model": route.model,
+            "ai_connection_id": str(route.connection_id) if route.connection_id else None,
             "prompt_version": prompt_version,
         }
     )
@@ -285,9 +294,10 @@ def request_review_generation(
         workspace_id=workspace_id,
         content_project_id=project.id,
         publish_record_id=record.id,
+        ai_connection_id=route.connection_id,
         generation_type="review_summary",
-        model_provider=settings.ai_provider,
-        model=settings.ai_model,
+        model_provider=route.provider,
+        model=route.model,
         prompt_version=prompt_version,
         input_hash=input_hash,
         input_payload=input_payload,

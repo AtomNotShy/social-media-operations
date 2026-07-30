@@ -59,6 +59,576 @@
         "title": "AIBudgetUsageSummary",
         "type": "object"
       },
+      "AIConnectionCreate": {
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "input_cost_per_million_usd": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Input Cost Per Million Usd"
+          },
+          "json_mode": {
+            "default": true,
+            "title": "Json Mode",
+            "type": "boolean"
+          },
+          "max_tokens": {
+            "default": 2000,
+            "maximum": 32768.0,
+            "minimum": 256.0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "output_cost_per_million_usd": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Output Cost Per Million Usd"
+          },
+          "provider": {
+            "enum": [
+              "deepseek",
+              "openai",
+              "openai_compatible"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0.2",
+            "title": "Temperature"
+          },
+          "timeout_seconds": {
+            "default": 60,
+            "maximum": 300.0,
+            "minimum": 5.0,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          },
+          "use_for": {
+            "items": {
+              "enum": [
+                "l1",
+                "l2",
+                "generation"
+              ],
+              "type": "string"
+            },
+            "title": "Use For",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "provider",
+          "model"
+        ],
+        "title": "AIConnectionCreate",
+        "type": "object"
+      },
+      "AIConnectionRead": {
+        "properties": {
+          "api_key_configured": {
+            "title": "Api Key Configured",
+            "type": "boolean"
+          },
+          "api_key_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key Masked"
+          },
+          "base_url": {
+            "title": "Base Url",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "json_mode": {
+            "title": "Json Mode",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "title": "Timeout Seconds",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "base_url",
+          "enabled",
+          "timeout_seconds",
+          "json_mode",
+          "api_key_configured",
+          "api_key_masked",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AIConnectionRead",
+        "type": "object"
+      },
+      "AIConnectionTestRequest": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "title": "AIConnectionTestRequest",
+        "type": "object"
+      },
+      "AIConnectionTestResult": {
+        "properties": {
+          "available_models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Models",
+            "type": "array"
+          },
+          "base_url": {
+            "title": "Base Url",
+            "type": "string"
+          },
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "integer"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "requested_model_available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Model Available"
+          }
+        },
+        "required": [
+          "ok",
+          "provider",
+          "base_url",
+          "latency_ms",
+          "available_models",
+          "requested_model_available"
+        ],
+        "title": "AIConnectionTestResult",
+        "type": "object"
+      },
+      "AIConnectionUpdate": {
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "clear_api_key": {
+            "default": false,
+            "title": "Clear Api Key",
+            "type": "boolean"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "json_mode": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json Mode"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "maximum": 300.0,
+                "minimum": 5.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Seconds"
+          }
+        },
+        "title": "AIConnectionUpdate",
+        "type": "object"
+      },
+      "AIModelRouteRead": {
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "connection_id": {
+            "format": "uuid",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "connection_name": {
+            "title": "Connection Name",
+            "type": "string"
+          },
+          "input_cost_per_million_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Input Cost Per Million Usd",
+            "type": "string"
+          },
+          "max_tokens": {
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "output_cost_per_million_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Output Cost Per Million Usd",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "task_type": {
+            "title": "Task Type",
+            "type": "string"
+          },
+          "temperature": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Temperature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_type",
+          "connection_id",
+          "connection_name",
+          "provider",
+          "model",
+          "temperature",
+          "max_tokens",
+          "input_cost_per_million_usd",
+          "output_cost_per_million_usd",
+          "configured"
+        ],
+        "title": "AIModelRouteRead",
+        "type": "object"
+      },
+      "AIModelRouteUpsert": {
+        "properties": {
+          "connection_id": {
+            "format": "uuid",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "input_cost_per_million_usd": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Input Cost Per Million Usd"
+          },
+          "max_tokens": {
+            "default": 2000,
+            "maximum": 32768.0,
+            "minimum": 256.0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "output_cost_per_million_usd": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Output Cost Per Million Usd"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "default": "0.2",
+            "title": "Temperature"
+          }
+        },
+        "required": [
+          "connection_id",
+          "model"
+        ],
+        "title": "AIModelRouteUpsert",
+        "type": "object"
+      },
+      "AIProviderCatalogItem": {
+        "properties": {
+          "custom_base_url": {
+            "title": "Custom Base Url",
+            "type": "boolean"
+          },
+          "default_base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Base Url"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "deepseek",
+              "openai",
+              "openai_compatible"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "suggested_models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggested Models",
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "default_base_url",
+          "suggested_models",
+          "custom_base_url"
+        ],
+        "title": "AIProviderCatalogItem",
+        "type": "object"
+      },
+      "AISettingsRead": {
+        "properties": {
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/AIConnectionRead"
+            },
+            "title": "Connections",
+            "type": "array"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/AIProviderCatalogItem"
+            },
+            "title": "Providers",
+            "type": "array"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/AIModelRouteRead"
+            },
+            "title": "Routes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "providers",
+          "connections",
+          "routes"
+        ],
+        "title": "AISettingsRead",
+        "type": "object"
+      },
       "AIUsageSummary": {
         "properties": {
           "cost_usd": {
@@ -141,6 +711,18 @@
       },
       "AnalysisRunRead": {
         "properties": {
+          "ai_connection_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Connection Id"
+          },
           "analysis_level": {
             "title": "Analysis Level",
             "type": "string"
@@ -275,6 +857,7 @@
           "id",
           "external_content_id",
           "sync_job_id",
+          "ai_connection_id",
           "analysis_level",
           "model_provider",
           "model",
@@ -1418,6 +2001,70 @@
           "meta"
         ],
         "title": "DataResponse[AIBudgetUsageSummary]",
+        "type": "object"
+      },
+      "DataResponse_AIConnectionRead_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIConnectionRead"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[AIConnectionRead]",
+        "type": "object"
+      },
+      "DataResponse_AIConnectionTestResult_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIConnectionTestResult"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[AIConnectionTestResult]",
+        "type": "object"
+      },
+      "DataResponse_AIModelRouteRead_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIModelRouteRead"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[AIModelRouteRead]",
+        "type": "object"
+      },
+      "DataResponse_AISettingsRead_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AISettingsRead"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[AISettingsRead]",
         "type": "object"
       },
       "DataResponse_AIUsageSummary_": {
@@ -3481,6 +4128,18 @@
       },
       "GenerationRunRead": {
         "properties": {
+          "ai_connection_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Connection Id"
+          },
           "content_project_id": {
             "format": "uuid",
             "title": "Content Project Id",
@@ -3651,6 +4310,7 @@
           "content_project_id",
           "publish_record_id",
           "sync_job_id",
+          "ai_connection_id",
           "generation_type",
           "model_provider",
           "model",
@@ -7335,6 +7995,350 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/ai/connections": {
+      "post": {
+        "operationId": "add_ai_connection_api_v1_ai_connections_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIConnectionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AIConnectionRead_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Ai Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/ai/connections/{connection_id}": {
+      "patch": {
+        "operationId": "patch_ai_connection_api_v1_ai_connections__connection_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIConnectionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AIConnectionRead_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Ai Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/ai/connections/{connection_id}/test": {
+      "post": {
+        "operationId": "test_ai_connection_api_v1_ai_connections__connection_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Connection Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIConnectionTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AIConnectionTestResult_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Test Ai Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/ai/routes/{task_type}": {
+      "put": {
+        "operationId": "put_ai_route_api_v1_ai_routes__task_type__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "l1",
+                "l2",
+                "generation"
+              ],
+              "title": "Task Type",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIModelRouteUpsert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AIModelRouteRead_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Put Ai Route",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/ai/settings": {
+      "get": {
+        "operationId": "get_ai_settings_api_v1_ai_settings_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AISettingsRead_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Ai Settings",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
     "/api/v1/analyses/{analysis_id}": {
       "get": {
         "operationId": "get_analysis_api_v1_analyses__analysis_id__get",

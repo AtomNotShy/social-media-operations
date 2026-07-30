@@ -15,6 +15,7 @@ from app.db.models import (
     WorkspaceInspiration,
 )
 from app.jobs.service import create_job
+from app.modules.ai_connections.service import resolve_route
 from app.modules.analysis.budget import reserve_ai_budget
 
 
@@ -134,13 +135,13 @@ def request_analysis(
     force: bool,
     settings: Settings,
 ) -> tuple[AnalysisRun, bool]:
-    if settings.ai_provider == "disabled" or settings.ai_model == "disabled":
-        raise AppError(
-            409,
-            "AI_NOT_CONFIGURED",
-            "AI provider is not configured",
-            "Configure an approved AI provider and model before creating analysis jobs.",
-        )
+    route = resolve_route(
+        db,
+        workspace_id=workspace_id,
+        task_type=level,
+        settings=settings,
+        include_secret=False,
+    )
     content = inspiration_content(
         db,
         workspace_id=workspace_id,
@@ -165,8 +166,9 @@ def request_analysis(
             "content_version": _content_version(content),
             "transcript_version": transcript.input_hash if transcript is not None else None,
             "prompt_version": prompt_version,
-            "model_provider": settings.ai_provider,
-            "model": settings.ai_model,
+            "model_provider": route.provider,
+            "model": route.model,
+            "ai_connection_id": str(route.connection_id) if route.connection_id else None,
             "analysis_level": level,
         }
     )
@@ -189,9 +191,10 @@ def request_analysis(
     run = AnalysisRun(
         workspace_id=workspace_id,
         external_content_id=content.id,
+        ai_connection_id=route.connection_id,
         analysis_level=level,
-        model_provider=settings.ai_provider,
-        model=settings.ai_model,
+        model_provider=route.provider,
+        model=route.model,
         prompt_version=prompt_version,
         input_hash=input_hash,
         status="queued",
@@ -217,8 +220,8 @@ def request_analysis(
         sync_job_id=job.id,
         resource_type="analysis",
         resource_id=run.id,
-        provider=settings.ai_provider,
-        model=settings.ai_model,
+        provider=route.provider,
+        model=route.model,
         estimated_cost_usd=estimated_cost,
     )
     db.flush()
