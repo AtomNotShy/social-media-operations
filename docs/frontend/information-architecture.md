@@ -85,7 +85,7 @@
 | `/w/{id}/assets` | 素材库 | P2 | 已实现 |
 | `/w/{id}/jobs` | 任务中心 | P0 | 已实现 |
 | `/w/{id}/usage` | 用量与费用 | P1 | 已实现 |
-| `/w/{id}/settings` | 工作区设置 | P0/P1 | 已实现 |
+| `/w/{id}/settings` | 工作区设置 | P0–P3 | 已实现，含工作区、预算、成员、健康状态和外部调用开关 |
 
 发布记录由排期页生成和登记，复盘详情以 `record_id` 打开；当前没有独立的 `/publish-records/{record_id}` 页面。
 

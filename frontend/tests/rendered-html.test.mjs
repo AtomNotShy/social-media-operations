@@ -152,6 +152,18 @@ test("serves P3 search, saved views, experiments, and productivity surfaces", as
   assert.doesNotMatch(experimentHtml, /P2 页面尚未启用/);
 });
 
+test("serves the live settings center without milestone placeholder copy", async () => {
+  const response = await render("/w/demo/settings");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /<title>工作区设置 · 序章<\/title>/i);
+  assert.match(html, /管理工作区信息、调用预算、运行安全与成员权限/);
+  assert.match(html, /数据连接/);
+  assert.match(html, /任务通知/);
+  assert.doesNotMatch(html, /P0 先展示系统边界|status: "P0"|>P0</);
+  assert.doesNotMatch(html, /规划中/);
+});
+
 test("removes all disposable starter-preview artifacts", async () => {
   const [layout, packageJson] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
