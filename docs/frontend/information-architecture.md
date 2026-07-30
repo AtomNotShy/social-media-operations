@@ -18,18 +18,18 @@
 │   └── 对标账号
 ├── 内容生产
 │   ├── 选题
-│   ├── 脚本
-│   ├── 内容
+│   ├── 内容项目
 │   ├── 排期
-│   └── 复盘
+│   ├── 复盘
+│   └── 运营实验
 ├── 我的资料
 │   ├── 灵感库
+│   ├── 搜索与热榜
 │   ├── 素材库
 │   └── 可复用模式
 └── 系统
     ├── 任务中心
     ├── 用量与费用
-    ├── 自动化
     └── 设置
 ```
 
@@ -56,36 +56,38 @@
 |---|---|
 | `/login` | 登录 |
 | `/workspaces/new` | 创建工作区 |
-| `/` | 重定向到最近工作区或登录 |
+| `/` | 当前演示部署重定向到 `/w/demo/today` |
 
 ### 3.2 工作台
 
-| 路由 | 页面 | 阶段 |
-|---|---|---|
-| `/w/{id}/today` | 今日工作台 | P2 |
-| `/w/{id}/channels` | 自有账号 | P2 |
-| `/w/{id}/channels/{channel_id}` | 账号定位详情 | P2 |
-| `/w/{id}/tracked-profiles` | 对标账号 | P0 |
-| `/w/{id}/tracked-profiles/{profile_id}` | 对标账号详情 | P1 |
-| `/w/{id}/inspirations` | 灵感库 | P1 |
-| `/w/{id}/inspirations/{inspiration_id}` | 灵感详情 | P1 |
-| `/w/{id}/discover` | 搜索与热榜 | P1 |
-| `/w/{id}/topics` | 选题 | P2 |
-| `/w/{id}/topics/{topic_id}` | 选题详情 | P2 |
-| `/w/{id}/content-projects` | 内容项目 | P2 |
-| `/w/{id}/content-projects/{project_id}` | 项目概览 | P2 |
-| `/w/{id}/content-projects/{project_id}/script` | 脚本 | P2 |
-| `/w/{id}/content-projects/{project_id}/assets` | 项目素材 | P2 |
-| `/w/{id}/schedule` | 排期日历 | P2 |
-| `/w/{id}/publish-records/{record_id}` | 发布记录 | P2 |
-| `/w/{id}/reviews` | 复盘列表 | P2 |
-| `/w/{id}/reviews/{record_id}` | 复盘详情 | P2 |
-| `/w/{id}/patterns` | 可复用模式 | P1 |
-| `/w/{id}/patterns/{pattern_id}` | 模式详情 | P1 |
-| `/w/{id}/assets` | 素材库 | P2 |
-| `/w/{id}/jobs` | 任务中心 | P0 |
-| `/w/{id}/usage` | 用量与费用 | P1 |
-| `/w/{id}/settings` | 工作区设置 | P0/P1 |
+| 路由 | 页面 | 阶段 | 状态 |
+|---|---|---|---|
+| `/w/{id}/today` | 今日工作台 | P2 | 已实现 |
+| `/w/{id}/channels` | 自有账号 | P2 | 已实现 |
+| `/w/{id}/channels/{channel_id}` | 账号定位详情 | P2 | 已实现 |
+| `/w/{id}/tracked-profiles` | 对标账号 | P0 | 已实现 |
+| `/w/{id}/tracked-profiles/{profile_id}` | 对标账号详情 | P1 | 已实现 |
+| `/w/{id}/inspirations` | 灵感库 | P1 | 已实现 |
+| `/w/{id}/inspirations/{inspiration_id}` | 灵感详情 | P1 | 已实现 |
+| `/w/{id}/discover` | 搜索与热榜 | P1 | 已实现 |
+| `/w/{id}/topics` | 选题 | P2/P3 | 已实现，含批量操作和保存视图 |
+| `/w/{id}/topics/{topic_id}` | 选题详情 | P2 | 已实现 |
+| `/w/{id}/content-projects` | 内容项目 | P2/P3 | 已实现，含保存视图 |
+| `/w/{id}/content-projects/{project_id}` | 项目概览 | P2 | 已实现 |
+| `/w/{id}/content-projects/{project_id}/script` | 脚本 | P2 | 已实现 |
+| `/w/{id}/content-projects/{project_id}/assets` | 项目素材 | P2 | 已实现 |
+| `/w/{id}/schedule` | 排期、发布包与发布登记 | P2/P3 | 已实现，含保存视图 |
+| `/w/{id}/reviews` | 复盘列表 | P2/P3 | 已实现，含保存视图 |
+| `/w/{id}/reviews/{record_id}` | 复盘详情 | P2 | 已实现 |
+| `/w/{id}/experiments` | 运营实验 | P3 | 已实现 |
+| `/w/{id}/patterns` | 可复用模式 | P1 | 已实现 |
+| `/w/{id}/patterns/{pattern_id}` | 模式详情 | P1 | 已实现 |
+| `/w/{id}/assets` | 素材库 | P2 | 已实现 |
+| `/w/{id}/jobs` | 任务中心 | P0 | 已实现 |
+| `/w/{id}/usage` | 用量与费用 | P1 | 已实现 |
+| `/w/{id}/settings` | 工作区设置 | P0/P1 | 已实现 |
+
+发布记录由排期页生成和登记，复盘详情以 `record_id` 打开；当前没有独立的 `/publish-records/{record_id}` 页面。
 
 ## 4. 页面层级
 
@@ -174,9 +176,23 @@ Windows/Linux: Ctrl + K
 - 新建选题。
 - 打开任务中心。
 
-P0 先实现页面跳转和新建对标账号；跨账号、灵感、选题、内容项目的统一实体搜索在 P3 开启。
+当前已实现页面跳转、创建入口，以及灵感、模式、选题和内容项目的跨实体关键词搜索。搜索结果显示实体类型和匹配摘要。
+
+统一搜索当前不是向量语义搜索。前端不使用“语义相似”文案，也不把关键词命中解释成语义召回。
 
 命令结果必须遵守工作区权限。Viewer 不显示会产生费用或修改数据的命令。
+
+### 6.1 键盘跳转
+
+焦点不在输入框、文本域或可编辑区域时支持：
+
+```text
+G → T：今日
+G → O：选题
+G → P：内容项目
+G → S：排期
+G → R：复盘
+```
 
 ## 7. URL 查询参数
 

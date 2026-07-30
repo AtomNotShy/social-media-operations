@@ -1,5 +1,28 @@
 # 前端测试、部署与验收
 
+本文档包含当前自动化证据和后续生产验收目标。最新结论见[前端实现状态](./implementation-status.md)。
+
+## 0. 当前自动化证据
+
+截至 2026-07-30，前端提交 `fbc5fde` 已通过：
+
+```text
+npm run api:generate
+npm run typecheck
+npm run lint
+npm test
+```
+
+结果：
+
+- 18 项 Vitest 单元测试通过。
+- vinext Production Build 通过。
+- 9 项 Node 路由与服务端渲染测试通过。
+- P0/P1/P2/P3 独立路由均可构建。
+- P2 路由不再落入通用占位页。
+
+当前尚未配置 Playwright 浏览器 E2E、完整视觉回归和自动可访问性扫描，因此下文对应条目仍是验收目标，不是已获得的证据。
+
 ## 1. 测试层级
 
 ```text
@@ -15,16 +38,15 @@ Static Checks
 
 ## 2. 静态检查
 
-每次提交执行：
+当前每次提交执行：
 
 - TypeScript strict typecheck。
 - ESLint。
-- Prettier/格式检查。
-- Tailwind class 和 CSS 检查。
 - 未使用导入。
 - 生成 API Client 是否最新。
-- 环境变量 Schema。
 - 禁止前端代码出现 TikHub Key 名称或 Provider Secret。
+
+Prettier 独立检查、环境变量 Schema 和 Tailwind 专项检查仍属于 CI 完善项。
 
 ## 3. 单元测试
 
@@ -41,7 +63,7 @@ Static Checks
 - Problem Details 到 AppError。
 - Idempotency Key 生命周期。
 
-## 4. 组件测试
+## 4. 组件测试目标
 
 使用 Testing Library，以用户可见行为断言：
 
@@ -57,7 +79,7 @@ Static Checks
 
 每个关键组件至少覆盖成功、Loading、Empty、Error、Viewer 权限、长中文文字和缺失指标。
 
-## 5. API Mock
+## 5. API Mock 目标
 
 MSW Handler 以 OpenAPI DTO 为基础，集中放在：
 
@@ -92,9 +114,9 @@ CI 获取后端 `openapi.json`：
 4. 验证稳定错误码。
 5. 验证状态机 Enum。
 
-后端接口尚未实现时，前端 Feature 使用契约 Mock，但页面必须清楚标记开发状态，不能连接虚假生产数据。
+`demo` 工作区使用 OpenAPI 类型约束的 Fixture；真实工作区直接调用后端。演示数据必须有明显 `DEMO` 标识，不能连接或冒充生产数据。
 
-## 7. E2E
+## 7. E2E 目标场景
 
 ### P0 必测流程
 
@@ -130,6 +152,18 @@ CI 获取后端 `openapi.json`：
 6. 生成发布包。
 7. 标记已发布。
 8. 完成 24 小时复盘。
+
+当前 9 项路由测试验证这些页面存在且不再返回占位内容，但没有替代真实浏览器、真实后端和真实对象存储 E2E。
+
+### P3 必测流程
+
+1. Command Palette 跨实体关键词搜索并打开结果。
+2. Viewer 不显示写命令。
+3. 保存、应用个人视图和团队共享视图。
+4. 批量选择选题并进行版本化状态更新。
+5. 使用 `G → T/O/P/S/R` 完成键盘跳转。
+6. 创建运营实验并冻结假设、主指标和版本。
+7. 移动端完成发布计划审核、发布登记和复盘录入。
 
 ## 8. 可访问性测试
 
@@ -222,6 +256,12 @@ Browser
 
 后端 CORS 只允许明确前端 Origin。
 
+当前前端已部署到私有 Sites：
+
+[https://xuzhang-social-ops.guoxinyi0712.chatgpt.site](https://xuzhang-social-ops.guoxinyi0712.chatgpt.site)
+
+当前部署默认使用 `demo` 工作区。它证明已验证的前端 Artifact 可以部署，不证明托管后端、生产 OIDC 或真实 Provider 已完成联调。
+
 部署要求：
 
 - Preview 环境连接 Staging 后端。
@@ -253,7 +293,7 @@ Production：
 5. 部署 Production。
 6. 检查错误率和 API 版本。
 
-## 14. Feature Flag
+## 14. Feature Flag 目标
 
 后端尚未实现或高风险功能使用明确 Feature Flag：
 
@@ -270,6 +310,8 @@ Production：
 - 不在浏览器中放 Secret。
 - 关闭功能时路由返回明确的不可用页面。
 - 不用 CSS 隐藏代替权限和 Feature Flag。
+
+当前前端尚未建立完整 Feature Flag 服务。已采用的边界是：只有当前 OpenAPI 已实现的真实接口进入真实工作区，尚无后端契约的语义搜索和独立通知投递不伪装成已启用。
 
 ## 15. P0 验收
 
@@ -330,3 +372,17 @@ Production：
 - 人工发布后可记录链接和时间。
 - 曝光、互动和转化在复盘中分开展示。
 
+当前上述前端交互和后端契约接入已经实现；真实对象存储、真实平台发布和托管后端 E2E 仍未验收。
+
+## 18. P3 验收
+
+- Command Palette 能搜索灵感、模式、选题和内容项目。
+- 搜索文案明确当前是关键词匹配，不冒充语义搜索。
+- 选题支持选择后批量进入生产、拒绝或归档。
+- 选题、项目、排期和复盘支持保存筛选视图。
+- 键盘跳转不劫持输入框和文本域。
+- 运营实验保留假设、主指标、版本组和定义版本。
+- 页面不在没有通知后端的情况下显示“提醒已发送”。
+- 移动端保留查看、审核、发布登记和复盘录入入口。
+
+当前前端契约实现已覆盖以上项目；向量语义搜索和独立通知投递不在已完成范围。

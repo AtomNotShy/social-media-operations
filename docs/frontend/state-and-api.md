@@ -1,5 +1,7 @@
 # 前端状态管理与 API 集成
 
+本文档中的“要求”包含目标设计。当前落地差异以[前端实现状态](./implementation-status.md)为准。
+
 ## 1. 数据边界
 
 ```mermaid
@@ -54,7 +56,7 @@ src/features/*/api.ts
 
 ## 3. API Core
 
-统一负责：
+目标统一负责：
 
 - `API_BASE_URL`。
 - Bearer Token。
@@ -68,6 +70,16 @@ src/features/*/api.ts
 - 网络错误标准化。
 
 不负责 TikHub 重试、业务任务重试、爆款评分、预算判断或后端状态机。
+
+当前 `src/api/client.ts` 已实现：
+
+- API Base URL。
+- 内存访问令牌。
+- `X-Workspace-Id`。
+- 每次请求的 `X-Request-Id`。
+- Problem Details 到 `AppError` 的统一转换。
+
+OIDC 刷新、统一超时/取消和通用 Idempotency Key 注入尚未完成。开发默认令牌只用于本地和演示契约，不能视为生产身份方案。
 
 ## 4. 身份
 
@@ -89,6 +101,8 @@ Bearer dev:<subject>
 ```
 
 开发 Token 只能在 Local/Test 环境出现，生产构建不得提供该入口。
+
+当前生产 OIDC 尚未完成联调；私有演示部署默认进入 `demo` 工作区，不以开发令牌访问生产业务数据。
 
 ## 5. 工作区
 
@@ -140,6 +154,16 @@ export const queryKeys = {
       ["workspaces", workspaceId, "jobs"] as const,
     detail: (workspaceId: string, jobId: string) =>
       ["workspaces", workspaceId, "jobs", jobId] as const,
+  },
+  production: {
+    channels: (workspaceId: string) =>
+      ["workspaces", workspaceId, "owned-channels"] as const,
+    topics: (workspaceId: string, status?: string) =>
+      ["workspaces", workspaceId, "topics", status] as const,
+    project: (workspaceId: string, projectId: string) =>
+      ["workspaces", workspaceId, "content-projects", projectId] as const,
+    plans: (workspaceId: string, status?: string) =>
+      ["workspaces", workspaceId, "publish-plans", status] as const,
   },
 }
 ```
@@ -316,6 +340,8 @@ UI Control
 - 退出登录时清理草稿。
 - 草稿不保存 Access Token 或第三方原始响应。
 
+当前脚本冲突会保留组件内草稿并提供复制；跨路由离开确认和持久化本地草稿仍是后续增强项。
+
 ## 15. 版本冲突
 
 后端返回 `VERSION_CONFLICT` 时：
@@ -336,11 +362,11 @@ sequenceDiagram
     participant S3 as Object Storage
 
     FE->>API: POST /assets/upload-intents
-    API-->>FE: presigned_url + asset_id
+    API-->>FE: upload_url + intent_id + upload_token + required_headers
     FE->>S3: PUT file
     S3-->>FE: success
     FE->>API: POST /assets/complete
-    API-->>FE: asset processing job/status
+    API-->>FE: verified asset
 ```
 
 要求：
@@ -350,6 +376,8 @@ sequenceDiagram
 - 可取消上传。
 - 上传失败允许重试，不重复创建多个业务素材。
 - 大文件不经过 Next.js Route Handler。
+
+当前已实现文件类型/大小元数据、SHA-256、版权说明、对象存储直传和 complete；真实进度条、取消和重复上传恢复尚未实现。
 
 ## 17. 错误映射
 
@@ -425,4 +453,3 @@ social-ops:{user_id}:{workspace_id}:workbench
 - OpenAPI Client 版本。
 
 不上传 Token、TikHub Key、完整脚本、逐字稿、用户文件或 Provider 原始响应。
-

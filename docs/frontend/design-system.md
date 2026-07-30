@@ -1,5 +1,7 @@
 # 前端设计系统
 
+本文档保留完整设计目标。当前共享组件和验收状态以[前端实现状态](./implementation-status.md)为准。
+
 ## 1. 视觉方向
 
 工作台采用安静、克制、信息密度适中的桌面工具风格：
@@ -287,13 +289,15 @@ Grade / Category / AI Status
 
 ## 12. 明暗模式
 
-P0/P1 只验收浅色模式。Token 必须语义化，为后续暗色模式保留能力，但不为了“支持”暗色模式提交未经完整 QA 的简单反色版本。
+当前 P0–P3 只验收浅色模式。Token 必须语义化，为后续暗色模式保留能力，但不为了“支持”暗色模式提交未经完整 QA 的简单反色版本。
 
 P3 若启用暗色模式：
 
 - 使用 `.dark` 或等价应用级模式。
 - 所有 Grade、Chart 和媒体遮罩重新检查对比度。
 - 用户选择优先，其次系统偏好。
+
+当前 P3 未启用暗色模式。
 
 ## 13. 可访问性
 
@@ -327,6 +331,8 @@ P3 若启用暗色模式：
 
 ## 15. 组件验收
 
+当前已落地的共享基础包括 `PageHeader`、`StatusBadge`、`EmptyState`、`ErrorState`、Workbench Shell，以及生产模块的 Dialog、Metric、InlineError、表单样式和 `SavedViewPicker`。本节其余组件状态是后续组件库验收目标。
+
 每个共享组件至少有：
 
 - Default。
@@ -339,4 +345,3 @@ P3 若启用暗色模式：
 - Viewer Permission。
 - Compact Width。
 - Reduced Motion。
-

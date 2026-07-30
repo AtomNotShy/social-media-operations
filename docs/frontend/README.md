@@ -1,7 +1,11 @@
 # 社媒运营工作台：前端架构
 
-状态：Draft v0.1  
-适用阶段：后端 P0 已启动，前端从 P0 Shell 和对标账号页面开始  
+状态：Implemented v1.0
+
+适用阶段：前端 P0–P3 契约主链已实现，外部集成与生产验收继续进行
+
+实现证据：[前端实现状态与证据边界](./implementation-status.md)
+
 后端契约：[后端 API 契约](../backend/api-contract.md)
 
 ## 1. 目标
@@ -91,9 +95,10 @@ flowchart LR
 - 转写。
 - L1/L2 分析。
 - AI 脚本生成。
-- 发布包生成。
 
 创建任务后立即展示 Job，并由任务中心追踪。
+
+发布包由已审核计划、最新脚本和素材同步组装；返回发布包不等于平台发布成功。
 
 ## 4. 技术栈
 
@@ -103,13 +108,13 @@ flowchart LR
 | UI | React 19 + TypeScript strict | 强类型组件和交互 |
 | Styling | Tailwind CSS v4 | 使用 CSS-first `@theme` 管理 Design Tokens |
 | Server State | TanStack Query v5 | 缓存、Mutation、失效和异步任务轮询 |
-| Forms | React Hook Form + Schema 校验 | 统一表单状态和错误展示 |
+| Forms | React 局部状态 + OpenAPI DTO | 当前表单状态和后端最终校验 |
 | API Client | OpenAPI 生成 | 与后端 DTO 和错误码同步 |
 | UI Store | 小型 Zustand Store | 仅保存工作台标签和界面偏好 |
-| Table | Headless Table | 大列表的排序、选择和列配置 |
-| Unit Tests | Vitest + Testing Library | 组件、Hook 和纯函数 |
-| E2E | Playwright | 核心业务流程 |
-| API Mock | MSW | 基于契约的本地开发与错误场景 |
+| Tables/Cards | 原生 React 组件 | 当前列表、选择和响应式卡片 |
+| Unit Tests | Vitest | 权限、错误、Query Key、格式化和展示逻辑 |
+| Route Tests | Node Test + vinext Worker | 服务端渲染、路由存在性和占位回归 |
+| Demo Fixtures | 类型化 Fixture | 仅用于 `demo` 工作区，不冒充生产数据 |
 
 Next.js App Router 默认使用 Server Components；交互、浏览器 API、TanStack Query Provider 和工作台 Store 放在明确的 Client Component 边界内。工作台页面高度交互且使用浏览器中的访问令牌，因此业务列表主要由 Client Component 使用生成 Client 读取，布局和静态壳层继续使用 Server Component。
 
@@ -198,48 +203,41 @@ frontend/
 ├── next.config.ts
 ├── tsconfig.json
 ├── public/
+├── app/
+│   ├── layout.tsx
+│   ├── providers.tsx
+│   ├── login/
+│   ├── workspaces/new/
+│   └── w/[workspace_id]/
+│       ├── layout.tsx
+│       ├── today/
+│       ├── channels/
+│       ├── tracked-profiles/
+│       ├── inspirations/
+│       ├── discover/
+│       ├── topics/
+│       ├── content-projects/
+│       ├── schedule/
+│       ├── reviews/
+│       ├── experiments/
+│       ├── patterns/
+│       ├── assets/
+│       ├── jobs/
+│       ├── usage/
+│       └── settings/
 ├── src/
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── providers.tsx
-│   │   ├── (auth)/
-│   │   │   └── login/
-│   │   └── (workbench)/
-│   │       └── w/
-│   │           └── [workspace_id]/
-│   │               ├── layout.tsx
-│   │               ├── today/
-│   │               ├── channels/
-│   │               ├── tracked-profiles/
-│   │               ├── inspirations/
-│   │               ├── topics/
-│   │               ├── content-projects/
-│   │               ├── schedule/
-│   │               ├── reviews/
-│   │               ├── patterns/
-│   │               ├── assets/
-│   │               ├── jobs/
-│   │               └── settings/
 │   ├── features/
-│   │   ├── auth/
-│   │   ├── workspaces/
-│   │   ├── channels/
-│   │   ├── tracked-profiles/
+│   │   ├── identity/
+│   │   ├── discovery/
 │   │   ├── inspirations/
-│   │   ├── topics/
-│   │   ├── content-projects/
-│   │   ├── scripts/
-│   │   ├── assets/
-│   │   ├── schedule/
-│   │   ├── reviews/
 │   │   ├── jobs/
+│   │   ├── patterns/
+│   │   ├── production/
+│   │   ├── tracked-profiles/
 │   │   └── usage/
 │   ├── components/
 │   │   ├── ui/
-│   │   ├── workbench/
-│   │   ├── data-display/
-│   │   ├── feedback/
-│   │   └── forms/
+│   │   └── workbench/
 │   ├── api/
 │   │   ├── generated/
 │   │   ├── client.ts
@@ -247,18 +245,12 @@ frontend/
 │   │   └── query-keys.ts
 │   ├── stores/
 │   │   └── workbench-store.ts
-│   ├── hooks/
 │   ├── lib/
-│   ├── styles/
-│   │   └── globals.css
 │   └── test/
-│       ├── fixtures/
-│       ├── handlers/
-│       └── setup.ts
+│       └── fixtures.ts
 ├── tests/
-│   └── e2e/
-└── scripts/
-    └── generate-api-client.ts
+│   └── rendered-html.test.mjs
+└── openapi.json
 ```
 
 路由目录只负责组合页面；业务逻辑和 Query Hook 放在 `features/`。
@@ -276,28 +268,7 @@ frontend/
 - 统一 Loading、Empty、Error、Forbidden。
 - OpenAPI Client 和 Query Key 基础设施。
 
-P0 只使用后端当前已实现的接口。
-
-当前可直接联调的后端范围：
-
-```text
-GET  /api/v1/health/live
-GET  /api/v1/health/ready
-GET  /api/v1/me
-GET  /api/v1/workspaces
-POST /api/v1/workspaces
-GET/POST/PATCH /api/v1/tracked-profiles
-GET  /api/v1/tracked-profiles/{id}
-POST /api/v1/tracked-profiles/{id}/sync
-POST /api/v1/tracked-profiles/{id}/pause
-POST /api/v1/tracked-profiles/{id}/resume
-GET  /api/v1/jobs
-GET  /api/v1/jobs/{id}
-POST /api/v1/jobs/{id}/retry
-POST /api/v1/jobs/{id}/cancel
-```
-
-灵感库、AI、转写、内容生产和发布页面先按本文档保留目标契约，只有对应后端接口落地并通过契约测试后才开启真实入口。
+状态：已实现。
 
 ### Frontend P1：灵感与分析
 
@@ -308,6 +279,8 @@ POST /api/v1/jobs/{id}/cancel
 - L1/L2。
 - 评论和逐字稿。
 - 可复用模式。
+
+状态：已实现。
 
 ### Frontend P2：内容生产
 
@@ -320,15 +293,18 @@ POST /api/v1/jobs/{id}/cancel
 - 发布包。
 - 复盘。
 
+状态：已实现。
+
 ### Frontend P3：效率增强
 
-- Command Palette 高级实体搜索和批量命令。
-- 批量操作。
-- 高级键盘快捷键。
-- 保存筛选视图。
-- 语义搜索。
-- 团队协作提醒。
-- 移动端快速审批和记录数据。
+- Command Palette 跨实体关键词搜索和页面/创建命令。
+- 选题批量操作。
+- `G → T/O/P/S/R` 键盘跳转。
+- 创建个人保存视图并读取团队共享视图。
+- 运营实验、项目负责人和分组协作信息。
+- 移动端查看、快速审核和发布结果录入。
+
+状态：当前后端契约支持的部分已实现。统一搜索是关键词匹配，不是向量语义搜索；独立通知投递尚无后端契约。详见[实现状态](./implementation-status.md)。
 
 ## 10. 关联文档
 
@@ -337,6 +313,7 @@ POST /api/v1/jobs/{id}/cancel
 - [设计系统](./design-system.md)
 - [状态管理与 API 集成](./state-and-api.md)
 - [测试、部署与验收](./testing-and-delivery.md)
+- [实现状态与证据边界](./implementation-status.md)
 - [后端 API 契约](../backend/api-contract.md)
 - [Next.js 文档](https://nextjs.org/docs)
 - [TanStack Query 文档](https://tanstack.com/query/latest/docs/framework/react/overview)
