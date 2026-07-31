@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 describe("development access-token session", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "local");
     vi.resetModules();
   });
 
@@ -37,7 +38,7 @@ describe("development access-token session", () => {
   });
 
   it("does not create a development identity in production", async () => {
-    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
     vi.resetModules();
 
     const productionClient = await import("./client");

@@ -36,6 +36,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setAccessToken } from "@/src/api/client";
+import { localDevelopmentEnabled } from "@/src/config/runtime";
 import {
   useMe,
   useWorkspaces,
@@ -50,8 +51,6 @@ type NavItem = {
   icon: LucideIcon;
   badge?: string;
 };
-
-const developmentControlsEnabled = process.env.NODE_ENV !== "production";
 
 const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
@@ -324,7 +323,7 @@ export function WorkbenchShell({
               ))
             )}
             <div className="my-1 h-px bg-border" />
-            {workspaceId !== "demo" || developmentControlsEnabled ? (
+            {workspaceId !== "demo" || localDevelopmentEnabled ? (
               <button
                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
                 onClick={() => router.push("/workspaces/new")}
@@ -334,7 +333,7 @@ export function WorkbenchShell({
                 创建工作区
               </button>
             ) : null}
-            {developmentControlsEnabled ? (
+            {localDevelopmentEnabled ? (
               <button
                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
                 onClick={() => router.push("/login")}
@@ -580,7 +579,7 @@ export function WorkbenchShell({
                         工作区设置
                       </button>
                       {workspaceId === "demo" &&
-                      developmentControlsEnabled ? (
+                      localDevelopmentEnabled ? (
                         <button
                           className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
                           onClick={() => {

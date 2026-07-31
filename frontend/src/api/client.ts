@@ -1,14 +1,14 @@
 import createClient from "openapi-fetch";
 import type { paths } from "@/src/api/generated/schema";
 import { toAppError } from "@/src/api/errors";
+import { localDevelopmentEnabled } from "@/src/config/runtime";
 
-const developmentBuild = process.env.NODE_ENV !== "production";
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
-  (developmentBuild ? "http://127.0.0.1:8000" : "");
+  (localDevelopmentEnabled ? "http://127.0.0.1:8000" : "");
 
 const accessTokenStorageKey = "social-ops.dev-access-token.v1";
-const defaultDevelopmentAccessToken = developmentBuild
+const defaultDevelopmentAccessToken = localDevelopmentEnabled
   ? "dev:local-owner"
   : null;
 let accessToken: string | null | undefined;
