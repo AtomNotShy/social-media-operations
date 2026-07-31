@@ -38,7 +38,7 @@ export function AuthShell({
         </div>
 
         <p className="text-xs leading-5 text-white/40">
-          凭据只用于连接你的后端服务，不会发送给第三方数据供应商。
+          身份与工作区数据由受控服务处理，浏览器不会读取第三方供应商密钥。
         </p>
       </section>
       <section className="flex items-center justify-center bg-canvas px-5 py-12 sm:px-10">

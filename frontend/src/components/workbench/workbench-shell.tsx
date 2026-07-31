@@ -48,6 +48,8 @@ type NavItem = {
   badge?: string;
 };
 
+const developmentControlsEnabled = process.env.NODE_ENV !== "production";
+
 const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "工作区",
@@ -257,22 +259,26 @@ export function WorkbenchShell({
               ))
             )}
             <div className="my-1 h-px bg-border" />
-            <button
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
-              onClick={() => router.push("/workspaces/new")}
-              type="button"
-            >
-              <PlusCircle aria-hidden="true" size={14} />
-              创建工作区
-            </button>
-            <button
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
-              onClick={() => router.push("/login")}
-              type="button"
-            >
-              <LogIn aria-hidden="true" size={14} />
-              连接开发后端
-            </button>
+            {workspaceId !== "demo" || developmentControlsEnabled ? (
+              <button
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
+                onClick={() => router.push("/workspaces/new")}
+                type="button"
+              >
+                <PlusCircle aria-hidden="true" size={14} />
+                创建工作区
+              </button>
+            ) : null}
+            {developmentControlsEnabled ? (
+              <button
+                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
+                onClick={() => router.push("/login")}
+                type="button"
+              >
+                <LogIn aria-hidden="true" size={14} />
+                连接开发后端
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -474,7 +480,7 @@ export function WorkbenchShell({
           {workspaceId === "demo" ? (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-primary-100 bg-primary-50 px-3.5 py-2 text-xs text-primary-700">
               <span>
-                当前展示契约演示数据；连接本地后端后，使用真实工作区 URL 即可读取实时数据。
+                当前展示契约演示数据；页面操作只影响演示状态，不会写入真实工作区。
               </span>
               <span className="hidden rounded-full bg-white/70 px-2 py-1 font-semibold sm:inline">
                 DEMO

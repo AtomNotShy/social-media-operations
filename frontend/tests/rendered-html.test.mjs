@@ -44,17 +44,24 @@ test("server-renders the tracked profiles workbench", async () => {
   assert.match(html, /对标账号/);
   assert.match(html, /演示工作区/);
   assert.match(html, /搜索或跳转/);
+  assert.doesNotMatch(
+    html,
+    /连接开发后端|连接真实后端|连接本地后端/,
+  );
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
-test("server-renders the development login and workspace creation routes", async () => {
+test("keeps development login out of the production build", async () => {
   const [login, workspace] = await Promise.all([
     render("/login"),
     render("/workspaces/new"),
   ]);
-  assert.equal(login.status, 200);
+  assert.equal(login.status, 307);
+  assert.equal(
+    login.headers.get("location"),
+    "http://localhost/w/demo/today",
+  );
   assert.equal(workspace.status, 200);
-  assert.match(await login.text(), /连接开发后端/);
   assert.match(await workspace.text(), /创建第一个工作区/);
 });
 

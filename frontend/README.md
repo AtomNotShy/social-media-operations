@@ -21,7 +21,8 @@ npm run dev
 http://localhost:3000/w/demo/today
 ```
 
-`demo` 工作区展示明确标记的契约演示数据。连接本地后端后，将 URL 中的
+`demo` 工作区展示明确标记的契约演示数据。本地开发构建可以通过
+`/login` 选择调试身份；生产构建会关闭该入口。连接本地后端后，将 URL 中的
 `demo` 替换为真实工作区 UUID。非 `demo` 工作区通过版本化 REST API 读取和
 修改后端数据。
 

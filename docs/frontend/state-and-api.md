@@ -79,7 +79,7 @@ src/features/*/api.ts
 - 每次请求的 `X-Request-Id`。
 - Problem Details 到 `AppError` 的统一转换。
 
-OIDC 刷新、统一超时/取消和通用 Idempotency Key 注入尚未完成。开发默认令牌只用于本地和演示契约，不能视为生产身份方案。
+OIDC 刷新、统一超时/取消和通用 Idempotency Key 注入尚未完成。开发默认令牌只在非生产构建中启用，不能视为生产身份方案；生产构建不会提供开发登录入口，也不会默认连接访问者本机后端。
 
 ## 4. 身份
 

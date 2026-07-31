@@ -49,7 +49,7 @@ export function DevLoginPage() {
 
   return (
     <AuthShell
-      description="使用后端 development 模式建立本地身份，读取真实工作区、成员角色和业务数据。生产环境将替换为 OIDC Authorization Code + PKCE。"
+      description="仅供本地开发：使用后端 development 模式建立调试身份，读取本机工作区、成员角色和业务数据。"
       eyebrow="Local development"
       title="连接开发后端"
     >
@@ -57,7 +57,7 @@ export function DevLoginPage() {
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3.5 text-amber-800">
           <FlaskConical aria-hidden="true" className="mt-0.5 shrink-0" size={17} />
           <p className="text-xs leading-5">
-            此入口只适用于本地开发环境，生产构建不会在浏览器保存开发令牌。
+            此入口只在本地开发构建中开放，线上访问会直接返回演示工作台。
           </p>
         </div>
         <form onSubmit={connect}>
