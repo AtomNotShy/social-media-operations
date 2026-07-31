@@ -29,6 +29,61 @@ AI Provider Key 不写入前端或项目 JSON，通过 Owner 鉴权的 `/api/v1/
 
 ## 本地启动
 
+后端支持两种本地运行方式：
+
+- 完整 Docker：PostgreSQL、数据库迁移、API、Worker 和 Scheduler 全部运行在容器中，
+  最接近部署环境。
+- 混合开发：只有 PostgreSQL 运行在 Docker 中，Python 进程运行在宿主机，适合使用
+  `uvicorn --reload` 调试代码。
+
+### 方式一：完整 Docker
+
+以下命令均在 `backend` 目录执行：
+
+```bash
+cp .env.example .env
+# 编辑 .env，至少填写 TIKHUB_API_KEY；不用外部采集时可先保持为空，
+# 但 Worker 会拒绝启动，API、Scheduler 和 PostgreSQL 仍可单独运行。
+
+docker compose --profile app up -d --build
+```
+
+`migrate` 是一次性容器：PostgreSQL 健康后先执行 `alembic upgrade head`，迁移成功后
+才启动 API、Worker 和 Scheduler。查看状态：
+
+```bash
+docker compose ps -a
+curl --fail http://127.0.0.1:8000/health/live
+curl --fail http://127.0.0.1:8000/health/ready
+```
+
+查看日志：
+
+```bash
+docker compose logs -f api worker scheduler
+```
+
+如果暂时不运行需要 TikHub Key 的 Worker，只启动数据库、迁移和 API：
+
+```bash
+docker compose --profile app up -d --build postgres migrate api
+```
+
+停止容器但保留 PostgreSQL 数据和服务端加密凭据：
+
+```bash
+docker compose --profile app down
+```
+
+只有明确需要清空全部本地数据时才使用下面的命令；它会删除 `postgres-data` 和
+`credentials-data` Volume，无法通过普通重启恢复：
+
+```bash
+docker compose --profile app down --volumes
+```
+
+### 方式二：混合开发
+
 ```bash
 cp .env.example .env
 docker compose up -d postgres

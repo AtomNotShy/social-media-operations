@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   BookOpenText,
@@ -19,6 +20,7 @@ import {
   Image,
   Lightbulb,
   LogIn,
+  LogOut,
   Menu,
   PlusCircle,
   Radar,
@@ -32,7 +34,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { setAccessToken } from "@/src/api/client";
 import {
   useMe,
   useWorkspaces,
@@ -106,10 +109,13 @@ export function WorkbenchShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const collapsed = useWorkbenchStore((state) => state.collapsed);
   const toggleCollapsed = useWorkbenchStore((state) => state.toggleCollapsed);
   const tabs = useWorkbenchStore((state) => state.tabs);
@@ -130,10 +136,25 @@ export function WorkbenchShell({
   const currentWorkspace = workspaces.data?.find(
     (workspace) => workspace.id === workspaceId,
   );
+  const workspaceAccessPending =
+    workspaceId !== "demo" &&
+    (workspaces.isPending ||
+      (workspaces.isSuccess && currentWorkspace === undefined));
   const workspaceName =
     workspaceId === "demo"
       ? "增长实验室"
       : (currentWorkspace?.name ?? "当前工作区");
+  const userDisplayName =
+    workspaceId === "demo"
+      ? "演示用户"
+      : (identity.data?.user.display_name ?? "当前用户");
+  const userDescription =
+    workspaceId === "demo"
+      ? "当前使用契约演示数据"
+      : (identity.data?.user.email ??
+        identity.data?.user.external_subject ??
+        "本地开发身份");
+  const avatarInitial = Array.from(userDisplayName.trim())[0] ?? "用";
   const workspaceTabs = useMemo(
     () => tabs.filter((tab) => tab.workspaceId === workspaceId),
     [tabs, workspaceId],
@@ -150,13 +171,57 @@ export function WorkbenchShell({
   }, [currentSection, currentTitle, pathname, visit, workspaceId]);
 
   useEffect(() => {
+    if (
+      workspaceId === "demo" ||
+      workspaces.isPending ||
+      workspaces.isError ||
+      !workspaces.data ||
+      currentWorkspace
+    ) {
+      return;
+    }
+    const fallbackWorkspace = workspaces.data[0];
+    router.replace(
+      fallbackWorkspace
+        ? `/w/${fallbackWorkspace.id}/today`
+        : "/workspaces/new",
+    );
+  }, [
+    currentWorkspace,
+    router,
+    workspaceId,
+    workspaces.data,
+    workspaces.isError,
+    workspaces.isPending,
+  ]);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () =>
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [userMenuOpen]);
+
+  useEffect(() => {
     let prefix = "";
     const handler = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setUserMenuOpen(false);
         setCommandOpen((open) => !open);
       }
-      if (event.key === "Escape") setCommandOpen(false);
+      if (event.key === "Escape") {
+        setCommandOpen(false);
+        setUserMenuOpen(false);
+      }
       const target = event.target as HTMLElement | null;
       if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
       const key = event.key.toLowerCase();
@@ -449,7 +514,10 @@ export function WorkbenchShell({
               <button
                 aria-label="打开命令面板"
                 className="hidden items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted shadow-panel sm:flex"
-                onClick={() => setCommandOpen(true)}
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  setCommandOpen(true);
+                }}
                 type="button"
               >
                 <Search aria-hidden="true" size={14} />
@@ -465,13 +533,86 @@ export function WorkbenchShell({
               >
                 <Bell aria-hidden="true" size={18} />
               </Link>
-              <button
-                aria-label="用户菜单"
-                className="ml-1 grid size-8 place-items-center rounded-full bg-text text-xs font-semibold text-white"
-                type="button"
-              >
-                {identity.data?.user.display_name.slice(0, 1) ?? "林"}
-              </button>
+              <div className="relative ml-1" ref={userMenuRef}>
+                <button
+                  aria-expanded={userMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="用户菜单"
+                  className={`grid size-8 place-items-center rounded-full bg-text text-xs font-semibold text-white outline-none transition-shadow hover:ring-4 hover:ring-primary-100 focus-visible:ring-4 focus-visible:ring-primary-200 ${
+                    userMenuOpen ? "ring-4 ring-primary-100" : ""
+                  }`}
+                  onClick={() => setUserMenuOpen((open) => !open)}
+                  type="button"
+                >
+                  {avatarInitial}
+                </button>
+
+                {userMenuOpen ? (
+                  <div
+                    aria-label="账户菜单"
+                    className="absolute top-11 right-0 z-50 w-64 overflow-hidden rounded-xl border border-border bg-surface shadow-popover"
+                    role="menu"
+                  >
+                    <div className="border-b border-border px-4 py-3">
+                      <p className="truncate text-sm font-semibold">
+                        {userDisplayName}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-text-muted">
+                        {userDescription}
+                      </p>
+                      <span className="mt-2 inline-flex rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-700">
+                        {permission.role
+                          ? roleLabel(permission.role)
+                          : "正在验证权限"}
+                      </span>
+                    </div>
+                    <div className="p-1.5">
+                      <button
+                        className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          router.push(`/w/${workspaceId}/settings`);
+                        }}
+                        role="menuitem"
+                        type="button"
+                      >
+                        <Settings aria-hidden="true" size={15} />
+                        工作区设置
+                      </button>
+                      {workspaceId === "demo" &&
+                      developmentControlsEnabled ? (
+                        <button
+                          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-subtle hover:text-text"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            router.push("/login");
+                          }}
+                          role="menuitem"
+                          type="button"
+                        >
+                          <LogIn aria-hidden="true" size={15} />
+                          连接真实后端
+                        </button>
+                      ) : workspaceId !== "demo" ? (
+                        <button
+                          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-danger hover:bg-red-50"
+                          onClick={() => {
+                            setAccessToken(null);
+                            queryClient.clear();
+                            setUserMenuOpen(false);
+                            router.push("/login");
+                          }}
+                          role="menuitem"
+                          type="button"
+                        >
+                          <LogOut aria-hidden="true" size={15} />
+                          退出当前身份
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </header>
@@ -487,7 +628,16 @@ export function WorkbenchShell({
               </span>
             </div>
           ) : null}
-          {children}
+          {workspaceAccessPending ? (
+            <div
+              aria-live="polite"
+              className="flex min-h-64 items-center justify-center text-sm text-text-muted"
+            >
+              正在验证工作区权限…
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
 

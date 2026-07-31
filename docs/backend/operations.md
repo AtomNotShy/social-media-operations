@@ -24,6 +24,51 @@ redis      可选；多 Worker 时用于分布式限流和短缓存
 
 本地可使用 Docker Compose；生产环境优先使用托管 PostgreSQL 和对象存储。
 
+### 2.1 本地完整 Docker 运行
+
+仓库的 `backend/docker-compose.yml` 包含：
+
+```text
+postgres   PostgreSQL 16 与持久化 Volume
+migrate    一次性 Alembic 迁移
+api        FastAPI，宿主机端口 8000
+worker     后台任务消费者
+scheduler  到期任务调度器
+```
+
+启动完整后端：
+
+```bash
+cd backend
+cp .env.example .env
+# 编辑 .env 后启动
+docker compose --profile app up -d --build
+docker compose ps -a
+```
+
+启动顺序由 Compose 健康依赖保证：`postgres healthy → migrate completed → API/Worker/
+Scheduler`。`migrate` 正常显示为退出码 0，不应被当成故障。
+
+验证和排障：
+
+```bash
+curl --fail http://127.0.0.1:8000/health/live
+curl --fail http://127.0.0.1:8000/health/ready
+docker compose logs --tail=200 api worker scheduler migrate
+```
+
+停止时默认保留数据库与凭据 Volume：
+
+```bash
+docker compose --profile app down
+```
+
+`docker compose --profile app down --volumes` 会不可逆地清除本地 PostgreSQL 数据和
+容器内服务端凭据，仅允许在明确重置本地环境时使用。
+
+完整 Docker 模式用于本地集成验证，不等于生产部署。生产环境仍需托管 PostgreSQL、
+对象存储、Secret Store、TLS、告警投递、PITR 和独立的 API/Worker/Scheduler 发布。
+
 ## 3. 配置
 
 示例仅列变量名，不保存真实值：
