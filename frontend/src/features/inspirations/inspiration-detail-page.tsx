@@ -36,7 +36,10 @@ import {
   useCreateTopicFromInspiration,
   useUpdateInspiration,
 } from "@/src/features/inspirations/queries";
-import type { AnalysisRun } from "@/src/features/inspirations/types";
+import type {
+  AnalysisRun,
+  ContentMetricSnapshot,
+} from "@/src/features/inspirations/types";
 import { useCreatePatternsFromAnalysis } from "@/src/features/patterns/queries";
 import { formatRelativeTime, platformLabel } from "@/src/lib/format";
 
@@ -243,17 +246,12 @@ export function InspirationDetailPage({
             <p className="mt-5 whitespace-pre-line text-sm leading-7 text-text">
               {item.content.body_text || "当前内容源未提供可读取的正文。"}
             </p>
-            <div className="mt-5 grid gap-3 border-t border-border pt-5 text-xs sm:grid-cols-3">
-              <Fact label="详情状态" value={detailStatusLabel(item.content.detail_status)} />
-              <Fact
-                label="最新互动快照"
-                value={
-                  latestMetrics
-                    ? `浏览 ${formatMetric(latestMetrics.views)} · 赞 ${formatMetric(latestMetrics.likes)} · 评 ${formatMetric(latestMetrics.comments)} · 藏 ${formatMetric(latestMetrics.favorites)}`
-                    : "尚无快照"
-                }
-              />
-              <Fact label="最后看见" value={formatRelativeTime(item.content.last_seen_at)} />
+            <div className="mt-5 border-t border-border pt-5">
+              <LatestMetricSnapshot metrics={latestMetrics} />
+              <div className="mt-5 grid gap-3 text-xs sm:grid-cols-2">
+                <Fact label="详情状态" value={detailStatusLabel(item.content.detail_status)} />
+                <Fact label="最后看见" value={formatRelativeTime(item.content.last_seen_at)} />
+              </div>
             </div>
           </section>
 
@@ -768,6 +766,40 @@ function Fact({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-[11px] text-text-muted">{label}</p>
       <p className="mt-1 break-words text-sm font-medium">{value}</p>
+    </div>
+  );
+}
+
+function LatestMetricSnapshot({
+  metrics,
+}: {
+  metrics?: ContentMetricSnapshot;
+}) {
+  const items: Array<[string, number | null | undefined]> = metrics
+    ? [
+        ["浏览", metrics.views],
+        ["赞", metrics.likes],
+        ["评", metrics.comments],
+        ["藏", metrics.favorites],
+      ]
+    : [];
+
+  return (
+    <div aria-label="最新互动快照">
+      <p className="text-sm text-text-muted">最新互动快照</p>
+      {metrics ? (
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xl font-semibold tracking-tight text-text sm:text-2xl">
+          {items.map(([label, value], index) => (
+            <span className="inline-flex items-baseline gap-1" key={label}>
+              {index > 0 ? <span aria-hidden="true" className="mr-1 text-text-muted">·</span> : null}
+              <span>{label}</span>
+              <span className="tabular-nums">{formatMetric(value)}</span>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-1 text-sm text-text-muted">尚无快照</p>
+      )}
     </div>
   );
 }
