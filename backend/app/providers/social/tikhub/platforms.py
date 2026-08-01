@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.providers.social.tikhub.bilibili import BilibiliAdapter
-from app.providers.social.tikhub.douyin import DouyinAppV3Adapter
+from app.providers.social.tikhub.douyin import DouyinAppV3Adapter, TikTokAppV3Adapter
 from app.providers.social.tikhub.twitter import TwitterAdapter
 from app.providers.social.tikhub.xiaohongshu import XiaohongshuAppV2Adapter
 
@@ -23,6 +23,7 @@ class TikHubPlatformBinding:
         return {
             "xiaohongshu": {"user_id": external_id},
             "douyin": {"sec_user_id": external_id},
+            "tiktok": {"sec_user_id": external_id},
             "bilibili": {"user_id": external_id},
         }[self.platform]
 
@@ -39,7 +40,7 @@ class TikHubPlatformBinding:
             return params
         if self.platform == "xiaohongshu":
             return {"user_id": external_id, "cursor": cursor}
-        if self.platform == "douyin":
+        if self.platform in {"douyin", "tiktok"}:
             return {
                 "sec_user_id": external_id,
                 "max_cursor": int(cursor or 0),
@@ -58,7 +59,7 @@ class TikHubPlatformBinding:
             return {"tweet_id": external_id} if external_id else {"url": canonical_url}
         if self.platform == "xiaohongshu":
             return {"note_id": external_id} if external_id else {"share_text": canonical_url}
-        if self.platform == "douyin":
+        if self.platform in {"douyin", "tiktok"}:
             return {"aweme_id": external_id}
         return {"url": canonical_url}
 
@@ -79,7 +80,7 @@ class TikHubPlatformBinding:
                 "pageArea": "UNFOLDED",
                 "sort_strategy": sort_strategy,
             }
-        if self.platform == "douyin":
+        if self.platform in {"douyin", "tiktok"}:
             return {
                 "aweme_id": external_id,
                 "cursor": int(cursor or 0),
@@ -100,6 +101,15 @@ def _x_user_params(external_id: str) -> dict[str, Any]:
 
 
 PLATFORM_BINDINGS = {
+    "tiktok": TikHubPlatformBinding(
+        platform="tiktok",
+        series="app_v3",
+        profile_endpoint="tiktok.profile",
+        contents_endpoint="tiktok.profile_contents",
+        detail_endpoint="tiktok.content_detail",
+        comments_endpoint="tiktok.comments",
+        adapter=TikTokAppV3Adapter(),
+    ),
     "x": TikHubPlatformBinding(
         platform="x",
         series="web",

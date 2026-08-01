@@ -1,0 +1,95 @@
+{
+  "code": 200,
+  "request_id": "xhs-video-detail-real",
+  "message": "Request successful.",
+  "data": {
+    "code": 0,
+    "success": true,
+    "msg": "success",
+    "data": [
+      {
+        "id": "697c0eee000000000a03c308",
+        "type": "video",
+        "title": "68岁传奇大师和妻子造房隐居，美得像电影",
+        "desc": "68岁传奇大师和妻子造房隐居，美得像电影\n68岁的摄影师上田义彦与妻子桐岛加恋隐居在一个名叫“叶山”的海边小镇。夫妻俩花25年，修缮、改造了一座百年老宅，每个角落都美得像是电影中的场景，上田义彦的不少经典作品亦是在家中完成。“人们总会在迷茫的时候，迫切地寻找所谓‘正确的判断’，但我宁可相信直觉，用直觉去生活。生活也好，摄影也罢，我想一切终归都是那种‘感觉’，人之所以能获得幸福，关键大概就在这里。”我们来到叶山拜访上田义彦的家，记录了一家人平凡而温暖的一天。#隐居[话题]# #上田义彦[话题]# #老宅改造[话题]# #生活方式[话题]# #人物[话题]#",
+        "time": 1769737966,
+        "sticky": false,
+        "ip_location": "Guizhou",
+        "liked_count": 8874,
+        "comments_count": 194,
+        "collected_count": 4253,
+        "shared_count": 2830,
+        "view_count": 0,
+        "images_list": [
+          {
+            "fileid": "spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8",
+            "url_size_large": "",
+            "index": 0,
+            "scale_to_large": 0,
+            "longitude": 0,
+            "url": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/576/format/webp/q/87%7CimageMogr2/strip&redImage/frame/0&ap=1&sc=V_PRV&sign=2f63c42dc1cae5059edb048c0aa62d83&t=6a6d5ffd&src=A&origin=0",
+            "original": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/5000/h/5000/format/webp/q/90&ap=1&sc=V_ORG&sign=2f63c42dc1cae5059edb048c0aa62d83&t=6a6d5ffd&src=A&origin=0",
+            "width": 1516,
+            "latitude": 0,
+            "need_load_original_image": false,
+            "height": 2022,
+            "trace_id": "spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8"
+          }
+        ],
+        "user": {
+          "id": "5efc6e660000000001006da1",
+          "red_official_verified": false,
+          "fstatus": "none",
+          "userid": "5efc6e660000000001006da1",
+          "show_red_official_verify_icon": false,
+          "red_official_verify_type": 0,
+          "track_duration": 0,
+          "level": {
+            "image": ""
+          },
+          "image": "https://sns-avatar-qc.rednotecdn.com/avatar/5f852121e2dbee0001dbb521.jpg?imageView2/2/w/80/format/jpg",
+          "group_id": "5d0b475af5a2636ef12b14c1",
+          "followed": false,
+          "nickname": "一条",
+          "red_id": "332831015",
+          "name": "一条",
+          "preload_posted": false
+        },
+        "video_info_v2": {
+          "capa": {
+            "is_user_select": false,
+            "is_upload": false,
+            "frame_ts": 0,
+            "duration": 410
+          },
+          "image": {
+            "thumbnail": "https://sns-i11.rednotecdn.com/frame/110/0/01e97bf9bd1a62c70010000000019c0c9b1b5d_0.webp?imageView2/2/w/5000/h/5000/format/webp/q/90&ap=1&sc=V_ORG&sign=eade68e7526a646f1cb36153ef92db79&t=6a6d5ffd&src=A&origin=0",
+            "thumbnail_dim": "https://sns-i11.rednotecdn.com/frame/110/0/01e97bf9bd1a62c70010000000019c0c9b1b5d_0.webp?imageView2/2/w/720/h/720/format/webp&ap=1&sc=V_SPRT&sign=eade68e7526a646f1cb36153ef92db79&t=6a6d5ffd&src=A&origin=0",
+            "first_frame": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/576/format/webp/q/87%7CimageMogr2/strip&redImage/frame/0&ap=1&sc=V_PRV&sign=2f63c42dc1cae5059edb048c0aa62d83&t=6a6d5ffd&src=A&origin=0"
+          },
+          "media": {
+            "video_id": "137777576161206983",
+            "video": {
+              "duration": 411
+            },
+            "stream": {
+              "h264": [
+                {
+                  "master_url": "http://sns-v28.rednotecdn.com/stream/79/110/258/01e97bf9bd1a62c74f0370019c0c9b69aa_258.mp4",
+                  "duration": 410324,
+                  "height": 1280,
+                  "width": 720,
+                  "format": "mp4",
+                  "backup_urls": [
+                    "http://sns-v8.rednotecdn.com/stream/79/110/258/01e97bf9bd1a62c74f0370019c0c9b69aa_258.mp4",
+                    "http://sns-v10.rednotecdn.com/stream/79/110/258/01e97bf9bd1a62c74f0370019c0c9b69aa_258.mp4"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

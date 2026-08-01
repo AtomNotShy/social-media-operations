@@ -92,11 +92,11 @@ def test_profile_scan_persists_evidence_content_metrics_and_usage(
     with app.state.database.session_factory() as db:
         job = db.get(SyncJob, uuid.UUID(job_id))
         assert job.status == "succeeded"
-        assert job.result["contents_created"] == 1
+        assert job.result["contents_created"] == 3
         assert db.scalar(select(func.count()).select_from(ProviderFetch)) == 3
-        assert db.scalar(select(func.count()).select_from(ExternalContent)) == 1
-        assert db.scalar(select(func.count()).select_from(ContentMetricSnapshot)) == 1
-        assert db.scalar(select(func.count()).select_from(ContentScore)) == 1
+        assert db.scalar(select(func.count()).select_from(ExternalContent)) == 3
+        assert db.scalar(select(func.count()).select_from(ContentMetricSnapshot)) == 3
+        assert db.scalar(select(func.count()).select_from(ContentScore)) == 3
         request_count = db.scalar(select(func.sum(ProviderUsageDaily.request_count)))
         estimated_cost = db.scalar(select(func.sum(ProviderUsageDaily.estimated_cost_usd)))
         assert request_count == 3
@@ -112,14 +112,18 @@ def test_profile_scan_persists_evidence_content_metrics_and_usage(
         headers=headers,
     )
     assert contents.status_code == 200
-    assert contents.json()["data"][0]["external_id"] == "note-fixture-001"
+    assert {item["external_id"] for item in contents.json()["data"]} == {
+        "68b39115000000001c037dad",
+        "63c8b257000000001f00d554",
+        "6a6b4b0b000000002c004cb2",
+    }
 
     metrics = client.get(
         f"/api/v1/tracked-profiles/{profile['id']}/metrics",
         headers=headers,
     )
     assert metrics.status_code == 200
-    assert metrics.json()["data"][0]["followers"] == 12000
+    assert metrics.json()["data"][0]["followers"] == 189402
 
     sync_runs = client.get(
         f"/api/v1/tracked-profiles/{profile['id']}/sync-runs",

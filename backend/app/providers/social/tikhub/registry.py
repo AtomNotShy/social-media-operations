@@ -15,6 +15,38 @@ class TikHubEndpoint:
 
 
 ENDPOINTS: dict[str, TikHubEndpoint] = {
+    "tiktok.profile": TikHubEndpoint(
+        key="tiktok.profile",
+        platform="tiktok",
+        path="/api/v1/tiktok/app/v3/handler_user_profile",
+        version="app_v3",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=24 * 60 * 60,
+    ),
+    "tiktok.profile_contents": TikHubEndpoint(
+        key="tiktok.profile_contents",
+        platform="tiktok",
+        path="/api/v1/tiktok/app/v3/fetch_user_post_videos",
+        version="app_v3",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=3 * 60 * 60,
+    ),
+    "tiktok.content_detail": TikHubEndpoint(
+        key="tiktok.content_detail",
+        platform="tiktok",
+        path="/api/v1/tiktok/app/v3/fetch_one_video",
+        version="app_v3",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=24 * 60 * 60,
+    ),
+    "tiktok.comments": TikHubEndpoint(
+        key="tiktok.comments",
+        platform="tiktok",
+        path="/api/v1/tiktok/app/v3/fetch_video_comments",
+        version="app_v3",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=24 * 60 * 60,
+    ),
     "x.profile": TikHubEndpoint(
         key="x.profile",
         platform="x",

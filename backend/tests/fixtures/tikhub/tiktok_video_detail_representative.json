@@ -1,0 +1,65 @@
+{
+  "code": 200,
+  "request_id": "tiktok-detail-real",
+  "message": "Request successful.",
+  "data": {
+    "aweme_detail": {
+      "aweme_id": "7350810998023949599",
+      "desc": "im so sick of being tired im so tired of being sick",
+      "create_time": 1711494099,
+      "author": {
+        "uid": "6617578271134646277",
+        "sec_uid": "MS4wLjABAAAAdsKhQYdpLrOx5hrYCM3O2FQK3Xhnncm0ZHzGROFGk43iPIEPqxyEOK_YWom9LoKn",
+        "unique_id": "jennmelon",
+        "nickname": "Jenn Melon",
+        "signature": "chicago ☆\njennm@sunandskyentertainment.com",
+        "follower_count": 0,
+        "following_count": 0
+      },
+      "statistics": {
+        "aweme_id": "7350810998023949599",
+        "collect_count": 211565,
+        "comment_count": 7829,
+        "digg_count": 2004082,
+        "download_count": 20349,
+        "forward_count": 0,
+        "lose_comment_count": 0,
+        "lose_count": 0,
+        "play_count": 12187417,
+        "repost_count": 0,
+        "share_count": 275192,
+        "whatsapp_share_count": 1422
+      },
+      "video": {
+        "duration": 5900,
+        "cover": {
+          "data_size": 0,
+          "height": 720,
+          "uri": "tos-useast8-p-0068-tx2/os1p6BH0mIEeKarGB2FEAODoEAARyQrQIVfkV1",
+          "url_list": [
+            "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/os1p6BH0mIEeKarGB2FEAODoEAARyQrQIVfkV1~tplv-tiktokx-cropcenter-q:300:400:q70.heic?dr=8596&refresh_token=ba368d40&x-expires=1785639600&x-signature=wnInSWzgvyc%2Fb6Am6dN3L%2BWl%2F8o%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=1d1a97fc&idc=useast5&biz_tag=tt_video&s=AWEME_DETAIL&sc=cover",
+            "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/os1p6BH0mIEeKarGB2FEAODoEAARyQrQIVfkV1~tplv-tiktokx-cropcenter-q:300:400:q70.heic?dr=8596&refresh_token=78d5fa76&x-expires=1785639600&x-signature=m3tru749YfAxOYvXnzS8Dw4ry8o%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=1d1a97fc&idc=useast5&biz_tag=tt_video&s=AWEME_DETAIL&sc=cover",
+            "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/os1p6BH0mIEeKarGB2FEAODoEAARyQrQIVfkV1~tplv-tiktokx-cropcenter-q:300:400:q70.jpeg?dr=8596&refresh_token=fba7e341&x-expires=1785639600&x-signature=JbUGd8xjbjz34xq9NWGMkWRChE8%3D&t=bacd0480&ps=933b5bde&shp=d05b14bd&shcp=1d1a97fc&idc=useast5&biz_tag=tt_video&s=AWEME_DETAIL&sc=cover"
+          ],
+          "url_prefix": null,
+          "width": 720
+        },
+        "play_addr": {
+          "data_size": 752761,
+          "file_cs": "c:0-6423-e48d",
+          "file_hash": "b50c8c4f128f4624605c968ffa09dbc7",
+          "height": 1024,
+          "uri": "v15044gf0000co1l7a7og65r5emn4dd0",
+          "url_key": "v15044gf0000co1l7a7og65r5emn4dd0_h264_540p_1020692",
+          "url_list": [
+            "https://v16m.tiktokcdn-us.com/893ecf10be49130a650cc00f33d6c617/6a6db5e8/video/tos/useast8/tos-useast8-ve-0068c003-tx2/oYWOQV0VoDA9U1fiH1F2ERmWkEkAaBjAIrfzDE/?a=1233&bti=OUBzOTg7QGo6OjZAL3AjLTAzYCMxNDNg&&bt=996&ft=WgSBMNdkVcy5Uxl7KStG-XD5SvJqF1PXtc2lfScyqF_4&mime_type=video_mp4&rc=Zmg3OWRlO2lmZjozZDxlZ0BpM2dxaHU5cmRvcjMzaTczNEAtYzMuYC8uNTMxYmExMzIyYSNhMWoyMmQ0NC5gLS1kMTJzcw%3D%3D&vvpl=1&l=20260801030123B829CA7EBAE10A2C2FF5&btag=e000b0000",
+            "https://v19.tiktokcdn-us.com/0683aada993c3d182fcfdebe3133689b/6a6db5e8/video/tos/useast8/tos-useast8-ve-0068c003-tx2/oYWOQV0VoDA9U1fiH1F2ERmWkEkAaBjAIrfzDE/?a=1233&bti=OUBzOTg7QGo6OjZAL3AjLTAzYCMxNDNg&&bt=996&ft=WgSBMNdkVcy5Uxl7KStG-XD5SvJqF1PXtc2lfScyqF_4&mime_type=video_mp4&rc=Zmg3OWRlO2lmZjozZDxlZ0BpM2dxaHU5cmRvcjMzaTczNEAtYzMuYC8uNTMxYmExMzIyYSNhMWoyMmQ0NC5gLS1kMTJzcw%3D%3D&vvpl=1&l=20260801030123B829CA7EBAE10A2C2FF5&btag=e000b0000",
+            "https://api16-normal-useast5.tiktokv.us/aweme/v1/play/?faid=1233&file_id=5d5b694ad0e74c6c8f182bca1664fe0c&is_play_url=1&item_id=7350810998023949599&line=0&signaturev3=dmlkZW9faWQ7ZmlsZV9pZDtpdGVtX2lkLjVkMWFhOTQ4YjBmNGVhYTBhZWM2ZjgxYjA3YjY2ZGI5&source=AWEME_DETAIL&video_id=v15044gf0000co1l7a7og65r5emn4dd0"
+          ],
+          "url_prefix": null,
+          "width": 576
+        }
+      }
+    }
+  }
+}

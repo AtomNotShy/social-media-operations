@@ -1,33 +1,191 @@
 {
   "code": 200,
-  "request_id": "fixture-profile-request",
+  "request_id": "xhs-profile-real",
+  "message": "Request successful.",
   "data": {
     "code": 0,
-    "success": true,
     "data": {
-      "basic_info": {
-        "nickname": "示例餐饮运营",
-        "red_id": "example_red_id",
-        "desc": "用于契约测试的去敏代表性数据",
-        "images": [
-          "https://example.invalid/avatar.jpg"
-        ],
-        "note_count": "128"
+      "tab_visible": {
+        "collect": true,
+        "note": true,
+        "seed": true,
+        "like": false
       },
+      "collected_poi_num": 0,
+      "blocked": false,
+      "ip_location": "Beijing",
+      "liked": 518721,
+      "follows": 7,
+      "result": {
+        "success": true,
+        "message": "success",
+        "code": 0
+      },
+      "collected": 46368,
+      "is_login_user_pro_account": false,
+      "recommend_info": "",
+      "real_name_info": "",
+      "default_collection_tab": "",
+      "block_view_to_user": false,
+      "red_club_info": {
+        "red_club_url": "https://www.rnote.com/store/mc/landing",
+        "redclubscore": 0,
+        "red_club": false,
+        "red_club_level": 0
+      },
+      "share_link": "https://www.rnote.com/user/profile/61b46d790000000010008153?xsec_token=YBcpk8xPSE0MiJptWyDqoMObuPo4PWACL3fe3x2AmFSMI=&xsec_source=app_share",
+      "banner_info": {
+        "image": "http://sns-avatar-qc.rednotecdn.com/user_banner/default/h240-b100.png?imageView2/2/w/540/format/jpg&ap=28&sc=USR_BG&src=A",
+        "bg_color": "c7e6fa",
+        "like_status": false
+      },
+      "share_info": {
+        "title": "JeremyLin林书豪",
+        "content": "职业篮球运动员"
+      },
+      "imageb": "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?imageView2/2/w/540/format/webp",
+      "red_official_verify_type": 1,
+      "show_extra_info_button": false,
+      "avatar_like_status": false,
+      "collected_product_num": 0,
+      "collected_notes_num": 0,
+      "location_jump": false,
+      "desc": "职业篮球运动员",
+      "location": "",
+      "remark_name": "",
+      "hula_tabs": {
+        "tab_id_selected": "note",
+        "all_show_tab_config": [
+          {
+            "tab_id": "note",
+            "tab_name": "Notes",
+            "tab_index_weight": 0
+          },
+          {
+            "tab_name": "Saves",
+            "tab_id": "collect",
+            "is_show_lock": false,
+            "tab_index_weight": 10
+          }
+        ]
+      },
+      "is_recommend_level_illegal": false,
+      "seller_info": {
+        "tab_code_names": [],
+        "is_tab_goods_first": true,
+        "tab_goods_api_version": 1
+      },
+      "ndiscovery": 311,
+      "userid": "61b46d790000000010008153",
+      "collected_movie_num": 0,
+      "red_official_verify_arrow": 0,
+      "fstatus": "none",
+      "identity_label_migrated": false,
+      "collected_brand_num": 0,
+      "avatar_pendant": {
+        "current_user_pendant": false,
+        "current_user_pet": false
+      },
+      "user_widget_switch": false,
+      "red_id": "1429907658",
+      "red_official_verified": false,
+      "community_rule_url": "https://www.rnote.com/user/community-rule",
+      "note_num_stat": {
+        "liked": 518721,
+        "posted": 311,
+        "collected": 46368
+      },
+      "blocking": false,
+      "collected_book_num": 0,
+      "tags": [
+        {
+          "icon": "http://sns-i11.rednotecdn.com/icons/user/gender-male-v1.png",
+          "tag_type": "info"
+        }
+      ],
+      "mute_view_to_user": false,
+      "block_view_from_user": false,
+      "recommend_info_icon": "",
+      "sec_account_deeplink": "xhsdiscover://rn/accounts/account-detail?targetId=61b46d790000000010008153&new_page_exp=1",
       "interactions": [
         {
-          "type": "fans",
-          "count": "1.2万"
-        },
-        {
+          "is_private": false,
+          "toast": "",
           "type": "follows",
-          "count": "88"
+          "name": "Following",
+          "count": 7
         },
         {
+          "is_private": false,
+          "count": 189402,
+          "toast": "",
+          "type": "fans",
+          "name": "Followers"
+        },
+        {
+          "is_private": false,
+          "count": 565089,
           "type": "interaction",
-          "count": "3.4万"
+          "name": "Likes & Collects",
+          "toast": ""
         }
-      ]
-    }
+      ],
+      "red_official_verify_content": "运动员",
+      "desc_at_users": [],
+      "level": {
+        "number": 0,
+        "image_link": ""
+      },
+      "nickname": "JeremyLin林书豪",
+      "user_desc_info": {
+        "button": {
+          "original": {
+            "button_content": "Translate",
+            "translation_strategy": 1
+          },
+          "replace": {
+            "button_content": "See original",
+            "translation_strategy": 3
+          }
+        },
+        "trans_api_param": {
+          "biz_id": "user_profile_61b46d790000000010008153",
+          "text_inputs": [
+            {
+              "key": "desc",
+              "content": "职业篮球运动员"
+            }
+          ],
+          "biz_type": "user_profile"
+        },
+        "desc_with_placeholder": "职业篮球运动员",
+        "desc_keywords_switch": true,
+        "desc_at_users": [],
+        "translation_desc": "Professional basketball player",
+        "desc": "职业篮球运动员"
+      },
+      "user_role_type": 6,
+      "gender": 0,
+      "nboards": 0,
+      "fans": 189402,
+      "tab_public": {
+        "collection": true,
+        "seed": true,
+        "collection_board": true,
+        "collection_note": true
+      },
+      "collected_tags_num": 0,
+      "images": "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?imageView2/2/w/360/format/webp",
+      "share_info_v2": {
+        "title": "@JeremyLin林书豪‘s profile",
+        "content": "Followers: 189.4k\nLikes&Col: 565.1k"
+      },
+      "zhong_tong_bar_info": {
+        "conversions": []
+      },
+      "real_name_deep_target": 1
+    },
+    "success": true,
+    "msg": "success"
   }
 }

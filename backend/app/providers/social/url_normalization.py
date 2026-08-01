@@ -31,6 +31,11 @@ _BILIBILI_CONTENT_PATTERNS = (
 _TWITTER_CONTENT_PATTERNS = (
     re.compile(r"^/(?P<handle>[A-Za-z0-9_]{1,15})/status/(?P<id>[0-9]{1,32})/?$"),
 )
+_TIKTOK_CONTENT_PATTERNS = (
+    (re.compile(r"^/@(?P<handle>[^/?#]+)/video/(?P<id>[0-9]{8,32})/?$"), "video"),
+    (re.compile(r"^/@(?P<handle>[^/?#]+)/photo/(?P<id>[0-9]{8,32})/?$"), "photo"),
+    (re.compile(r"^/video/(?P<id>[0-9]{8,32})/?$"), "video"),
+)
 
 
 def normalize_content_url(value: str) -> SocialURLReference:
@@ -131,6 +136,30 @@ def normalize_content_url(value: str) -> SocialURLReference:
         canonical_url = f"https://x.com/{handle}/status/{external_id}"
         return SocialURLReference(
             platform="x",
+            canonical_url=canonical_url,
+            external_id=external_id,
+            share_text=value.strip(),
+        )
+
+    if _is_host(host, "tiktok.com"):
+        external_id = None
+        handle = None
+        kind = "video"
+        for pattern, matched_kind in _TIKTOK_CONTENT_PATTERNS:
+            matched = pattern.fullmatch(path)
+            if matched:
+                external_id = matched.group("id")
+                handle = matched.groupdict().get("handle")
+                kind = matched_kind
+                break
+        if external_id is None:
+            raise UnsupportedSocialURL("The URL is not a supported TikTok content URL")
+        if handle:
+            canonical_url = f"https://www.tiktok.com/@{handle}/{kind}/{external_id}"
+        else:
+            canonical_url = f"https://www.tiktok.com/video/{external_id}"
+        return SocialURLReference(
+            platform="tiktok",
             canonical_url=canonical_url,
             external_id=external_id,
             share_text=value.strip(),

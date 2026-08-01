@@ -1,34 +1,95 @@
 {
   "code": 200,
-  "request_id": "fixture-content-detail-request",
+  "request_id": "xhs-content-detail-real",
+  "message": "Request successful.",
   "data": {
     "code": 0,
     "success": true,
-    "data": {
-      "note_id": "note-detail-fixture-001",
-      "title": "后厨高峰期的五个检查点",
-      "desc": "用于链接导入契约测试的去敏代表性正文。",
-      "time": 1760000000000,
-      "user": {
-        "user_id": "profile-fixture-001",
-        "nickname": "示例餐饮运营",
-        "red_id": "example_red_id",
-        "fans": "1.2万"
-      },
-      "image_list": [
-        {
-          "url_default": "https://example.invalid/detail-1.jpg"
+    "msg": "success",
+    "data": [
+      {
+        "model_type": "note",
+        "track_id": "",
+        "user": {
+          "red_official_verified": false,
+          "id": "5efc6e660000000001006da1",
+          "fstatus": "none",
+          "userid": "5efc6e660000000001006da1",
+          "show_red_official_verify_icon": false,
+          "red_official_verify_type": 0,
+          "track_duration": 0,
+          "level": {
+            "image": ""
+          },
+          "image": "https://sns-avatar-qc.xhscdn.com/avatar/5f852121e2dbee0001dbb521.jpg?imageView2/2/w/120/format/jpg",
+          "group_id": "5d0b475af5a2636ef12b14c1",
+          "followed": false,
+          "red_id": "332831015",
+          "nickname": "一条",
+          "name": "一条"
         },
-        {
-          "url_default": "https://example.invalid/detail-2.jpg"
-        }
-      ],
-      "interact_info": {
-        "liked_count": "2300",
-        "comment_count": "120",
-        "collected_count": "980",
-        "share_count": "41"
+        "comment_list": [],
+        "note_list": [
+          {
+            "id": "697c0eee000000000a03c308",
+            "type": "video",
+            "title": "68岁传奇大师和妻子造房隐居，美得像电影",
+            "desc": "68岁的摄影师上田义彦与妻子桐岛加恋隐居在一个名叫“叶山”的海边小镇。夫妻俩花25年，修缮、改造了一座百年老宅，每个角落都美得像是电影中的场景，上田义彦的不少经典作品亦是在家中完成。“人们总会在迷茫的时候，迫切地寻找所谓‘正确的判断’，但我宁可相信直觉，用直觉去生活。生活也好，摄影也罢，我想一切终归都是那种‘感觉’，人之所以能获得幸福，关键大概就在这里。”我们来到叶山拜访上田义彦的家，记录了一家人平凡而温暖的一天。#隐居[话题]# #上田义彦[话题]# #老宅改造[话题]# #生活方式[话题]# #人物[话题]#",
+            "time": 1769737966,
+            "sticky": false,
+            "ip_location": "Guizhou",
+            "liked_count": 8874,
+            "comments_count": 194,
+            "collected_count": 4253,
+            "shared_count": 2830,
+            "view_count": 0,
+            "images_list": [
+              {
+                "fileid": "spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8",
+                "index": 0,
+                "scale_to_large": 4,
+                "width": 1516,
+                "original": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/5000/h/5000/format/webp/q/90&ap=1&sc=V_ORG&sign=3fef272328cc6b6724d57c667e357bc7&t=6a6d5fd7&src=A&origin=0",
+                "latitude": 0,
+                "url": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/576/format/webp/q/87%7CimageMogr2/strip&redImage/frame/0&ap=1&sc=V_PRV&sign=3fef272328cc6b6724d57c667e357bc7&t=6a6d5fd7&src=A&origin=0",
+                "url_multi_level": {
+                  "low": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/576/format/webp/q/75%7CimageMogr2/strip&redImage/frame/0&ap=1&sc=V_PRV&sign=3fef272328cc6b6724d57c667e357bc7&t=6a6d5fd7&src=A&origin=0",
+                  "high": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/576/format/webp/q/75%7CimageMogr2/strip&redImage/frame/0&ap=1&sc=V_PRV&sign=3fef272328cc6b6724d57c667e357bc7&t=6a6d5fd7&src=A&origin=0",
+                  "medium": "https://sns-i11.rednotecdn.com/spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8?imageView2/2/w/576/format/webp/q/75%7CimageMogr2/strip&redImage/frame/0&ap=1&sc=V_PRV&sign=3fef272328cc6b6724d57c667e357bc7&t=6a6d5fd7&src=A&origin=0"
+                },
+                "longitude": 0,
+                "need_load_original_image": true,
+                "origin_img": {
+                  "width": 1516,
+                  "size": 0,
+                  "height": 2022
+                },
+                "height": 2022,
+                "trace_id": "spectrum/1040g0k031ruoe8lti0005nnsdpj08rd1d0o3kd8",
+                "text_intention": 0
+              }
+            ],
+            "user": {
+              "id": "5efc6e660000000001006da1",
+              "red_official_verified": false,
+              "fstatus": "none",
+              "userid": "5efc6e660000000001006da1",
+              "show_red_official_verify_icon": false,
+              "red_official_verify_type": 0,
+              "track_duration": 0,
+              "level": {
+                "image": ""
+              },
+              "image": "https://sns-avatar-qc.xhscdn.com/avatar/5f852121e2dbee0001dbb521.jpg?imageView2/2/w/120/format/jpg",
+              "group_id": "5d0b475af5a2636ef12b14c1",
+              "followed": false,
+              "red_id": "332831015",
+              "nickname": "一条",
+              "name": "一条"
+            }
+          }
+        ]
       }
-    }
+    ]
   }
 }

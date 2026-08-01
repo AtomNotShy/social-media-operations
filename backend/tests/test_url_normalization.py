@@ -51,6 +51,18 @@ def test_accepts_share_domain_without_following_redirect():
             "1808168603721650364",
             "https://x.com/elonmusk/status/1808168603721650364",
         ),
+        (
+            "https://www.tiktok.com/@jennmelon/video/7350810998023949599",
+            "tiktok",
+            "7350810998023949599",
+            "https://www.tiktok.com/@jennmelon/video/7350810998023949599",
+        ),
+        (
+            "https://www.tiktok.com/video/7350810998023949599",
+            "tiktok",
+            "7350810998023949599",
+            "https://www.tiktok.com/video/7350810998023949599",
+        ),
     ],
 )
 def test_normalizes_supported_content_urls(url, platform, external_id, canonical_url):
@@ -68,6 +80,8 @@ def test_normalizes_supported_content_urls(url, platform, external_id, canonical
         "https://twitter.com/elonmusk/status/abc",
         "https://t.co/abc123",
         "https://x.com/elonmusk/status/",
+        "https://vm.tiktok.com/ZMabcdef/",
+        "https://www.tiktok.com/@jennmelon/video/abc",
     ],
 )
 def test_rejects_unsupported_twitter_urls(url):

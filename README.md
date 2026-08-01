@@ -31,7 +31,7 @@
 - 统一 REST 响应、Problem Details 错误与 Request ID。
 - 开发/OIDC 身份边界、工作区与基础 RBAC。
 - 对标账号 API、同步 Worker 和 PostgreSQL 活跃任务去重。
-- TikHub Client、预算/缓存 Gateway、小红书/抖音/Bilibili/X Adapter 与调用证据。
+- TikHub Client、预算/缓存 Gateway、小红书/抖音/Bilibili/X/TikTok Adapter 与调用证据。
 - 标准化外部内容、指标快照、灵感关系和 Provider 费用记录。
 - 版本化评分、分析/转写账本、评论采样、搜索发现和模式库。
 - 自有账号、选题、项目、脚本、素材、排期、人工发布记录与复盘。

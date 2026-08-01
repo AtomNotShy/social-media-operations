@@ -34,7 +34,7 @@ def test_duplicate_url_import_reuses_active_job_then_fresh_content(
     workspace,
 ):
     headers = _workspace_headers(auth_headers, workspace)
-    url = "https://www.xiaohongshu.com/explore/note-detail-fixture-001?source=web"
+    url = "https://www.xiaohongshu.com/explore/697c0eee000000000a03c308?source=web"
 
     first = client.post(
         "/api/v1/inspirations/import-url",
@@ -138,7 +138,7 @@ def test_explicit_analysis_request_queues_l1_only_when_configured(
 
     def handler(_: httpx.Request) -> httpx.Response:
         payload = _fixture("xhs_content_detail_representative.json")
-        payload["data"]["data"]["note_id"] = "analysis-detail-fixture"
+        payload["data"]["data"][0]["note_list"][0]["id"] = "analysis-detail-fixture"
         return httpx.Response(200, json=payload)
 
     async def run_detail():

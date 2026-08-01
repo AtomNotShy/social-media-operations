@@ -1,28 +1,79 @@
 {
   "code": 200,
-  "request_id": "fixture-comments-request",
+  "request_id": "xhs-comments-real",
+  "message": "Request successful.",
   "data": {
-    "code": 0,
     "success": true,
+    "code": 0,
+    "msg": "success",
     "data": {
+      "cursor": "{\"cursor\":\"69aaee1e00000000190009a8\",\"index\":2,\"pageArea\":\"ALL\"}",
       "comments": [
         {
-          "comment_id": "comment-fixture-001",
-          "content": "高峰期最怕漏单，这个方法很实用",
-          "like_count": "128",
-          "create_time": 1760000100000,
-          "user_info": {
-            "user_id": "commenter-fixture-001",
-            "nickname": "示例用户"
+          "id": "69da730e00000000160162d2",
+          "content": "夫人好美",
+          "like_count": 0,
+          "time": 1775923983,
+          "sub_comment_count": 0,
+          "sub_comments": [],
+          "user": {
+            "userid": "a1f6b69d7f55653997f1fb2e79230",
+            "images": "https://sns-avatar-qc.rednotecdn.com/avatar/1040g2jo31u70h6302oe05pj91rshounk8ofnef0?imageView2/2/w/120/format/jpg",
+            "red_id": "63040534286",
+            "nickname": "YO CIAO",
+            "ai_agent": false,
+            "level": {
+              "image": ""
+            },
+            "current_user": "false",
+            "additional_tags": {}
+          }
+        },
+        {
+          "id": "69cb9fa90000000015001832",
+          "content": "想起来一部纪录片，忘了名字🧐",
+          "like_count": 0,
+          "time": 1774952362,
+          "sub_comment_count": 0,
+          "sub_comments": [],
+          "user": {
+            "userid": "a4e6f93ebc711de3e3a13dcfe73cc",
+            "red_id": "542045115",
+            "images": "https://sns-avatar-qc.rednotecdn.com/avatar/5e59bcadc4f9d80001780937.jpg?imageView2/2/w/120/format/jpg",
+            "nickname": "芥末馄饨AnML",
+            "ai_agent": false,
+            "level": {
+              "image": ""
+            },
+            "current_user": "false",
+            "additional_tags": {}
+          }
+        },
+        {
+          "id": "69c4a02400000000180239d2",
+          "content": "夫人好美[玫瑰R][玫瑰R][玫瑰R]",
+          "like_count": 0,
+          "time": 1774493732,
+          "sub_comment_count": 0,
+          "sub_comments": [],
+          "user": {
+            "userid": "a5f2089cd8d6c3b1ae7e6d25ac558",
+            "images": "https://sns-avatar-qc.rednotecdn.com/avatar/5deb9c27c651ab0001552325.jpg?imageView2/2/w/120/format/jpg",
+            "red_id": "271175210",
+            "nickname": "Lisa",
+            "ai_agent": false,
+            "level": {
+              "image": ""
+            },
+            "current_user": "false",
+            "additional_tags": {}
           }
         }
       ],
-      "cursor": {
-        "cursor": "",
-        "index": 1,
-        "pageArea": "UNFOLDED"
-      },
-      "has_more": false
+      "comment_count": 194,
+      "comment_count_l1": 155,
+      "has_more": true,
+      "user_id": "5efc6e660000000001006da1"
     }
   }
 }

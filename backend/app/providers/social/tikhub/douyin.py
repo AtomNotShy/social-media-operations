@@ -29,6 +29,8 @@ def _first_url(value: Any) -> str | None:
 
 class DouyinAppV3Adapter:
     platform = "douyin"
+    content_domain = "www.douyin.com"
+    profile_contents_endpoint_key = "douyin.profile_contents"
 
     def parse_profile(self, payload: dict[str, Any], *, external_id: str) -> NormalizedProfile:
         body = _unwrap_data(payload)
@@ -75,7 +77,7 @@ class DouyinAppV3Adapter:
         return ProviderPage(
             items=items,
             next_cursor=str(cursor) if has_more and cursor not in {None, ""} else None,
-            endpoint_key="douyin.profile_contents",
+            endpoint_key=self.profile_contents_endpoint_key,
             provider_request_id=payload.get("request_id"),
             raw_response=payload,
         )
@@ -125,7 +127,7 @@ class DouyinAppV3Adapter:
         return NormalizedContent(
             platform=self.platform,
             external_id=aweme_id,
-            canonical_url=f"https://www.douyin.com/video/{aweme_id}",
+            canonical_url=f"https://{self.content_domain}/video/{aweme_id}",
             content_type=content_type,
             title=None,
             body_text=_first(raw, "desc", "description"),
@@ -185,3 +187,9 @@ class DouyinAppV3Adapter:
             page_area="DEFAULT",
             has_more=has_more,
         )
+
+
+class TikTokAppV3Adapter(DouyinAppV3Adapter):
+    platform = "tiktok"
+    content_domain = "www.tiktok.com"
+    profile_contents_endpoint_key = "tiktok.profile_contents"

@@ -36,6 +36,7 @@ const platforms = [
   { label: "抖音", value: "douyin" },
   { label: "哔哩哔哩", value: "bilibili" },
   { label: "YouTube", value: "youtube" },
+  { label: "TikTok", value: "tiktok" },
   { label: "X", value: "x" },
 ];
 

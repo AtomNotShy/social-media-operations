@@ -54,15 +54,18 @@ def _seed_inspiration(app, workspace):
 def test_representative_comment_fixture_is_normalized():
     page = XiaohongshuAppV2Adapter().parse_comments(_fixture())
 
-    assert page.has_more is False
-    assert page.index == 1
-    assert len(page.items) == 1
-    assert page.items[0].external_id == "comment-fixture-001"
+    assert page.has_more is True
+    assert page.index == 2
+    assert page.page_area == "ALL"
+    assert len(page.items) == 3
+    assert page.items[0].external_id == "69da730e00000000160162d2"
     assert page.items[0].author == {
-        "external_id": "commenter-fixture-001",
-        "display_name": "示例用户",
+        "external_id": "a1f6b69d7f55653997f1fb2e79230",
+        "display_name": "YO CIAO",
+        "handle": "63040534286",
     }
-    assert page.items[0].like_count == 128
+    assert page.items[0].body_text == "夫人好美"
+    assert page.items[0].like_count == 0
 
 
 def test_comment_fetch_is_deduplicated_and_persists_limited_sample(
@@ -120,10 +123,14 @@ def test_comment_fetch_is_deduplicated_and_persists_limited_sample(
         headers=headers,
     )
     assert response.status_code == 200
-    assert response.json()["data"][0]["external_comment_id"] == "comment-fixture-001"
+    assert {item["external_comment_id"] for item in response.json()["data"]} == {
+        "69da730e00000000160162d2",
+        "69cb9fa90000000015001832",
+        "69c4a02400000000180239d2",
+    }
     with app.state.database.session_factory() as db:
-        assert db.scalar(select(func.count()).select_from(CommentSample)) == 1
+        assert db.scalar(select(func.count()).select_from(CommentSample)) == 3
         assert db.scalar(select(func.count()).select_from(ProviderFetch)) == 1
         job = db.get(SyncJob, UUID(first.json()["data"]["job_id"]))
         assert job.status == "succeeded"
-        assert job.result["comments_created"] == 1
+        assert job.result["comments_created"] == 3

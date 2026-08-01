@@ -62,6 +62,44 @@ BILIBILI_DETAIL = {
     },
 }
 
+TIKTOK_DETAIL = {
+    "code": 200,
+    "request_id": "tiktok-contract",
+    "data": {
+        "aweme_detail": {
+            "aweme_id": "7350810998023949599",
+            "desc": "im so sick of being tired im so tired of being sick",
+            "create_time": 1711494099,
+            "author": {
+                "uid": "6617578271134646277",
+                "sec_uid": (
+                    "MS4wLjABAAAAdsKhQYdpLrOx5hrYCM3O2FQK3Xhnncm0ZHzGROFGk43iPI"
+                    "EPqxyEOK_YWom9LoKn"
+                ),
+                "unique_id": "jennmelon",
+                "nickname": "Jenn Melon",
+                "follower_count": 0,
+                "following_count": 0,
+            },
+            "statistics": {
+                "play_count": 12187417,
+                "digg_count": 2004082,
+                "comment_count": 7829,
+                "collect_count": 211565,
+                "share_count": 275192,
+                "download_count": 20349,
+            },
+            "video": {
+                "duration": 5900,
+                "cover": {"url_list": ["https://p19-common-sign.tiktokcdn-us.com/cover.jpg"]},
+                "play_addr": {
+                    "url_list": ["https://v16m.tiktokcdn-us.com/video.mp4"],
+                },
+            },
+        }
+    },
+}
+
 X_TWEET_DETAIL = {
     "code": 200,
     "request_id": "x-contract",
@@ -152,6 +190,13 @@ def test_bilibili_contract_shape_is_normalized():
             "x",
             "1808168603721650364",
         ),
+        (
+            "https://www.tiktok.com/@jennmelon/video/7350810998023949599",
+            "/api/v1/tiktok/app/v3/fetch_one_video",
+            TIKTOK_DETAIL,
+            "tiktok",
+            "7350810998023949599",
+        ),
     ],
 )
 def test_multiplatform_url_import_uses_registered_adapter(
@@ -211,3 +256,6 @@ def test_multiplatform_url_import_uses_registered_adapter(
             "type": "photo",
             "url": "https://pbs.twimg.com/media/GRfnwy5X0AAwIK2.jpg",
         }
+    if expected_platform == "tiktok":
+        assert content["content_type"] == "video"
+        assert content["canonical_url"] == "https://www.tiktok.com/video/7350810998023949599"
