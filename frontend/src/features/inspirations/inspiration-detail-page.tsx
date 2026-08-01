@@ -3,14 +3,17 @@
 import {
   Archive,
   ArrowLeft,
+  BarChart3,
   Bot,
   Check,
   ExternalLink,
   FileAudio,
   Gauge,
+  Heart,
   LoaderCircle,
   MessageCircle,
   RefreshCw,
+  Repeat2,
   RotateCcw,
   Sparkles,
   Tags,
@@ -775,12 +778,12 @@ function LatestMetricSnapshot({
 }: {
   metrics?: ContentMetricSnapshot;
 }) {
-  const items: Array<[string, number | null | undefined]> = metrics
+  const items = metrics
     ? [
-        ["浏览", metrics.views],
-        ["赞", metrics.likes],
-        ["评", metrics.comments],
-        ["藏", metrics.favorites],
+        { label: "回复", value: metrics.comments, icon: MessageCircle },
+        { label: "转推", value: metrics.shares, icon: Repeat2 },
+        { label: "喜欢", value: metrics.likes, icon: Heart },
+        { label: "浏览", value: metrics.views, icon: BarChart3 },
       ]
     : [];
 
@@ -788,12 +791,17 @@ function LatestMetricSnapshot({
     <div aria-label="最新互动快照">
       <p className="text-sm text-text-muted">最新互动快照</p>
       {metrics ? (
-        <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xl font-semibold tracking-tight text-text sm:text-2xl">
-          {items.map(([label, value], index) => (
-            <span className="inline-flex items-baseline gap-1" key={label}>
-              {index > 0 ? <span aria-hidden="true" className="mr-1 text-text-muted">·</span> : null}
-              <span>{label}</span>
-              <span className="tabular-nums">{formatMetric(value)}</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-7 gap-y-3 text-xl font-medium tracking-tight text-text-muted sm:text-2xl">
+          {items.map(({ label, value, icon: Icon }) => (
+            <span
+              aria-label={`${label} ${formatMetric(value)}`}
+              className="inline-flex items-center gap-2"
+              key={label}
+            >
+              <Icon aria-hidden="true" size={24} strokeWidth={2} />
+              <span aria-hidden="true" className="tabular-nums">
+                {formatMetric(value)}
+              </span>
             </span>
           ))}
         </div>
