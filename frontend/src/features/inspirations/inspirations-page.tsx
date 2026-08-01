@@ -15,6 +15,7 @@ import { StatusBadge } from "@/src/components/ui/status-badge";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
 import { ImportInspirationDialog } from "@/src/features/inspirations/import-inspiration-dialog";
 import { InspirationCard } from "@/src/features/inspirations/inspiration-card";
+import { buildInspirationsSearchHref } from "@/src/features/inspirations/navigation";
 import {
   contentTitle,
   inspirationStatusLabel,
@@ -43,6 +44,7 @@ const platforms = [
 export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const search = searchParams.toString();
   const [queryInput, setQueryInput] = useState(searchParams.get("q") ?? "");
   const [importOpen, setImportOpen] = useState(
     searchParams.get("import") === "1",
@@ -58,19 +60,18 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
   const permission = useWorkspaceRole(workspaceId);
 
   useEffect(() => {
+    const href = buildInspirationsSearchHref({
+      workspaceId,
+      search,
+      query: queryInput,
+    });
+    if (!href) return;
+
     const timeout = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (queryInput.trim()) params.set("q", queryInput.trim());
-      else params.delete("q");
-      params.delete("cursor");
-      const suffix = params.toString();
-      router.replace(
-        `/w/${workspaceId}/inspirations${suffix ? `?${suffix}` : ""}`,
-      );
+      router.replace(href, { scroll: false });
     }, 350);
     return () => window.clearTimeout(timeout);
-    // searchParams is intentionally included so external filters are preserved.
-  }, [queryInput, router, searchParams, workspaceId]);
+  }, [queryInput, router, search, workspaceId]);
 
   const stats = useMemo(() => {
     const items = inspirations.data ?? [];
@@ -86,6 +87,7 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
     const suffix = params.toString();
     router.replace(
       `/w/${workspaceId}/inspirations${suffix ? `?${suffix}` : ""}`,
+      { scroll: false },
     );
   }
 
