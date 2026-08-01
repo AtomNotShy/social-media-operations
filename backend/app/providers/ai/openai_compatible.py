@@ -113,7 +113,10 @@ class OpenAICompatibleProvider:
             "the schema; do not translate them. "
             "For L1, factors must explain observable performance or creative factors, caveats "
             "must state evidence gaps, life is timely or evergreen, and recommended_for_l2 "
-            "must be conservative. For L2, evidence_refs must contain every required evidence "
+            "must be conservative. L1 should return content_potential_score, opportunity_score, "
+            "score_reasons, and dimension_scores from content evidence; strategy_fit_score may "
+            "be null when no owned-channel context exists. For L2, evidence_refs must contain "
+            "every required evidence "
             "reference supplied by the user."
         )
         response, latency_ms = await self._chat(

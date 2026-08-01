@@ -21,6 +21,11 @@ class AnalysisL1Result(BaseModel):
     life: Literal["timely", "evergreen"]
     life_reason: str = Field(min_length=1)
     recommended_for_l2: bool
+    content_potential_score: float | None = Field(default=None, ge=0, le=100)
+    strategy_fit_score: float | None = Field(default=None, ge=0, le=100)
+    opportunity_score: float | None = Field(default=None, ge=0, le=100)
+    score_reasons: list[str] = Field(default_factory=list)
+    dimension_scores: dict[str, float] = Field(default_factory=dict)
 
 
 class AnalysisL2Result(BaseModel):

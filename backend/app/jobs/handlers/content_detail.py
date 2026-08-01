@@ -9,6 +9,7 @@ from app.core.errors import AppError
 from app.db.models import ExternalContent, SyncJob, Workspace
 from app.modules.ai_connections.service import configured_for
 from app.modules.analysis.service import request_analysis
+from app.modules.automation.service import evaluate_hard_gate, get_automation_settings
 from app.modules.inspirations.service import upsert_external_content
 from app.modules.scoring.service import calculate_content_score
 from app.providers.social.tikhub.errors import TikHubError
@@ -131,6 +132,23 @@ class ContentDetailHandler:
                 workspace_id=workspace.id,
                 content_id=content.id,
             )
+            automation = get_automation_settings(workspace)
+            gate = evaluate_hard_gate(
+                self.db,
+                workspace=workspace,
+                content=content,
+                policy=automation,
+            )
+            score.evidence = {
+                **(score.evidence or {}),
+                "automation_gate": gate.evidence,
+                "score_mode": "content_independent",
+                "manual_selection": True,
+            }
+            if gate.configured and not gate.passed:
+                score.grade = "below_threshold"
+            elif gate.passed and score.grade not in {"t1", "t2"}:
+                score.grade = "qualified"
             self.db.commit()
             score_id = str(score.id)
             score_grade = score.grade

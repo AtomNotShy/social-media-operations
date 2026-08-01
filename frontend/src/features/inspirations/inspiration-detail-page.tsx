@@ -39,6 +39,11 @@ import {
   useCreateTopicFromInspiration,
   useUpdateInspiration,
 } from "@/src/features/inspirations/queries";
+import {
+  scoreEvidenceMeta,
+  scoreGradeLabel,
+  scoreReasonLabel,
+} from "@/src/features/inspirations/scoring-presentation";
 import { metricPresentation } from "@/src/features/inspirations/metric-presentation";
 import type {
   AnalysisRun,
@@ -162,6 +167,9 @@ export function InspirationDetailPage({
     evidence.transcripts.error,
   ].find(Boolean);
   const latestMetrics = evidence.metrics.data?.[0];
+  const latestScoreMeta = latestScore
+    ? scoreEvidenceMeta(latestScore.evidence)
+    : null;
 
   function dispatchAction(next: InspirationAction) {
     setToast(null);
@@ -433,7 +441,7 @@ export function InspirationDetailPage({
             ) : latestScore ? (
               <>
                 <div className="grid grid-cols-3 gap-3">
-                  <Score label="等级" value={latestScore.grade} />
+                  <Score label="等级" value={scoreGradeLabel(latestScore.grade)} />
                   <Score label="R 值" value={latestScore.r_value ?? "—"} />
                   <Score label="M 值" value={latestScore.m_value ?? "—"} />
                 </div>
@@ -442,13 +450,31 @@ export function InspirationDetailPage({
                   {latestScore.baseline_value ?? "—"} ·
                   {formatRelativeTime(latestScore.calculated_at)}
                 </p>
+                {latestScoreMeta?.mode || latestScoreMeta?.confidence ? (
+                  <p className="mt-2 text-xs leading-5 text-text-muted">
+                    {latestScoreMeta.mode
+                      ? `评分模式：${latestScoreMeta.mode}`
+                      : ""}
+                    {latestScoreMeta.mode && latestScoreMeta.confidence
+                      ? " · "
+                      : ""}
+                    {latestScoreMeta.confidence
+                      ? `置信度：${latestScoreMeta.confidence}`
+                      : ""}
+                  </p>
+                ) : null}
+                {latestScore.grade.toLowerCase() === "insufficient" ? (
+                  <p className="mt-3 rounded-lg bg-warning/10 p-3 text-xs leading-5 text-text-muted">
+                    数据不足不代表内容没有潜力，只表示当前证据不足以计算可靠等级。系统仍会保留这条内容，并在指标补全后重新判断。
+                  </p>
+                ) : null}
                 <div className="mt-3 rounded-lg bg-canvas/70 p-3 text-xs leading-5 text-text-muted">
                   {latestScore.is_initial
                     ? "首次评分证据已冻结，不会被后续重算覆盖。"
                     : "这是追加评分记录；历史首次证据仍保留。"}
                   {Array.isArray(latestScore.evidence.reasons) &&
                   latestScore.evidence.reasons.length
-                    ? ` 证据状态：${latestScore.evidence.reasons.map(String).join("、")}。`
+                    ? ` 证据状态：${latestScore.evidence.reasons.map(scoreReasonLabel).join("；")}。`
                     : ""}
                 </div>
               </>
@@ -1178,11 +1204,13 @@ function AnalysisResult({ run }: { run?: AnalysisRun }) {
       </div>
       {run.result ? (
         <dl className="mt-4 grid gap-3">
-          {Object.entries(run.result)
+          {orderedAnalysisEntries(run.result)
             .slice(0, 8)
             .map(([key, value]) => (
               <div className="rounded-lg bg-canvas/70 p-3" key={key}>
-                <dt className="text-[11px] font-medium text-text-muted">{key}</dt>
+                <dt className="text-[11px] font-medium text-text-muted">
+                  {analysisResultLabel(key)}
+                </dt>
                 <dd className="mt-1 text-sm leading-6">{displayValue(value)}</dd>
               </div>
             ))}
@@ -1217,6 +1245,36 @@ function AnalysisResult({ run }: { run?: AnalysisRun }) {
         )}
       </div>
     </div>
+  );
+}
+
+const analysisResultLabels: Record<string, string> = {
+  opportunity_score: "内容机会分",
+  content_potential_score: "内容潜力分",
+  confidence: "置信度",
+  recommended_for_l2: "是否建议深度分析",
+  summary: "内容摘要",
+  why_it_works: "传播原因",
+  reusable_patterns: "可复用模式",
+  risks: "风险提醒",
+};
+
+function analysisResultLabel(key: string): string {
+  return analysisResultLabels[key] ?? key;
+}
+
+function orderedAnalysisEntries(
+  result: Record<string, unknown>,
+): Array<[string, unknown]> {
+  const priority = new Map([
+    ["opportunity_score", 0],
+    ["content_potential_score", 1],
+    ["confidence", 2],
+    ["recommended_for_l2", 3],
+  ]);
+  return Object.entries(result).sort(
+    ([left], [right]) =>
+      (priority.get(left) ?? 100) - (priority.get(right) ?? 100),
   );
 }
 

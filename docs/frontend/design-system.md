@@ -39,9 +39,9 @@ Tailwind CSS v4 使用 CSS-first `@theme` 定义 Token。下例是语义结构�
   --color-primary-600: oklch(0.55 0.20 255);
   --color-primary-700: oklch(0.48 0.18 255);
 
-  --color-grade-t3: oklch(0.58 0.23 28);
+  --color-grade-t1: oklch(0.58 0.23 28);
   --color-grade-t2: oklch(0.70 0.18 55);
-  --color-grade-t1: oklch(0.78 0.16 82);
+  --color-grade-t3: oklch(0.78 0.16 82);
   --color-success: oklch(0.62 0.16 150);
   --color-warning: oklch(0.74 0.16 75);
   --color-danger: oklch(0.58 0.23 28);
@@ -81,9 +81,9 @@ Tailwind CSS v4 使用 CSS-first `@theme` 定义 Token。下例是语义结构�
 
 | 状态 | 颜色 | 要求 |
 |---|---|---|
-| T3 现象级 | 红 | 只用于等级与关键数字 |
+| T1 现象级 | 红 | 只用于等级与关键数字 |
 | T2 爆款 | 橙 | 不作为普通警告色 |
-| T1 小爆 | 琥珀 | 与 Warning 保持形态差异 |
+| T3 小爆 | 琥珀 | 与 Warning 保持形态差异 |
 | 成功 | 绿 | 同步完成、保存成功 |
 | 警告 | 黄/橙 | 预算接近、部分数据 |
 | 错误 | 红 | 失败、危险操作 |

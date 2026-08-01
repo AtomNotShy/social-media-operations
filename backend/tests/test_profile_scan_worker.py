@@ -98,7 +98,11 @@ def test_profile_scan_persists_evidence_content_metrics_and_usage(
         assert db.scalar(select(func.count()).select_from(ExternalContent)) == 3
         assert db.scalar(select(func.count()).select_from(ContentMetricSnapshot)) == 3
         assert db.scalar(select(func.count()).select_from(ContentScore)) == 3
-        assert db.scalar(select(func.count()).select_from(WorkspaceInspiration)) == 0
+        # Two fixture posts clear the default deterministic hard gate and are
+        # promoted even though the profile history is not yet large enough for
+        # an author-relative baseline.
+        assert db.scalar(select(func.count()).select_from(WorkspaceInspiration)) == 2
+        assert job.result["qualified_contents"] == 2
         request_count = db.scalar(select(func.sum(ProviderUsageDaily.request_count)))
         estimated_cost = db.scalar(select(func.sum(ProviderUsageDaily.estimated_cost_usd)))
         assert request_count == 3

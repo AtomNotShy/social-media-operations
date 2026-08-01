@@ -74,6 +74,7 @@ class TikHubGateway:
         endpoint: TikHubEndpoint,
         params: dict[str, Any],
         sync_job_id: uuid.UUID | None = None,
+        force_refresh: bool = False,
     ) -> GatewayResult:
         locked_workspace = self.db.scalar(
             select(Workspace).where(Workspace.id == workspace.id).with_for_update()
@@ -98,7 +99,7 @@ class TikHubGateway:
             params=normalized_params,
         )
         now = datetime.now(timezone.utc)
-        cached = self.db.scalar(
+        cached = None if force_refresh else self.db.scalar(
             select(ProviderFetch)
             .where(
                 ProviderFetch.workspace_id == workspace.id,

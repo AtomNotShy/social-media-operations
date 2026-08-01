@@ -59,7 +59,7 @@ def ensure_workspace_inspiration(
     return inspiration
 
 
-PROMOTION_GRADES = frozenset({"t1", "t2"})
+PROMOTION_GRADES = frozenset({"t1", "t2", "qualified"})
 
 
 def is_promotion_grade(grade: str) -> bool:

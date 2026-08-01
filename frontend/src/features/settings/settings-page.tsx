@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ErrorState } from "@/src/components/ui/error-state";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { AutomationSettingsPanel } from "@/src/features/automation/automation-settings-panel";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
 import {
   InlineError,
@@ -156,6 +157,11 @@ export function SettingsPage({ workspaceId }: { workspaceId: string }) {
           </Panel>
 
           <AISettingsPanel
+            canManage={permission.isOwner}
+            workspaceId={workspaceId}
+          />
+
+          <AutomationSettingsPanel
             canManage={permission.isOwner}
             workspaceId={workspaceId}
           />

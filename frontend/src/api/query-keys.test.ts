@@ -74,4 +74,19 @@ describe("query keys", () => {
       { dateFrom: "2026-07-01", dateTo: "2026-07-30" },
     ]);
   });
+
+  it("separates automation settings from today's pipeline summary", () => {
+    expect(queryKeys.settings.automation("workspace-auto")).toEqual([
+      "workspaces",
+      "workspace-auto",
+      "settings",
+      "automation",
+    ]);
+    expect(queryKeys.production.automationToday("workspace-auto")).toEqual([
+      "workspaces",
+      "workspace-auto",
+      "automation",
+      "today",
+    ]);
+  });
 });

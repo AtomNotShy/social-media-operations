@@ -209,6 +209,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/automation/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Settings */
+        get: operations["read_settings_api_v1_automation_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Settings */
+        patch: operations["patch_settings_api_v1_automation_settings_patch"];
+        trace?: never;
+    };
+    "/api/v1/automation/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Today */
+        get: operations["today_api_v1_automation_today_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/content-projects": {
         parameters: {
             query?: never;
@@ -2440,6 +2475,149 @@ export interface components {
             /** Workspace Id */
             workspace_id: string | null;
         };
+        /** AutomationCandidate */
+        AutomationCandidate: {
+            /** Confidence */
+            confidence?: ("low" | "medium" | "high") | null;
+            /** Content Potential Score */
+            content_potential_score?: number | null;
+            /** Grade */
+            grade: string | null;
+            /**
+             * Inspiration Id
+             * Format: uuid
+             */
+            inspiration_id: string;
+            /** L1 Status */
+            l1_status?: string | null;
+            /** L2 Status */
+            l2_status?: string | null;
+            /** Opportunity Score */
+            opportunity_score?: number | null;
+            /** Platform */
+            platform: string | null;
+            /** Qualified At */
+            qualified_at?: string | null;
+            /** Score Mode */
+            score_mode?: string | null;
+            /** Title */
+            title: string | null;
+        };
+        /** AutomationSettings */
+        AutomationSettings: {
+            /**
+             * Auto L1
+             * @default true
+             */
+            auto_l1: boolean;
+            /**
+             * Auto L2
+             * @default true
+             */
+            auto_l2: boolean;
+            /**
+             * Daily L1 Limit
+             * @default 20
+             */
+            daily_l1_limit: number;
+            /**
+             * Daily L2 Limit
+             * @default 5
+             */
+            daily_l2_limit: number;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            metric_thresholds?: components["schemas"]["MetricThresholds"];
+            /**
+             * Minimum Age Minutes
+             * @default 120
+             */
+            minimum_age_minutes: number;
+            /**
+             * Observation Hours
+             * @default 72
+             */
+            observation_hours: number;
+            /**
+             * Scan Interval Hours
+             * @default 24
+             */
+            scan_interval_hours: number;
+            /**
+             * Threshold Match
+             * @default any
+             * @enum {string}
+             */
+            threshold_match: "any" | "all";
+        };
+        /** AutomationSettingsPatch */
+        AutomationSettingsPatch: {
+            /** Auto L1 */
+            auto_l1?: boolean | null;
+            /** Auto L2 */
+            auto_l2?: boolean | null;
+            /** Daily L1 Limit */
+            daily_l1_limit?: number | null;
+            /** Daily L2 Limit */
+            daily_l2_limit?: number | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            metric_thresholds?: components["schemas"]["MetricThresholdsPatch"] | null;
+            /** Minimum Age Minutes */
+            minimum_age_minutes?: number | null;
+            /** Observation Hours */
+            observation_hours?: number | null;
+            /** Scan Interval Hours */
+            scan_interval_hours?: number | null;
+            /** Threshold Match */
+            threshold_match?: ("any" | "all") | null;
+        };
+        /** AutomationToday */
+        AutomationToday: {
+            /**
+             * Actual Cost Usd
+             * @default 0
+             */
+            actual_cost_usd: string;
+            /** Candidates */
+            candidates: components["schemas"]["AutomationCandidate"][];
+            /** Discovered Contents */
+            discovered_contents: number;
+            /**
+             * Estimated Cost Usd
+             * @default 0
+             */
+            estimated_cost_usd: string;
+            /** L1 Completed */
+            l1_completed: number;
+            /** L1 Queued */
+            l1_queued: number;
+            /** L2 Completed */
+            l2_completed: number;
+            /** L2 Queued */
+            l2_queued: number;
+            /** Observing Contents */
+            observing_contents: number;
+            /** Qualified Contents */
+            qualified_contents: number;
+            /** Scanned Profiles */
+            scanned_profiles: number;
+            /** Timezone */
+            timezone: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            window_start: string;
+        };
         /** CommentFetchRequest */
         CommentFetchRequest: {
             /**
@@ -2687,6 +2865,16 @@ export interface components {
         /** DataResponse[AttributionEventRead] */
         DataResponse_AttributionEventRead_: {
             data: components["schemas"]["AttributionEventRead"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[AutomationSettings] */
+        DataResponse_AutomationSettings_: {
+            data: components["schemas"]["AutomationSettings"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[AutomationToday] */
+        DataResponse_AutomationToday_: {
+            data: components["schemas"]["AutomationToday"];
             meta: components["schemas"]["ResponseMeta"];
         };
         /** DataResponse[ContentProjectRead] */
@@ -3591,6 +3779,47 @@ export interface components {
              * Format: uuid
              */
             workspace_id: string;
+        };
+        /** MetricThresholds */
+        MetricThresholds: {
+            /**
+             * Comments
+             * @default 30
+             */
+            comments: number;
+            /**
+             * Favorites
+             * @default 100
+             */
+            favorites: number;
+            /**
+             * Likes
+             * @default 200
+             */
+            likes: number;
+            /**
+             * Shares
+             * @default 50
+             */
+            shares: number;
+            /**
+             * Views
+             * @default 10000
+             */
+            views: number;
+        };
+        /** MetricThresholdsPatch */
+        MetricThresholdsPatch: {
+            /** Comments */
+            comments?: number | null;
+            /** Favorites */
+            favorites?: number | null;
+            /** Likes */
+            likes?: number | null;
+            /** Shares */
+            shares?: number | null;
+            /** Views */
+            views?: number | null;
         };
         /** OwnedChannelCreate */
         OwnedChannelCreate: {
@@ -5369,6 +5598,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataResponse_list_AuditEventRead__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_settings_api_v1_automation_settings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AutomationSettings_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_settings_api_v1_automation_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationSettingsPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AutomationSettings_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    today_api_v1_automation_today_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_AutomationToday_"];
                 };
             };
             /** @description Validation Error */

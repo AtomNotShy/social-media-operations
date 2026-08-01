@@ -18,7 +18,9 @@ import { useWorkspaceRole } from "@/src/features/identity/queries";
 import type { Job } from "@/src/features/tracked-profiles/types";
 import {
   formatRelativeTime,
+  jobErrorLabel,
   jobStatusLabel,
+  jobTypeLabel,
 } from "@/src/lib/format";
 
 const filters = [
@@ -182,7 +184,7 @@ function JobRow({
           </p>
           {job.last_error_message ? (
             <p className="mt-2 line-clamp-2 text-xs leading-5 text-danger">
-              {job.last_error_message}
+              {jobErrorLabel(job.last_error_code)}
             </p>
           ) : null}
           <div className="mt-2 sm:hidden">
@@ -227,16 +229,5 @@ function JobRow({
         )}
       </div>
     </article>
-  );
-}
-
-function jobTypeLabel(type: string) {
-  return (
-    {
-      PROFILE_SCAN: "对标账号同步",
-      CONTENT_IMPORT: "内容导入",
-      TRANSCRIPTION: "内容转写",
-      ANALYSIS: "AI 内容分析",
-    }[type] ?? type
   );
 }

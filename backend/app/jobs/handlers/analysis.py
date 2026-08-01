@@ -13,10 +13,18 @@ from app.db.models import (
     ExternalContent,
     SyncJob,
     Transcript,
+    Workspace,
+    WorkspaceInspiration,
 )
 from app.jobs.errors import JobExecutionError
+from app.modules.ai_connections.service import configured_for
 from app.modules.analysis.budget import settle_ai_budget
 from app.modules.analysis.schemas import AnalysisL1Result, AnalysisL2Result
+from app.modules.analysis.service import request_analysis
+from app.modules.automation.service import (
+    get_automation_settings,
+    within_daily_analysis_limit,
+)
 from app.providers.ai.base import AIProviderRequestError, AnalysisProvider
 from app.providers.ai.factory import analysis_provider_for_run
 
@@ -176,11 +184,60 @@ class AnalysisHandler:
             actual_cost_usd=output.cost_usd,
         )
         self.db.commit()
+        auto_l2_status = "not_applicable"
+        auto_l2_run_id = None
+        if run.analysis_level == "l1" and validated.recommended_for_l2:
+            auto_l2_status, auto_l2_run_id = self._queue_automatic_l2(run)
         return {
             "analysis_run_id": str(run.id),
             "analysis_level": run.analysis_level,
             "evidence_refs": evidence_refs,
+            "auto_l2_status": auto_l2_status,
+            "auto_l2_run_id": auto_l2_run_id,
         }
+
+    def _queue_automatic_l2(self, run: AnalysisRun) -> tuple[str, str | None]:
+        if self.settings is None:
+            return "not_configured", None
+        workspace = self.db.get(Workspace, run.workspace_id)
+        if workspace is None:
+            return "workspace_missing", None
+        automation = get_automation_settings(workspace)
+        if not automation.enabled or not automation.auto_l2:
+            return "disabled", None
+        if not within_daily_analysis_limit(
+            self.db, workspace=workspace, level="l2", policy=automation
+        ):
+            return "daily_limit_reached", None
+        if not configured_for(
+            self.db,
+            workspace_id=workspace.id,
+            task_type="l2",
+            settings=self.settings,
+        ):
+            return "not_configured", None
+        inspiration = self.db.scalar(
+            select(WorkspaceInspiration).where(
+                WorkspaceInspiration.workspace_id == workspace.id,
+                WorkspaceInspiration.external_content_id == run.external_content_id,
+            )
+        )
+        if inspiration is None:
+            return "inspiration_missing", None
+        try:
+            l2, reused = request_analysis(
+                self.db,
+                workspace_id=workspace.id,
+                inspiration_id=inspiration.id,
+                level="l2",
+                force=False,
+                settings=self.settings,
+            )
+            self.db.commit()
+            return ("reused" if reused else "queued"), str(l2.id)
+        except AppError as exc:
+            self.db.rollback()
+            return exc.code.lower(), None
 
     def _fail(self, run: AnalysisRun, code: str, message: str) -> None:
         run.status = "failed"

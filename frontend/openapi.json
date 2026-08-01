@@ -1469,6 +1469,427 @@
         "title": "AuditEventRead",
         "type": "object"
       },
+      "AutomationCandidate": {
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "content_potential_score": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Potential Score"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "inspiration_id": {
+            "format": "uuid",
+            "title": "Inspiration Id",
+            "type": "string"
+          },
+          "l1_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Status"
+          },
+          "l2_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L2 Status"
+          },
+          "opportunity_score": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opportunity Score"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "qualified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Qualified At"
+          },
+          "score_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Mode"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "inspiration_id",
+          "title",
+          "platform",
+          "grade"
+        ],
+        "title": "AutomationCandidate",
+        "type": "object"
+      },
+      "AutomationSettings": {
+        "additionalProperties": false,
+        "properties": {
+          "auto_l1": {
+            "default": true,
+            "title": "Auto L1",
+            "type": "boolean"
+          },
+          "auto_l2": {
+            "default": true,
+            "title": "Auto L2",
+            "type": "boolean"
+          },
+          "daily_l1_limit": {
+            "default": 20,
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Daily L1 Limit",
+            "type": "integer"
+          },
+          "daily_l2_limit": {
+            "default": 5,
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Daily L2 Limit",
+            "type": "integer"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "metric_thresholds": {
+            "$ref": "#/components/schemas/MetricThresholds"
+          },
+          "minimum_age_minutes": {
+            "default": 120,
+            "maximum": 43200.0,
+            "minimum": 0.0,
+            "title": "Minimum Age Minutes",
+            "type": "integer"
+          },
+          "observation_hours": {
+            "default": 72,
+            "maximum": 720.0,
+            "minimum": 1.0,
+            "title": "Observation Hours",
+            "type": "integer"
+          },
+          "scan_interval_hours": {
+            "default": 24,
+            "maximum": 720.0,
+            "minimum": 1.0,
+            "title": "Scan Interval Hours",
+            "type": "integer"
+          },
+          "threshold_match": {
+            "default": "any",
+            "enum": [
+              "any",
+              "all"
+            ],
+            "title": "Threshold Match",
+            "type": "string"
+          }
+        },
+        "title": "AutomationSettings",
+        "type": "object"
+      },
+      "AutomationSettingsPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "auto_l1": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto L1"
+          },
+          "auto_l2": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto L2"
+          },
+          "daily_l1_limit": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily L1 Limit"
+          },
+          "daily_l2_limit": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily L2 Limit"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "metric_thresholds": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricThresholdsPatch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minimum_age_minutes": {
+            "anyOf": [
+              {
+                "maximum": 43200.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Age Minutes"
+          },
+          "observation_hours": {
+            "anyOf": [
+              {
+                "maximum": 720.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observation Hours"
+          },
+          "scan_interval_hours": {
+            "anyOf": [
+              {
+                "maximum": 720.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scan Interval Hours"
+          },
+          "threshold_match": {
+            "anyOf": [
+              {
+                "enum": [
+                  "any",
+                  "all"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold Match"
+          }
+        },
+        "title": "AutomationSettingsPatch",
+        "type": "object"
+      },
+      "AutomationToday": {
+        "properties": {
+          "actual_cost_usd": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Actual Cost Usd",
+            "type": "string"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/AutomationCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "discovered_contents": {
+            "title": "Discovered Contents",
+            "type": "integer"
+          },
+          "estimated_cost_usd": {
+            "default": "0",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Estimated Cost Usd",
+            "type": "string"
+          },
+          "l1_completed": {
+            "title": "L1 Completed",
+            "type": "integer"
+          },
+          "l1_queued": {
+            "title": "L1 Queued",
+            "type": "integer"
+          },
+          "l2_completed": {
+            "title": "L2 Completed",
+            "type": "integer"
+          },
+          "l2_queued": {
+            "title": "L2 Queued",
+            "type": "integer"
+          },
+          "observing_contents": {
+            "title": "Observing Contents",
+            "type": "integer"
+          },
+          "qualified_contents": {
+            "title": "Qualified Contents",
+            "type": "integer"
+          },
+          "scanned_profiles": {
+            "title": "Scanned Profiles",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timezone",
+          "window_start",
+          "window_end",
+          "scanned_profiles",
+          "discovered_contents",
+          "observing_contents",
+          "qualified_contents",
+          "l1_queued",
+          "l1_completed",
+          "l2_queued",
+          "l2_completed",
+          "candidates"
+        ],
+        "title": "AutomationToday",
+        "type": "object"
+      },
       "CommentFetchRequest": {
         "properties": {
           "max_pages": {
@@ -2193,6 +2614,38 @@
           "meta"
         ],
         "title": "DataResponse[AttributionEventRead]",
+        "type": "object"
+      },
+      "DataResponse_AutomationSettings_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AutomationSettings"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[AutomationSettings]",
+        "type": "object"
+      },
+      "DataResponse_AutomationToday_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AutomationToday"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[AutomationToday]",
         "type": "object"
       },
       "DataResponse_ContentProjectRead_": {
@@ -4936,6 +5389,120 @@
           "role"
         ],
         "title": "MembershipRead",
+        "type": "object"
+      },
+      "MetricThresholds": {
+        "additionalProperties": false,
+        "properties": {
+          "comments": {
+            "default": 30,
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Comments",
+            "type": "integer"
+          },
+          "favorites": {
+            "default": 100,
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Favorites",
+            "type": "integer"
+          },
+          "likes": {
+            "default": 200,
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Likes",
+            "type": "integer"
+          },
+          "shares": {
+            "default": 50,
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Shares",
+            "type": "integer"
+          },
+          "views": {
+            "default": 10000,
+            "maximum": 10000000000.0,
+            "minimum": 0.0,
+            "title": "Views",
+            "type": "integer"
+          }
+        },
+        "title": "MetricThresholds",
+        "type": "object"
+      },
+      "MetricThresholdsPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "comments": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "favorites": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Favorites"
+          },
+          "likes": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "maximum": 10000000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          }
+        },
+        "title": "MetricThresholdsPatch",
         "type": "object"
       },
       "OwnedChannelCreate": {
@@ -9330,6 +9897,176 @@
         "tags": [
           "members",
           "audit"
+        ]
+      }
+    },
+    "/api/v1/automation/settings": {
+      "get": {
+        "operationId": "read_settings_api_v1_automation_settings_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AutomationSettings_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Settings",
+        "tags": [
+          "automation"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_settings_api_v1_automation_settings_patch",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationSettingsPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AutomationSettings_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Settings",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/v1/automation/today": {
+      "get": {
+        "operationId": "today_api_v1_automation_today_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_AutomationToday_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Today",
+        "tags": [
+          "automation"
         ]
       }
     },

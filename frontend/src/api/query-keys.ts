@@ -15,6 +15,8 @@ export const queryKeys = {
   workspace: (workspaceId: string) =>
     ["workspaces", workspaceId, "detail"] as const,
   settings: {
+    automation: (workspaceId: string) =>
+      ["workspaces", workspaceId, "settings", "automation"] as const,
     members: (workspaceId: string) =>
       ["workspaces", workspaceId, "settings", "members"] as const,
     providerHealth: (workspaceId: string) =>
@@ -164,6 +166,8 @@ export const queryKeys = {
     all: (workspaceId: string) => ["workspaces", workspaceId, "jobs"] as const,
   },
   production: {
+    automationToday: (workspaceId: string) =>
+      ["workspaces", workspaceId, "automation", "today"] as const,
     channels: (workspaceId: string) =>
       ["workspaces", workspaceId, "owned-channels"] as const,
     channel: (workspaceId: string, channelId: string) =>

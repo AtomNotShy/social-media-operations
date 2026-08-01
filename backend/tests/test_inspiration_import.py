@@ -101,7 +101,10 @@ def test_duplicate_url_import_reuses_active_job_then_fresh_content(
         assert db.scalar(select(func.count()).select_from(WorkspaceInspiration)) == 1
         assert db.scalar(select(func.count()).select_from(ContentScore)) == 1
         job = db.scalar(select(SyncJob))
-        assert job.result["score_grade"] == "insufficient"
+        assert job.result["score_grade"] == "qualified"
+        score = db.scalar(select(ContentScore))
+        assert score.evidence["score_mode"] == "content_independent"
+        assert score.evidence["manual_selection"] is True
 
     refresh = client.post(
         f"/api/v1/inspirations/{third.json()['data']['inspiration_id']}/refresh-metrics",

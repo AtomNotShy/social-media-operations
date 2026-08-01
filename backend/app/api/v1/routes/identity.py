@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user, get_db
 from app.core.errors import AppError
 from app.db.models import ScanPolicy, ScoringPolicy, User, Workspace, WorkspaceMember
+from app.modules.automation.schemas import AutomationSettings
 from app.modules.identity.schemas import (
     ExternalCallsPauseRequest,
     ExternalCallsStateRead,
@@ -94,6 +95,7 @@ def create_workspace(
         timezone=body.timezone,
         daily_provider_budget_usd=body.daily_provider_budget_usd,
         daily_ai_budget_usd=body.daily_ai_budget_usd,
+        settings={"automation": AutomationSettings().model_dump(mode="json")},
     )
     db.add(workspace)
     db.flush()

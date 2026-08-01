@@ -19,6 +19,11 @@ from app.db.models import (
 )
 from app.modules.ai_connections.service import configured_for
 from app.modules.analysis.service import request_analysis
+from app.modules.automation.service import (
+    evaluate_hard_gate,
+    get_automation_settings,
+    within_daily_analysis_limit,
+)
 from app.modules.inspirations.service import (
     is_promotion_grade,
     promote_scored_content,
@@ -59,6 +64,15 @@ class ProfileScanHandler:
                 message="Tracked profile or workspace no longer exists.",
                 retryable=False,
             )
+        automation = get_automation_settings(workspace)
+        if not automation.enabled:
+            profile.sync_status = "idle"
+            self.db.commit()
+            return {
+                "tracked_profile_id": str(profile.id),
+                "skipped": True,
+                "skip_reason": "automation_disabled",
+            }
         try:
             binding = get_platform_binding(profile.platform)
         except ValueError as exc:
@@ -83,6 +97,7 @@ class ProfileScanHandler:
                 endpoint=get_endpoint(binding.profile_endpoint),
                 params=binding.profile_params(profile.external_id),
                 sync_job_id=job.id,
+                force_refresh=True,
             )
             normalized_profile = adapter.parse_profile(
                 profile_result.payload,
@@ -112,6 +127,7 @@ class ProfileScanHandler:
                     endpoint=get_endpoint(binding.contents_endpoint),
                     params=binding.contents_params(profile.external_id, cursor, 20),
                     sync_job_id=job.id,
+                    force_refresh=True,
                 )
                 page = adapter.parse_profile_contents(
                     page_result.payload,
@@ -150,8 +166,19 @@ class ProfileScanHandler:
             scores_created = 0
             inspirations_promoted = 0
             analyses_queued = 0
+            observing_count = 0
+            threshold_passed_count = 0
             score_errors: list[str] = []
             for content_id in observed_content_ids:
+                content = self.db.get(ExternalContent, content_id)
+                if content is None:
+                    continue
+                gate = evaluate_hard_gate(
+                    self.db,
+                    workspace=workspace,
+                    content=content,
+                    policy=automation,
+                )
                 previous_score = self.db.scalar(
                     select(ContentScore)
                     .where(
@@ -176,6 +203,30 @@ class ProfileScanHandler:
                         workspace_id=workspace.id,
                         content_id=content_id,
                     )
+                    relative_qualified = is_promotion_grade(score.grade)
+                    gate_passed = gate.passed or (not gate.configured and relative_qualified)
+                    gate_evidence = dict(gate.evidence)
+                    gate_evidence["passed"] = gate_passed
+                    gate_evidence["decision_mode"] = (
+                        "relative_score_fallback"
+                        if not gate.configured and relative_qualified
+                        else "hard_threshold"
+                    )
+                    score.evidence = {
+                        **(score.evidence or {}),
+                        "automation_gate": gate_evidence,
+                        "score_mode": (
+                            "hard_threshold" if gate.configured else "author_relative"
+                        ),
+                    }
+                    if gate.configured and not gate.passed:
+                        score.grade = "below_threshold"
+                    elif gate.passed and not relative_qualified:
+                        score.grade = "qualified"
+                    if gate.observing and not gate_passed:
+                        observing_count += 1
+                    if gate_passed:
+                        threshold_passed_count += 1
                     self.db.commit()
                     scores_created += 1
                     inspiration = promote_scored_content(
@@ -193,6 +244,14 @@ class ProfileScanHandler:
                     if (
                         inspiration is not None
                         and (existing_inspiration is None or newly_qualified)
+                        and automation.enabled
+                        and automation.auto_l1
+                        and within_daily_analysis_limit(
+                            self.db,
+                            workspace=workspace,
+                            level="l1",
+                            policy=automation,
+                        )
                         and self.settings is not None
                         and configured_for(
                             self.db,
@@ -217,7 +276,9 @@ class ProfileScanHandler:
                     score_errors.append(exc.code)
 
             profile.last_synced_at = datetime.now(timezone.utc)
-            profile.next_scan_at = profile.last_synced_at + timedelta(hours=24)
+            profile.next_scan_at = profile.last_synced_at + timedelta(
+                hours=automation.scan_interval_hours
+            )
             profile.sync_status = "idle"
             self.db.commit()
             return {
@@ -228,6 +289,8 @@ class ProfileScanHandler:
                 "scores_created": scores_created,
                 "inspirations_promoted": inspirations_promoted,
                 "analyses_queued": analyses_queued,
+                "observing_contents": observing_count,
+                "qualified_contents": threshold_passed_count,
                 "score_errors": score_errors,
             }
         except Exception:

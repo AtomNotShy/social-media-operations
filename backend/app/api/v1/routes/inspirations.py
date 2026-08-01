@@ -22,6 +22,8 @@ from app.db.models import (
     WorkspaceInspiration,
 )
 from app.jobs.service import create_job
+from app.modules.ai_connections.service import configured_for
+from app.modules.analysis.service import request_analysis
 from app.modules.inspirations.schemas import (
     ContentMetricSnapshotRead,
     ImportURLRead,
@@ -206,14 +208,31 @@ def import_url(
             else None
         )
         if fresh_fetch_id is not None:
+            analysis_job_id = None
+            analysis_reused = False
+            if body.analyze and configured_for(
+                db,
+                workspace_id=context.workspace.id,
+                task_type="l1",
+                settings=request.app.state.settings,
+            ):
+                run, analysis_reused = request_analysis(
+                    db,
+                    workspace_id=context.workspace.id,
+                    inspiration_id=inspiration.id,
+                    level="l1",
+                    force=False,
+                    settings=request.app.state.settings,
+                )
+                analysis_job_id = run.sync_job_id
             db.commit()
-            response.status_code = 200
+            response.status_code = 200 if analysis_job_id is None or analysis_reused else 202
             return DataResponse(
                 data=ImportURLRead(
                     inspiration_id=inspiration.id,
                     external_content_id=content.id,
                     existing=True,
-                    job_id=None,
+                    job_id=analysis_job_id,
                 ),
                 meta=ResponseMeta(request_id=request.state.request_id),
             )

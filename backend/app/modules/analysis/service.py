@@ -112,12 +112,25 @@ def _enforce_l2_gate(
         .order_by(AnalysisRun.finished_at.desc(), AnalysisRun.created_at.desc())
         .limit(1)
     )
-    if score is None or score.grade not in {"t1", "t2"}:
+    inspiration = db.scalar(
+        select(WorkspaceInspiration).where(
+            WorkspaceInspiration.workspace_id == workspace_id,
+            WorkspaceInspiration.external_content_id == content_id,
+        )
+    )
+    manually_selected = inspiration is not None and inspiration.source == "manual_url"
+    gate_passed = bool(
+        score is not None
+        and (score.evidence or {}).get("automation_gate", {}).get("passed")
+    )
+    if not manually_selected and (
+        score is None or (score.grade not in {"t1", "t2", "qualified"} and not gate_passed)
+    ):
         raise AppError(
             409,
             "L2_POLICY_REJECTED",
             "Content is not eligible for L2",
-            "L2 requires the latest score to be T1 or T2.",
+            "L2 requires a qualified score or a manually selected inspiration.",
         )
     if l1 is None or not bool((l1.result or {}).get("recommended_for_l2")):
         raise AppError(

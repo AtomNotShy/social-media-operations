@@ -5,7 +5,8 @@ from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db.models import ACTIVE_JOB_STATUSES, ProcessHeartbeat, SyncJob, TrackedProfile
+from app.db.models import ACTIVE_JOB_STATUSES, ProcessHeartbeat, SyncJob, TrackedProfile, Workspace
+from app.modules.automation.service import get_automation_settings
 
 
 def touch_process_heartbeat(
@@ -162,6 +163,9 @@ def schedule_due_profile_scans(
     created = 0
     deduplicated = 0
     for profile in profiles:
+        workspace = db.get(Workspace, profile.workspace_id)
+        if workspace is None or not get_automation_settings(workspace).enabled:
+            continue
         _, was_created = create_job(
             db,
             workspace_id=profile.workspace_id,

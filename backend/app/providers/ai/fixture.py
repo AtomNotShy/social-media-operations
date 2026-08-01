@@ -15,6 +15,11 @@ class FixtureAnalysisProvider:
                 "life": "evergreen",
                 "life_reason": "Fixture result for automated tests.",
                 "recommended_for_l2": True,
+                "content_potential_score": 82,
+                "strategy_fit_score": None,
+                "opportunity_score": 78,
+                "score_reasons": ["Strong reusable structure."],
+                "dimension_scores": {"hook": 84, "discussion": 72},
             }
         else:
             result = {
