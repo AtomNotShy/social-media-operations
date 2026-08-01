@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
-  CalendarClock,
   Check,
+  ChevronDown,
   Clock3,
   ExternalLink,
   LoaderCircle,
@@ -12,8 +12,6 @@ import {
   Pencil,
   Play,
   RefreshCw,
-  ScanSearch,
-  ShieldCheck,
   Trash2,
   UsersRound,
   X,
@@ -26,17 +24,24 @@ import { z } from "zod";
 import { ErrorState } from "@/src/components/ui/error-state";
 import { StatusBadge } from "@/src/components/ui/status-badge";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
-import { ProfileContentCard } from "@/src/features/inspirations/inspiration-card";
-import { useProfileContents } from "@/src/features/inspirations/queries";
 import { DeleteProfileDialog } from "@/src/features/tracked-profiles/delete-profile-dialog";
+import {
+  isVideo,
+  ProfileOverviewContentCard,
+} from "@/src/features/tracked-profiles/profile-overview-content-card";
 import {
   useDeleteTrackedProfile,
   useSyncTrackedProfile,
   useToggleTrackedProfile,
   useTrackedProfile,
+  useTrackedProfileOverview,
   useUpdateTrackedProfile,
 } from "@/src/features/tracked-profiles/queries";
 import { ProfileAvatar } from "@/src/features/tracked-profiles/profile-avatar";
+import type {
+  TrackedProfileOverview,
+  TrackedProfileOverviewContent,
+} from "@/src/features/tracked-profiles/types";
 import {
   formatCompactNumber,
   formatRelativeTime,
@@ -59,7 +64,7 @@ export function TrackedProfileDetailPage({
 }) {
   const router = useRouter();
   const profile = useTrackedProfile(workspaceId, profileId);
-  const contents = useProfileContents(workspaceId, profileId);
+  const overview = useTrackedProfileOverview(workspaceId, profileId);
   const permission = useWorkspaceRole(workspaceId);
   const update = useUpdateTrackedProfile(workspaceId, profileId);
   const toggle = useToggleTrackedProfile(workspaceId);
@@ -67,6 +72,7 @@ export function TrackedProfileDetailPage({
   const remove = useDeleteTrackedProfile(workspaceId);
   const [editing, setEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [syncAccepted, setSyncAccepted] = useState(false);
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: { display_name: "", priority: 50 },
@@ -110,7 +116,7 @@ export function TrackedProfileDetailPage({
     );
   }
 
-  const item = profile.data;
+  const item = overview.data?.profile ?? profile.data;
   const busy =
     toggle.isPending || sync.isPending || update.isPending || remove.isPending;
 
@@ -124,14 +130,13 @@ export function TrackedProfileDetailPage({
         返回对标账号
       </Link>
 
-      <section className="mb-5 overflow-hidden rounded-2xl border border-border bg-surface shadow-panel">
-        <div className="h-1.5 bg-gradient-to-r from-primary-600 via-blue-400 to-cyan-300" />
-        <div className="flex flex-col gap-5 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
+      <section className="mb-6 rounded-xl border border-border bg-surface p-4 shadow-panel sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-3.5">
             <ProfileAvatar profile={item} size="lg" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-2xl font-semibold tracking-tight">
+                <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
                   {item.display_name}
                 </h1>
                 <StatusBadge
@@ -139,71 +144,67 @@ export function TrackedProfileDetailPage({
                   status={item.sync_status}
                 />
               </div>
-              <p className="mt-1.5 text-sm text-text-muted">
+              <p className="mt-1 text-sm text-text-muted">
                 {platformLabel(item.platform)}
                 {item.handle ? ` · ${item.handle}` : ""}
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-muted">
+                <span className="inline-flex items-center gap-1.5">
+                  <UsersRound aria-hidden="true" size={13} />
+                  {formatCompactNumber(item.follower_count_latest)} 粉丝
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock3 aria-hidden="true" size={13} />
+                  上次采集 {formatRelativeTime(item.last_synced_at)}
+                </span>
+                <span>
+                  {overview.data ? overview.data.recent_content_count : "—"} 条近期内容
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <a
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium hover:bg-surface-subtle"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-muted hover:bg-surface-subtle hover:text-text"
               href={item.profile_url}
               rel="noreferrer"
               target="_blank"
             >
               <ExternalLink aria-hidden="true" size={15} />
-              打开主页
+              平台主页
             </a>
             {permission.canEdit ? (
               <>
+                {syncAccepted ? (
+                  <Link
+                    aria-live="polite"
+                    className="text-xs font-medium text-primary-700 hover:underline"
+                    href={`/w/${workspaceId}/jobs`}
+                  >
+                    同步任务已加入队列
+                  </Link>
+                ) : null}
                 <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium hover:bg-surface-subtle disabled:opacity-50"
-                  disabled={busy}
-                  onClick={() => setEditing(true)}
-                  type="button"
-                >
-                  <Pencil aria-hidden="true" size={15} />
-                  编辑
-                </button>
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium hover:bg-surface-subtle disabled:opacity-50"
-                  disabled={busy}
-                  onClick={() => toggle.mutate(item)}
-                  type="button"
-                >
-                  {item.active ? (
-                    <Pause aria-hidden="true" size={15} />
-                  ) : (
-                    <Play aria-hidden="true" size={15} />
-                  )}
-                  {item.active ? "暂停" : "恢复"}
-                </button>
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3.5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-50"
                   disabled={busy || !item.active}
-                  onClick={() => sync.mutate(item)}
+                  onClick={() => {
+                    setSyncAccepted(false);
+                    sync.mutate(item, {
+                      onSuccess: () => setSyncAccepted(true),
+                    });
+                  }}
                   type="button"
                 >
                   {sync.isPending ? (
                     <LoaderCircle
                       aria-hidden="true"
                       className="animate-spin"
-                      size={15}
+                      size={14}
                     />
                   ) : (
-                    <RefreshCw aria-hidden="true" size={15} />
+                    <RefreshCw aria-hidden="true" size={14} />
                   )}
                   立即同步
-                </button>
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3.5 py-2.5 text-sm font-medium text-danger hover:bg-red-50 disabled:opacity-50"
-                  disabled={busy}
-                  onClick={() => setDeleteOpen(true)}
-                  type="button"
-                >
-                  <Trash2 aria-hidden="true" size={15} />
-                  删除
                 </button>
               </>
             ) : (
@@ -215,115 +216,84 @@ export function TrackedProfileDetailPage({
         </div>
       </section>
 
-      <section className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {[
-          {
-            icon: UsersRound,
-            label: "粉丝数",
-            value: formatCompactNumber(item.follower_count_latest),
-            detail: item.follower_count_latest == null ? "平台暂未提供" : "最新快照",
-          },
-          {
-            icon: ScanSearch,
-            label: "扫描优先级",
-            value: String(item.priority),
-            detail: "范围 0–100",
-          },
-          {
-            icon: Clock3,
-            label: "最近同步",
-            value: formatRelativeTime(item.last_synced_at),
-            detail: item.last_synced_at ? "数据已入库" : "尚未执行",
-          },
-          {
-            icon: CalendarClock,
-            label: "下次扫描",
-            value: item.active ? formatFuture(item.next_scan_at) : "已暂停",
-            detail: item.active ? "按当前策略" : "恢复后重新计划",
-          },
-        ].map((metric) => (
-          <div
-            className="rounded-xl border border-border bg-surface p-4 shadow-panel sm:p-5"
-            key={metric.label}
-          >
-            <div className="flex items-center gap-2 text-xs font-medium text-text-muted">
-              <metric.icon aria-hidden="true" size={15} />
-              {metric.label}
-            </div>
-            <strong className="mt-3 block text-xl font-semibold tabular-nums">
-              {metric.value}
-            </strong>
-            <p className="mt-1 text-[11px] text-text-muted">{metric.detail}</p>
-          </div>
-        ))}
-      </section>
+      <ProfileContentsSection
+        contents={overview.data?.contents ?? []}
+        error={overview.error}
+        isLoading={overview.isLoading}
+        total={overview.data?.recent_content_count}
+        workspaceId={workspaceId}
+      />
 
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
-        <section className="rounded-xl border border-border bg-surface p-5 shadow-panel sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.14em] text-primary-600 uppercase">
-                Profile
-              </p>
-              <h2 className="mt-1 text-lg font-semibold">账号资料与扫描配置</h2>
-            </div>
-            <ShieldCheck aria-hidden="true" className="text-success" size={20} />
-          </div>
-          <dl className="mt-6 grid gap-x-8 gap-y-5 text-sm sm:grid-cols-2">
+      {overview.data ? <ProfileContentOverview overview={overview.data} /> : null}
+
+      <details className="group mt-6 overflow-hidden rounded-xl border border-border bg-surface shadow-panel">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-sm font-medium hover:bg-canvas/50 sm:px-5 [&::-webkit-details-marker]:hidden">
+          <span>
+            监控设置与诊断
+            <span className="ml-2 text-xs font-normal text-text-muted">
+              优先级 {item.priority} · 下次扫描{item.active ? formatFuture(item.next_scan_at) : "已暂停"}
+            </span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className="shrink-0 text-text-muted transition group-open:rotate-180"
+            size={17}
+          />
+        </summary>
+        <div className="border-t border-border px-4 py-5 sm:px-5">
+          <dl className="grid gap-x-8 gap-y-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <Detail label="平台" value={platformLabel(item.platform)} />
             <Detail label="平台账号 ID" value={item.external_id} mono />
             <Detail label="账号 Handle" value={item.handle ?? "—"} />
             <Detail label="扫描策略 ID" value={item.scan_policy_id} mono />
+            <Detail label="扫描优先级" value={`${item.priority} / 100`} />
+            <Detail
+              label="下次扫描"
+              value={item.active ? formatFuture(item.next_scan_at) : "已暂停"}
+            />
             <Detail
               label="加入时间"
               value={new Date(item.created_at).toLocaleString("zh-CN")}
             />
-            <Detail
-              label="最后更新"
-              value={formatRelativeTime(item.updated_at)}
-            />
+            <Detail label="最后更新" value={formatRelativeTime(item.updated_at)} />
           </dl>
-        </section>
-
-        <section className="rounded-xl border border-border bg-surface p-5 shadow-panel sm:p-6">
-          <p className="text-xs font-semibold tracking-[0.14em] text-primary-600 uppercase">
-            Data availability
-          </p>
-          <div className="flex items-end justify-between gap-3">
-            <h2 className="mt-1 text-lg font-semibold">最近采集作品</h2>
-            <span className="text-xs text-text-muted">
-              {contents.data?.length ?? 0} 条
-            </span>
-          </div>
-          {contents.isLoading ? (
-            <div className="mt-6 space-y-3">
-              {Array.from({ length: 2 }).map((_, index) => (
-                <div
-                  className="h-28 animate-pulse rounded-xl bg-surface-subtle"
-                  key={index}
-                />
-              ))}
+          {permission.canEdit ? (
+            <div className="mt-6 flex flex-wrap gap-2 border-t border-border pt-4">
+              <button
+                className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-surface-subtle disabled:opacity-50"
+                disabled={busy}
+                onClick={() => setEditing(true)}
+                type="button"
+              >
+                <Pencil aria-hidden="true" size={14} />
+                编辑账号
+              </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium hover:bg-surface-subtle disabled:opacity-50"
+                disabled={busy}
+                onClick={() => toggle.mutate(item)}
+                type="button"
+              >
+                {item.active ? (
+                  <Pause aria-hidden="true" size={14} />
+                ) : (
+                  <Play aria-hidden="true" size={14} />
+                )}
+                {item.active ? "暂停监控" : "恢复监控"}
+              </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-danger hover:bg-red-50 disabled:opacity-50"
+                disabled={busy}
+                onClick={() => setDeleteOpen(true)}
+                type="button"
+              >
+                <Trash2 aria-hidden="true" size={14} />
+                删除账号
+              </button>
             </div>
-          ) : contents.error ? (
-            <div className="mt-6 rounded-xl border border-amber-100 bg-amber-50 p-4 text-xs leading-5 text-amber-800">
-              作品列表暂时读取失败，账号同步状态仍以页面上方为准。
-            </div>
-          ) : contents.data?.length ? (
-            <div className="mt-6 space-y-3">
-              {contents.data.slice(0, 6).map((content) => (
-                <ProfileContentCard item={content} key={content.id} />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-6 rounded-xl border border-dashed border-border bg-canvas/60 p-5 text-center">
-              <p className="text-sm font-medium">尚未采集到作品</p>
-              <p className="mt-2 text-xs leading-5 text-text-muted">
-                发起同步后，可在任务中心确认任务完成，再回到这里查看已入库作品。
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
+          ) : null}
+        </div>
+      </details>
 
       {editing ? (
         <div
@@ -450,6 +420,253 @@ export function TrackedProfileDetailPage({
   );
 }
 
+export type ProfileContentsSectionProps = {
+  contents: TrackedProfileOverviewContent[];
+  workspaceId: string;
+  isLoading?: boolean;
+  error?: unknown;
+  total?: number;
+};
+
+export function ProfileContentsSection({
+  contents,
+  workspaceId,
+  isLoading = false,
+  error,
+  total,
+}: ProfileContentsSectionProps) {
+  const [filter, setFilter] = useState<"all" | "high" | "image" | "video">(
+    "all",
+  );
+  const [sort, setSort] = useState<"published" | "collected">("published");
+  const contentCount = total ?? contents.length;
+  const visibleContents = [...contents]
+    .filter((content) => {
+      if (filter === "all") return true;
+      if (filter === "high") {
+        return ["t1", "t2", "qualified"].includes(
+          content.latest_score?.grade.toLowerCase() ?? "",
+        );
+      }
+      return filter === "video"
+        ? isVideo(content.content_type)
+        : !isVideo(content.content_type);
+    })
+    .sort((left, right) => {
+      const leftDate =
+        sort === "published"
+          ? (left.published_at ?? left.first_seen_at)
+          : left.first_seen_at;
+      const rightDate =
+        sort === "published"
+          ? (right.published_at ?? right.first_seen_at)
+          : right.first_seen_at;
+      return new Date(rightDate).getTime() - new Date(leftDate).getTime();
+    });
+
+  return (
+    <section aria-labelledby="recent-profile-contents" className="min-w-0">
+      <div className="mb-4 flex flex-col gap-4">
+        <div>
+          <h2
+            className="text-xl font-semibold tracking-tight sm:text-2xl"
+            id="recent-profile-contents"
+          >
+            最近采集内容
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-text-muted">
+            优先浏览这个账号最近发布的内容，快速判断值得继续拆解的主题和表达。
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
+            {[
+              { label: "全部", value: "all" as const },
+              { label: "高潜内容", value: "high" as const },
+              { label: "图文", value: "image" as const },
+              { label: "视频", value: "video" as const },
+            ].map((option) => (
+              <button
+                aria-pressed={filter === option.value}
+                className={`shrink-0 border-b-2 px-3 py-2 text-sm font-medium transition ${
+                  filter === option.value
+                    ? "border-primary-600 text-primary-700"
+                    : "border-transparent text-text-muted hover:text-text"
+                }`}
+                key={option.value}
+                onClick={() => setFilter(option.value)}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="mb-2 flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+            <span className="text-xs text-text-muted">最近入库 {contentCount} 条</span>
+            <select
+              aria-label="内容排序"
+              className="h-8 rounded-lg border border-border bg-surface px-2.5 text-xs outline-none focus:border-primary-500"
+              onChange={(event) =>
+                setSort(event.target.value as "published" | "collected")
+              }
+              value={sort}
+            >
+              <option value="published">最新发布</option>
+              <option value="collected">最新采集</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div
+          aria-label="正在加载最近采集内容"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div
+              className="overflow-hidden rounded-xl border border-border bg-surface"
+              key={index}
+            >
+              <div className="aspect-[16/9] animate-pulse bg-surface-subtle" />
+              <div className="space-y-3 p-4">
+                <div className="h-4 w-4/5 animate-pulse rounded bg-surface-subtle" />
+                <div className="h-3 w-full animate-pulse rounded bg-surface-subtle" />
+                <div className="h-3 w-2/3 animate-pulse rounded bg-surface-subtle" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-amber-100 bg-amber-50 p-5 text-sm leading-6 text-amber-800">
+          最近内容暂时读取失败。你可以稍后重试，账号本身的同步状态不受影响。
+        </div>
+      ) : visibleContents.length ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visibleContents.map((content) => (
+            <ProfileOverviewContentCard
+              item={content}
+              key={content.id}
+              workspaceId={workspaceId}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border bg-surface px-5 py-12 text-center shadow-panel">
+          <p className="text-sm font-medium">
+            {contents.length ? "当前筛选下没有内容" : "尚未采集到内容"}
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-text-muted">
+            {contents.length
+              ? "切换到全部内容，查看这个账号最近入库的作品。"
+              : "发起同步后，可在任务中心确认任务完成，再回到这里查看已入库内容。"}
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProfileContentOverview({
+  overview,
+}: {
+  overview: TrackedProfileOverview;
+}) {
+  const distribution = [
+    {
+      key: "t1",
+      label: "T1 现象级",
+      value: overview.grade_distribution.t1,
+      color: "bg-grade-t1",
+    },
+    {
+      key: "t2",
+      label: "T2 爆款",
+      value: overview.grade_distribution.t2,
+      color: "bg-grade-t2",
+    },
+    {
+      key: "t3",
+      label: "T3 小爆",
+      value: overview.grade_distribution.t3,
+      color: "bg-grade-t3",
+    },
+    {
+      key: "qualified",
+      label: "已过硬门槛",
+      value: overview.grade_distribution.qualified,
+      color: "bg-primary-500",
+    },
+    {
+      key: "normal",
+      label: "普通 / 未分级",
+      value: overview.grade_distribution.normal,
+      color: "bg-text-muted/30",
+    },
+  ];
+  const gradedTotal = distribution.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <section
+      aria-label="内容表现概览"
+      className="mt-6 grid gap-4 lg:grid-cols-[0.42fr_0.58fr]"
+    >
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-panel">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-base font-semibold">内容表现概览</h2>
+          <span className="text-xs text-text-muted">最近 {overview.window_days} 天</span>
+        </div>
+        <dl className="mt-5 grid grid-cols-2 gap-4">
+          <div>
+            <dt className="text-xs text-text-muted">近期内容</dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums">
+              {overview.recent_content_count}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-text-muted">累计采集</dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums">
+              {overview.total_content_count}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-panel">
+        <h2 className="text-base font-semibold">内容分级分布</h2>
+        {gradedTotal ? (
+          <>
+            <div
+              aria-label="内容分级比例"
+              className="mt-5 flex h-2.5 overflow-hidden rounded-full bg-surface-subtle"
+            >
+              {distribution.map((grade) => (
+                <span
+                  className={grade.color}
+                  key={grade.key}
+                  style={{ width: `${(grade.value / gradedTotal) * 100}%` }}
+                />
+              ))}
+            </div>
+            <div className="mt-4 grid gap-2 text-xs text-text-muted sm:grid-cols-2 xl:grid-cols-5">
+              {distribution.map((grade) => (
+                <div className="flex items-center gap-2" key={grade.key}>
+                  <span className={`size-2 shrink-0 rounded-full ${grade.color}`} />
+                  <span>
+                    {grade.label} {grade.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="mt-5 text-sm text-text-muted">当前时间窗口内还没有可分级内容。</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function Detail({
   label,
   value,
@@ -478,7 +695,9 @@ function syncStatusLabel(status: string) {
       paused: "已暂停",
       pending: "等待中",
       running: "同步中",
+      syncing: "同步中",
       failed: "同步失败",
+      error: "同步失败",
       dead: "需要处理",
     }[status] ?? status
   );

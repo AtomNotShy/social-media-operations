@@ -1580,6 +1580,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tracked-profiles/{profile_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Profile Overview */
+        get: operations["get_profile_overview_api_v1_tracked_profiles__profile_id__overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tracked-profiles/{profile_id}/pause": {
         parameters: {
             query?: never;
@@ -3025,6 +3042,11 @@ export interface components {
         /** DataResponse[TopicRead] */
         DataResponse_TopicRead_: {
             data: components["schemas"]["TopicRead"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[TrackedProfileOverviewRead] */
+        DataResponse_TrackedProfileOverviewRead_: {
+            data: components["schemas"]["TrackedProfileOverviewRead"];
             meta: components["schemas"]["ResponseMeta"];
         };
         /** DataResponse[TrackedProfileRead] */
@@ -4730,6 +4752,116 @@ export interface components {
         TrackedProfileImportRequest: {
             /** Profiles */
             profiles: components["schemas"]["TrackedProfileCreate"][];
+        };
+        /** TrackedProfileOverviewContent */
+        TrackedProfileOverviewContent: {
+            /** Canonical Url */
+            canonical_url: string;
+            /** Content Type */
+            content_type: string;
+            /** Cover Url */
+            cover_url: string | null;
+            /** External Id */
+            external_id: string;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** In Inspiration Library */
+            in_inspiration_library: boolean;
+            /** Inspiration Id */
+            inspiration_id: string | null;
+            latest_metrics: components["schemas"]["TrackedProfileOverviewMetricSummary"] | null;
+            latest_score: components["schemas"]["TrackedProfileOverviewScoreSummary"] | null;
+            /** Platform */
+            platform: string;
+            /** Published At */
+            published_at: string | null;
+            /** Title */
+            title: string | null;
+        };
+        /** TrackedProfileOverviewGradeDistribution */
+        TrackedProfileOverviewGradeDistribution: {
+            /**
+             * Normal
+             * @default 0
+             */
+            normal: number;
+            /**
+             * Qualified
+             * @default 0
+             */
+            qualified: number;
+            /**
+             * T1
+             * @default 0
+             */
+            t1: number;
+            /**
+             * T2
+             * @default 0
+             */
+            t2: number;
+            /**
+             * T3
+             * @default 0
+             */
+            t3: number;
+        };
+        /** TrackedProfileOverviewMetricSummary */
+        TrackedProfileOverviewMetricSummary: {
+            /**
+             * Captured At
+             * Format: date-time
+             */
+            captured_at: string;
+            /** Comments */
+            comments: number | null;
+            /** Downloads */
+            downloads: number | null;
+            /** Favorites */
+            favorites: number | null;
+            /** Likes */
+            likes: number | null;
+            /** Shares */
+            shares: number | null;
+            /** Views */
+            views: number | null;
+        };
+        /** TrackedProfileOverviewRead */
+        TrackedProfileOverviewRead: {
+            /** Contents */
+            contents: components["schemas"]["TrackedProfileOverviewContent"][];
+            grade_distribution: components["schemas"]["TrackedProfileOverviewGradeDistribution"];
+            profile: components["schemas"]["TrackedProfileRead"];
+            /** Recent Content Count */
+            recent_content_count: number;
+            /** Total Content Count */
+            total_content_count: number;
+            /** Window Days */
+            window_days: number;
+        };
+        /** TrackedProfileOverviewScoreSummary */
+        TrackedProfileOverviewScoreSummary: {
+            /**
+             * Calculated At
+             * Format: date-time
+             */
+            calculated_at: string;
+            /** Grade */
+            grade: string;
+            /** M Value */
+            m_value: string | null;
+            /** R Value */
+            r_value: string | null;
+            /** Tier */
+            tier: string | null;
         };
         /** TrackedProfileRead */
         TrackedProfileRead: {
@@ -9241,6 +9373,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataResponse_list_ProfileMetricSnapshotRead__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profile_overview_api_v1_tracked_profiles__profile_id__overview_get: {
+        parameters: {
+            query?: {
+                window_days?: number;
+                limit?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_TrackedProfileOverviewRead_"];
                 };
             };
             /** @description Validation Error */

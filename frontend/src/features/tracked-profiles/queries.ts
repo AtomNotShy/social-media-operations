@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   useMutation,
   useQuery,
@@ -11,6 +12,7 @@ import {
   createTrackedProfile,
   deleteTrackedProfile,
   getTrackedProfile,
+  getTrackedProfileOverview,
   listTrackedProfiles,
   syncTrackedProfile,
   updateTrackedProfile,
@@ -19,9 +21,16 @@ import type {
   Job,
   TrackedProfile,
   TrackedProfileCreate,
+  TrackedProfileOverview,
   TrackedProfileUpdate,
 } from "@/src/features/tracked-profiles/types";
-import { demoJobs, demoProfiles } from "@/src/test/fixtures";
+import {
+  demoContents,
+  demoInspirations,
+  demoJobs,
+  demoProfiles,
+} from "@/src/test/fixtures";
+import { contentCoverUrl } from "@/src/features/inspirations/presentation";
 
 export function useTrackedProfiles(
   workspaceId: string,
@@ -65,6 +74,129 @@ export function useTrackedProfile(
   });
 }
 
+export function useTrackedProfileOverview(
+  workspaceId: string,
+  profileId: string,
+  windowDays = 30,
+) {
+  const client = useQueryClient();
+  const query = useQuery({
+    queryKey: queryKeys.trackedProfiles.overview(
+      workspaceId,
+      profileId,
+      windowDays,
+    ),
+    queryFn: async () => {
+      if (workspaceId !== "demo") {
+        return getTrackedProfileOverview(
+          workspaceId,
+          profileId,
+          windowDays,
+          12,
+        );
+      }
+
+      const profile = structuredClone(demoProfiles).find(
+        (item) => item.id === profileId,
+      );
+      if (!profile) throw new Error("没有找到这个对标账号。");
+      const contents = structuredClone(demoContents).filter(
+        (item) => item.tracked_profile_id === profileId,
+      );
+      const overviewContents = contents.map((content) => {
+        const inspiration = demoInspirations.find(
+          (item) => item.content.id === content.id,
+        );
+        return {
+          id: content.id,
+          platform: content.platform,
+          external_id: content.external_id,
+          canonical_url: content.canonical_url,
+          content_type: content.content_type,
+          title: content.title,
+          cover_url: contentCoverUrl(content.media_manifest),
+          published_at: content.published_at,
+          first_seen_at: content.first_seen_at,
+          latest_metrics: inspiration?.latest_metrics
+            ? { ...inspiration.latest_metrics, downloads: null }
+            : null,
+          latest_score: inspiration?.latest_score
+            ? { ...inspiration.latest_score, tier: null }
+            : null,
+          in_inspiration_library: Boolean(inspiration),
+          inspiration_id: inspiration?.id ?? null,
+        };
+      });
+      const gradeDistribution = overviewContents.reduce(
+        (distribution, content) => {
+          const grade = content.latest_score?.grade.toLowerCase();
+          if (
+            grade === "t1" ||
+            grade === "t2" ||
+            grade === "t3" ||
+            grade === "qualified"
+          ) {
+            distribution[grade] += 1;
+          } else {
+            distribution.normal += 1;
+          }
+          return distribution;
+        },
+        { t1: 0, t2: 0, t3: 0, qualified: 0, normal: 0 },
+      );
+      return {
+        profile,
+        window_days: windowDays,
+        total_content_count: overviewContents.length,
+        recent_content_count: overviewContents.length,
+        grade_distribution: gradeDistribution,
+        contents: overviewContents,
+      } satisfies TrackedProfileOverview;
+    },
+    refetchInterval: (query) =>
+      workspaceId !== "demo" &&
+      ["pending", "running", "syncing"].includes(
+        query.state.data?.profile.sync_status ?? "",
+      )
+        ? 5_000
+        : false,
+  });
+
+  useEffect(() => {
+    const currentProfile = query.data?.profile;
+    if (!currentProfile) return;
+    client.setQueryData(
+      queryKeys.trackedProfiles.detail(workspaceId, profileId),
+      currentProfile,
+    );
+    client.setQueriesData<TrackedProfile[]>(
+      { queryKey: queryKeys.trackedProfiles.lists(workspaceId) },
+      (current) =>
+        current?.map((item) =>
+          item.id === currentProfile.id ? currentProfile : item,
+        ),
+    );
+  }, [client, profileId, query.data?.profile, workspaceId]);
+
+  return query;
+}
+
+function updateOverviewProfile(
+  client: ReturnType<typeof useQueryClient>,
+  workspaceId: string,
+  profile: TrackedProfile,
+) {
+  client.setQueriesData<TrackedProfileOverview>(
+    {
+      queryKey: [
+        ...queryKeys.trackedProfiles.detail(workspaceId, profile.id),
+        "overview",
+      ],
+    },
+    (current) => (current ? { ...current, profile } : current),
+  );
+}
+
 export function useUpdateTrackedProfile(
   workspaceId: string,
   profileId: string,
@@ -96,10 +228,11 @@ export function useUpdateTrackedProfile(
         updated,
       );
       client.setQueriesData<TrackedProfile[]>(
-        { queryKey: queryKeys.trackedProfiles.all(workspaceId) },
+        { queryKey: queryKeys.trackedProfiles.lists(workspaceId) },
         (current) =>
           current?.map((item) => (item.id === updated.id ? updated : item)),
       );
+      updateOverviewProfile(client, workspaceId, updated);
     },
   });
 }
@@ -133,11 +266,10 @@ export function useCreateTrackedProfile(
         handle: input.handle ?? null,
       } satisfies TrackedProfile;
     },
-    onSuccess: (created) => {
-      client.setQueriesData<TrackedProfile[]>(
-        { queryKey: queryKeys.trackedProfiles.all(workspaceId) },
-        (current) => (current ? [created, ...current] : [created]),
-      );
+    onSuccess: () => {
+      client.invalidateQueries({
+        queryKey: queryKeys.trackedProfiles.lists(workspaceId),
+      });
       onCreated?.();
     },
   });
@@ -162,11 +294,10 @@ export function useToggleTrackedProfile(workspaceId: string) {
         queryKeys.trackedProfiles.detail(workspaceId, updated.id),
         updated,
       );
-      client.setQueriesData<TrackedProfile[]>(
-        { queryKey: queryKeys.trackedProfiles.all(workspaceId) },
-        (current) =>
-          current?.map((item) => (item.id === updated.id ? updated : item)),
-      );
+      updateOverviewProfile(client, workspaceId, updated);
+      client.invalidateQueries({
+        queryKey: queryKeys.trackedProfiles.lists(workspaceId),
+      });
     },
   });
 }
@@ -197,11 +328,10 @@ export function useDeleteTrackedProfile(workspaceId: string) {
         queryKeys.trackedProfiles.detail(workspaceId, updated.id),
         updated,
       );
-      client.setQueriesData<TrackedProfile[]>(
-        { queryKey: queryKeys.trackedProfiles.all(workspaceId) },
-        (current) =>
-          current?.map((item) => (item.id === updated.id ? updated : item)),
-      );
+      updateOverviewProfile(client, workspaceId, updated);
+      client.invalidateQueries({
+        queryKey: queryKeys.trackedProfiles.lists(workspaceId),
+      });
     },
   });
 }
@@ -216,6 +346,23 @@ export function useSyncTrackedProfile(workspaceId: string) {
       return { id: crypto.randomUUID(), status: "pending" };
     },
     onSuccess: (accepted, profile) => {
+      const pendingProfile = {
+        ...profile,
+        sync_status: accepted.status,
+      } satisfies TrackedProfile;
+      client.setQueryData(
+        queryKeys.trackedProfiles.detail(workspaceId, profile.id),
+        pendingProfile,
+      );
+      client.setQueriesData<TrackedProfile[]>(
+        { queryKey: queryKeys.trackedProfiles.lists(workspaceId) },
+        (current) =>
+          current?.map((item) =>
+            item.id === profile.id ? pendingProfile : item,
+          ),
+      );
+      updateOverviewProfile(client, workspaceId, pendingProfile);
+      client.invalidateQueries({ queryKey: queryKeys.jobs.all(workspaceId) });
       if (workspaceId === "demo") {
         const now = new Date().toISOString();
         const job: Job = {

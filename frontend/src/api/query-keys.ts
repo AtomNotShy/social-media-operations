@@ -29,6 +29,8 @@ export const queryKeys = {
   trackedProfiles: {
     all: (workspaceId: string) =>
       ["workspaces", workspaceId, "tracked-profiles"] as const,
+    lists: (workspaceId: string) =>
+      ["workspaces", workspaceId, "tracked-profiles", "list"] as const,
     list: (workspaceId: string, filters: TrackedProfileFilters) =>
       [
         "workspaces",
@@ -56,6 +58,16 @@ export const queryKeys = {
         "detail",
         profileId,
         "contents",
+      ] as const,
+    overview: (workspaceId: string, profileId: string, windowDays: number) =>
+      [
+        "workspaces",
+        workspaceId,
+        "tracked-profiles",
+        "detail",
+        profileId,
+        "overview",
+        windowDays,
       ] as const,
   },
   inspirations: {

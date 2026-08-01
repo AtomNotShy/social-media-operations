@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
@@ -90,3 +91,54 @@ class ExternalContentRead(BaseModel):
     detail_status: str
     first_seen_at: datetime
     last_seen_at: datetime
+
+
+class TrackedProfileOverviewGradeDistribution(BaseModel):
+    t1: int = 0
+    t2: int = 0
+    t3: int = 0
+    qualified: int = 0
+    normal: int = 0
+
+
+class TrackedProfileOverviewMetricSummary(BaseModel):
+    captured_at: datetime
+    views: int | None
+    likes: int | None
+    comments: int | None
+    favorites: int | None
+    shares: int | None
+    downloads: int | None
+
+
+class TrackedProfileOverviewScoreSummary(BaseModel):
+    calculated_at: datetime
+    grade: str
+    tier: str | None
+    r_value: Decimal | None
+    m_value: Decimal | None
+
+
+class TrackedProfileOverviewContent(BaseModel):
+    id: UUID
+    platform: str
+    external_id: str
+    canonical_url: str
+    content_type: str
+    title: str | None
+    cover_url: str | None
+    published_at: datetime | None
+    first_seen_at: datetime
+    latest_metrics: TrackedProfileOverviewMetricSummary | None
+    latest_score: TrackedProfileOverviewScoreSummary | None
+    in_inspiration_library: bool
+    inspiration_id: UUID | None
+
+
+class TrackedProfileOverviewRead(BaseModel):
+    profile: TrackedProfileRead
+    window_days: int
+    total_content_count: int
+    recent_content_count: int
+    grade_distribution: TrackedProfileOverviewGradeDistribution
+    contents: list[TrackedProfileOverviewContent]

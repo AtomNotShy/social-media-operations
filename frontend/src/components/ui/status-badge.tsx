@@ -5,9 +5,11 @@ const styles: Record<string, string> = {
   paused: "bg-surface-subtle text-text-muted",
   pending: "bg-primary-50 text-primary-700",
   running: "bg-primary-50 text-primary-700",
+  syncing: "bg-primary-50 text-primary-700",
   retry_wait: "bg-amber-50 text-amber-700",
   succeeded: "bg-emerald-50 text-emerald-700",
   failed: "bg-red-50 text-red-700",
+  error: "bg-red-50 text-red-700",
   dead: "bg-red-50 text-red-700",
   cancelled: "bg-surface-subtle text-text-muted",
   inbox: "bg-amber-50 text-amber-700",
@@ -34,7 +36,11 @@ export function StatusBadge({
     >
       <Circle
         aria-hidden="true"
-        className={status === "running" ? "animate-pulse fill-current" : "fill-current"}
+        className={
+          ["running", "syncing"].includes(status)
+            ? "animate-pulse fill-current"
+            : "fill-current"
+        }
         size={6}
       />
       {label}

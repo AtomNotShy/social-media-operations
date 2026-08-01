@@ -3,6 +3,7 @@ import type {
   Job,
   TrackedProfile,
   TrackedProfileCreate,
+  TrackedProfileOverview,
   TrackedProfileUpdate,
 } from "@/src/features/tracked-profiles/types";
 
@@ -37,6 +38,25 @@ export async function getTrackedProfile(
     {
       headers: workspaceHeaders(workspaceId),
       params: { path: { profile_id: profileId } },
+    },
+  );
+  return data!.data;
+}
+
+export async function getTrackedProfileOverview(
+  workspaceId: string,
+  profileId: string,
+  windowDays = 30,
+  limit = 12,
+): Promise<TrackedProfileOverview> {
+  const { data } = await api.GET(
+    "/api/v1/tracked-profiles/{profile_id}/overview",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: {
+        path: { profile_id: profileId },
+        query: { window_days: windowDays, limit },
+      },
     },
   );
   return data!.data;

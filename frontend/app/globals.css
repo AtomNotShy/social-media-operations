@@ -19,6 +19,9 @@
   --color-success: oklch(0.62 0.16 150);
   --color-warning: oklch(0.72 0.16 75);
   --color-danger: oklch(0.58 0.23 28);
+  --color-grade-t1: oklch(0.58 0.23 28);
+  --color-grade-t2: oklch(0.7 0.18 55);
+  --color-grade-t3: oklch(0.78 0.16 82);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;

@@ -154,6 +154,7 @@ GET    /tracked-profiles
 POST   /tracked-profiles
 POST   /tracked-profiles/import
 GET    /tracked-profiles/{profile_id}
+GET    /tracked-profiles/{profile_id}/overview
 PATCH  /tracked-profiles/{profile_id}
 DELETE /tracked-profiles/{profile_id}
 POST   /tracked-profiles/{profile_id}/sync
@@ -163,6 +164,21 @@ GET    /tracked-profiles/{profile_id}/contents
 GET    /tracked-profiles/{profile_id}/metrics
 GET    /tracked-profiles/{profile_id}/sync-runs
 ```
+
+内容情报首屏使用 `GET /tracked-profiles/{profile_id}/overview`。查询参数：
+
+- `window_days`：近期采集统计窗口，默认 30 天，范围 1–365 天。
+- `limit`：返回的最近内容数量，默认 12，范围 1–50。
+
+返回账号摘要、全部已采集内容数、窗口内采集数、窗口内最新评分的
+`t1/t2/t3/qualified/normal` 分布，以及最近内容。每条内容包含封面、标题、发布时间、
+最新互动指标、最新评分、是否已进入灵感库及灵感 ID。内容没有评分时计入
+`normal`，缺失指标或评分时对应摘要为 `null`。
+来源侧已删除（`deleted_at_source` 非空）的内容不计入总数、分布或最近内容。
+
+后端契约变化后从 `backend/` 目录运行
+`uv run python -m app.cli.export_openapi ../frontend/openapi.json`，再从
+`frontend/` 目录运行 `npm run api:generate` 更新 TypeScript 类型；生成文件不手改。
 
 创建对标账号可以接受主页 URL，返回同步任务：
 

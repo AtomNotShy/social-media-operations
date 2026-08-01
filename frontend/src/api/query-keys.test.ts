@@ -18,6 +18,12 @@ describe("query keys", () => {
   });
 
   it("does not leak blank filter values into the key", () => {
+    expect(queryKeys.trackedProfiles.lists("workspace-b")).toEqual([
+      "workspaces",
+      "workspace-b",
+      "tracked-profiles",
+      "list",
+    ]);
     expect(
       queryKeys.trackedProfiles.list("workspace-b", { q: "   " }),
     ).toEqual([

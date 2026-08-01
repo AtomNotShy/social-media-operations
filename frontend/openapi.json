@@ -3128,6 +3128,22 @@
         "title": "DataResponse[TopicRead]",
         "type": "object"
       },
+      "DataResponse_TrackedProfileOverviewRead_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TrackedProfileOverviewRead"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[TrackedProfileOverviewRead]",
+        "type": "object"
+      },
       "DataResponse_TrackedProfileRead_": {
         "properties": {
           "data": {
@@ -7892,6 +7908,336 @@
           "profiles"
         ],
         "title": "TrackedProfileImportRequest",
+        "type": "object"
+      },
+      "TrackedProfileOverviewContent": {
+        "properties": {
+          "canonical_url": {
+            "title": "Canonical Url",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          },
+          "external_id": {
+            "title": "External Id",
+            "type": "string"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "in_inspiration_library": {
+            "title": "In Inspiration Library",
+            "type": "boolean"
+          },
+          "inspiration_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inspiration Id"
+          },
+          "latest_metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrackedProfileOverviewMetricSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrackedProfileOverviewScoreSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "external_id",
+          "canonical_url",
+          "content_type",
+          "title",
+          "cover_url",
+          "published_at",
+          "first_seen_at",
+          "latest_metrics",
+          "latest_score",
+          "in_inspiration_library",
+          "inspiration_id"
+        ],
+        "title": "TrackedProfileOverviewContent",
+        "type": "object"
+      },
+      "TrackedProfileOverviewGradeDistribution": {
+        "properties": {
+          "normal": {
+            "default": 0,
+            "title": "Normal",
+            "type": "integer"
+          },
+          "qualified": {
+            "default": 0,
+            "title": "Qualified",
+            "type": "integer"
+          },
+          "t1": {
+            "default": 0,
+            "title": "T1",
+            "type": "integer"
+          },
+          "t2": {
+            "default": 0,
+            "title": "T2",
+            "type": "integer"
+          },
+          "t3": {
+            "default": 0,
+            "title": "T3",
+            "type": "integer"
+          }
+        },
+        "title": "TrackedProfileOverviewGradeDistribution",
+        "type": "object"
+      },
+      "TrackedProfileOverviewMetricSummary": {
+        "properties": {
+          "captured_at": {
+            "format": "date-time",
+            "title": "Captured At",
+            "type": "string"
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "downloads": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downloads"
+          },
+          "favorites": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Favorites"
+          },
+          "likes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          }
+        },
+        "required": [
+          "captured_at",
+          "views",
+          "likes",
+          "comments",
+          "favorites",
+          "shares",
+          "downloads"
+        ],
+        "title": "TrackedProfileOverviewMetricSummary",
+        "type": "object"
+      },
+      "TrackedProfileOverviewRead": {
+        "properties": {
+          "contents": {
+            "items": {
+              "$ref": "#/components/schemas/TrackedProfileOverviewContent"
+            },
+            "title": "Contents",
+            "type": "array"
+          },
+          "grade_distribution": {
+            "$ref": "#/components/schemas/TrackedProfileOverviewGradeDistribution"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/TrackedProfileRead"
+          },
+          "recent_content_count": {
+            "title": "Recent Content Count",
+            "type": "integer"
+          },
+          "total_content_count": {
+            "title": "Total Content Count",
+            "type": "integer"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profile",
+          "window_days",
+          "total_content_count",
+          "recent_content_count",
+          "grade_distribution",
+          "contents"
+        ],
+        "title": "TrackedProfileOverviewRead",
+        "type": "object"
+      },
+      "TrackedProfileOverviewScoreSummary": {
+        "properties": {
+          "calculated_at": {
+            "format": "date-time",
+            "title": "Calculated At",
+            "type": "string"
+          },
+          "grade": {
+            "title": "Grade",
+            "type": "string"
+          },
+          "m_value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "M Value"
+          },
+          "r_value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R Value"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier"
+          }
+        },
+        "required": [
+          "calculated_at",
+          "grade",
+          "tier",
+          "r_value",
+          "m_value"
+        ],
+        "title": "TrackedProfileOverviewScoreSummary",
         "type": "object"
       },
       "TrackedProfileRead": {
@@ -17104,6 +17450,94 @@
           }
         ],
         "summary": "List Profile Metrics",
+        "tags": [
+          "tracked-profiles"
+        ]
+      }
+    },
+    "/api/v1/tracked-profiles/{profile_id}/overview": {
+      "get": {
+        "operationId": "get_profile_overview_api_v1_tracked_profiles__profile_id__overview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Profile Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window_days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Window Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_TrackedProfileOverviewRead_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Profile Overview",
         "tags": [
           "tracked-profiles"
         ]

@@ -7,7 +7,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  SlidersHorizontal,
   Trash2,
   UsersRound,
 } from "lucide-react";
@@ -75,10 +74,10 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
       total: items.length,
       active: items.filter((item) => item.active).length,
       syncing: items.filter((item) =>
-        ["pending", "running"].includes(item.sync_status),
+        ["pending", "running", "syncing"].includes(item.sync_status),
       ).length,
       needsAttention: items.filter((item) =>
-        ["failed", "dead"].includes(item.sync_status),
+        ["failed", "dead", "error"].includes(item.sync_status),
       ).length,
     };
   }, [profiles.data]);
@@ -98,9 +97,9 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
   return (
     <>
       <PageHeader
-        eyebrow="账号与定位"
+        eyebrow="内容情报"
         title="对标账号"
-        description="管理持续监控的公开账号，掌握每个账号的同步状态与下一次扫描计划。"
+        description="从持续跟踪的账号进入最近采集内容，发现值得拆解和转化的选题。"
         actions={permission.canEdit ? (
           <button
             className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700"
@@ -117,44 +116,8 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
         )}
       />
 
-      <section
-        aria-label="账号概览"
-        className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4"
-      >
-        {[
-          { label: "已跟踪账号", value: stats.total, detail: "当前工作区" },
-          { label: "正常监控", value: stats.active, detail: "按策略扫描" },
-          { label: "同步中", value: stats.syncing, detail: "后台任务可追踪" },
-          {
-            label: "需要处理",
-            value: stats.needsAttention,
-            detail: stats.needsAttention ? "请检查失败原因" : "暂无异常",
-            danger: stats.needsAttention > 0,
-          },
-        ].map((item) => (
-          <div
-            className="rounded-xl border border-border bg-surface p-4 shadow-panel sm:p-5"
-            key={item.label}
-          >
-            <p className="text-xs font-medium text-text-muted">{item.label}</p>
-            <div className="mt-3 flex items-end justify-between gap-2">
-              <strong
-                className={`text-2xl font-semibold tabular-nums ${
-                  item.danger ? "text-danger" : ""
-                }`}
-              >
-                {item.value}
-              </strong>
-              <span className="truncate text-[11px] text-text-muted">
-                {item.detail}
-              </span>
-            </div>
-          </div>
-        ))}
-      </section>
-
       <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-panel">
-        <div className="flex flex-col gap-3 border-b border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
           <div className="relative w-full max-w-md">
             <Search
               aria-hidden="true"
@@ -188,14 +151,20 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
                 {item.label}
               </button>
             ))}
-            <button
-              aria-label="更多筛选"
-              className="grid size-7 place-items-center rounded-md text-text-muted hover:bg-surface"
-              type="button"
-            >
-              <SlidersHorizontal aria-hidden="true" size={14} />
-            </button>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-border bg-canvas/35 px-4 py-2.5 text-xs text-text-muted">
+          <span>
+            <strong className="font-semibold text-text">{stats.total}</strong> 个账号
+          </span>
+          <span>{stats.active} 个监控中</span>
+          {stats.syncing ? <span className="text-primary-700">{stats.syncing} 个正在同步</span> : null}
+          {stats.needsAttention ? (
+            <span className="font-medium text-danger">{stats.needsAttention} 个需要处理</span>
+          ) : (
+            <span>暂无同步异常</span>
+          )}
         </div>
 
         {profiles.isLoading ? (
@@ -223,15 +192,13 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
         ) : profiles.data?.length ? (
           <>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+              <table className="w-full min-w-[820px] border-collapse text-left text-sm">
                 <thead className="bg-canvas/70 text-xs text-text-muted">
                   <tr>
                     <th className="px-5 py-3 font-medium">账号</th>
-                    <th className="px-4 py-3 font-medium">粉丝</th>
-                    <th className="px-4 py-3 font-medium">优先级</th>
-                    <th className="px-4 py-3 font-medium">最近同步</th>
-                    <th className="px-4 py-3 font-medium">同步状态</th>
-                    <th className="px-4 py-3 font-medium">下次扫描</th>
+                    <th className="px-4 py-3 font-medium">近期内容</th>
+                    <th className="px-4 py-3 font-medium">受众规模</th>
+                    <th className="px-4 py-3 font-medium">监控状态</th>
                     <th className="px-5 py-3 text-right font-medium">操作</th>
                   </tr>
                 </thead>
@@ -358,31 +325,35 @@ function ProfileRow({
       <td className="px-5 py-4">
         <ProfileIdentity href={detailHref} profile={profile} />
       </td>
-      <td className="px-4 py-4 font-medium tabular-nums">
-        {formatCompactNumber(profile.follower_count_latest)}
-      </td>
       <td className="px-4 py-4">
-        <div className="flex items-center gap-2">
-          <span className="tabular-nums">{profile.priority}</span>
-          <span className="h-1.5 w-14 overflow-hidden rounded-full bg-surface-subtle">
-            <span
-              className="block h-full rounded-full bg-primary-500"
-              style={{ width: `${profile.priority}%` }}
+        <Link
+          className="group/content inline-flex flex-col hover:text-primary-700"
+          href={`${detailHref}#recent-profile-contents`}
+        >
+          <span className="inline-flex items-center gap-1 font-medium">
+            查看最近采集内容
+            <ArrowUpRight
+              aria-hidden="true"
+              className="transition group-hover/content:translate-x-0.5 group-hover/content:-translate-y-0.5"
+              size={13}
             />
           </span>
-        </div>
+          <span className="mt-1 text-xs text-text-muted">
+            上次采集 {formatRelativeTime(profile.last_synced_at)}
+          </span>
+        </Link>
       </td>
-      <td className="px-4 py-4 text-text-muted">
-        {formatRelativeTime(profile.last_synced_at)}
+      <td className="px-4 py-4">
+        <span className="font-medium tabular-nums">
+          {formatCompactNumber(profile.follower_count_latest)}
+        </span>
+        <span className="ml-1 text-xs text-text-muted">粉丝</span>
       </td>
       <td className="px-4 py-4">
         <StatusBadge
           label={syncStatusLabel(profile.sync_status)}
           status={profile.sync_status}
         />
-      </td>
-      <td className="px-4 py-4 text-text-muted">
-        {profile.active ? formatRelativeFuture(profile.next_scan_at) : "已暂停"}
       </td>
       <td className="px-5 py-4">
         {canEdit ? <div className="flex items-center justify-end gap-1">
@@ -455,7 +426,14 @@ function ProfileCard({
           status={profile.sync_status}
         />
       </div>
-      <dl className="mt-4 grid grid-cols-3 gap-3 rounded-lg bg-canvas/70 p-3 text-xs">
+      <Link
+        className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-primary-100 bg-primary-50/60 px-3.5 py-3 text-sm font-medium text-primary-700"
+        href={`${detailHref}#recent-profile-contents`}
+      >
+        查看最近采集内容
+        <ArrowUpRight aria-hidden="true" size={15} />
+      </Link>
+      <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
         <div>
           <dt className="text-text-muted">粉丝</dt>
           <dd className="mt-1 font-semibold tabular-nums">
@@ -463,11 +441,7 @@ function ProfileCard({
           </dd>
         </div>
         <div>
-          <dt className="text-text-muted">优先级</dt>
-          <dd className="mt-1 font-semibold tabular-nums">{profile.priority}</dd>
-        </div>
-        <div>
-          <dt className="text-text-muted">最近同步</dt>
+          <dt className="text-text-muted">上次采集</dt>
           <dd className="mt-1 font-semibold">
             {formatRelativeTime(profile.last_synced_at)}
           </dd>
@@ -546,18 +520,10 @@ function syncStatusLabel(status: string) {
       paused: "已暂停",
       pending: "等待中",
       running: "同步中",
+      syncing: "同步中",
       failed: "同步失败",
+      error: "同步失败",
       dead: "需要处理",
     }[status] ?? status
   );
-}
-
-function formatRelativeFuture(value: string | null) {
-  if (!value) return "待计划";
-  const diff = new Date(value).getTime() - Date.now();
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes <= 0) return "即将开始";
-  if (minutes < 60) return `${minutes} 分钟后`;
-  const hours = Math.floor(minutes / 60);
-  return hours < 24 ? `${hours} 小时后` : `${Math.floor(hours / 24)} 天后`;
 }

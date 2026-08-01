@@ -28,9 +28,11 @@ from app.modules.tracked_profiles.schemas import (
     ProfileMetricSnapshotRead,
     TrackedProfileCreate,
     TrackedProfileImportRequest,
+    TrackedProfileOverviewRead,
     TrackedProfileRead,
     TrackedProfileUpdate,
 )
+from app.modules.tracked_profiles.service import profile_content_overview
 from app.providers.social.tikhub.platforms import get_platform_binding
 from app.schemas.common import DataResponse, JobAccepted, ResponseMeta
 
@@ -264,6 +266,39 @@ def get_profile(
 
 
 @router.get(
+    "/{profile_id}/overview",
+    response_model=DataResponse[TrackedProfileOverviewRead],
+)
+def get_profile_overview(
+    profile_id: uuid.UUID,
+    request: Request,
+    window_days: int = Query(default=30, ge=1, le=365),
+    limit: int = Query(default=12, ge=1, le=50),
+    context: WorkspaceContext = Depends(get_workspace_context),
+    db: Session = Depends(get_db),
+) -> DataResponse:
+    profile = _get_profile(db, context.workspace.id, profile_id)
+    total, recent, distribution, contents = profile_content_overview(
+        db,
+        workspace_id=context.workspace.id,
+        profile_id=profile.id,
+        window_days=window_days,
+        limit=limit,
+    )
+    return DataResponse(
+        data=TrackedProfileOverviewRead(
+            profile=TrackedProfileRead.model_validate(profile),
+            window_days=window_days,
+            total_content_count=total,
+            recent_content_count=recent,
+            grade_distribution=distribution,
+            contents=contents,
+        ),
+        meta=ResponseMeta(request_id=request.state.request_id),
+    )
+
+
+@router.get(
     "/{profile_id}/contents",
     response_model=DataResponse[list[ExternalContentRead]],
 )
@@ -415,6 +450,7 @@ def sync_profile(
         },
         priority=profile.priority,
     )
+    profile.sync_status = "syncing" if job.status == "running" else "pending"
     db.commit()
     return DataResponse(
         data=JobAccepted(job_id=job.id, status=job.status),
