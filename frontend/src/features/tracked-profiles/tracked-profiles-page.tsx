@@ -25,6 +25,7 @@ import {
   useToggleTrackedProfile,
   useTrackedProfiles,
 } from "@/src/features/tracked-profiles/queries";
+import { buildTrackedProfilesSearchHref } from "@/src/features/tracked-profiles/navigation";
 import type { TrackedProfile } from "@/src/features/tracked-profiles/types";
 import {
   formatCompactNumber,
@@ -35,6 +36,7 @@ import {
 export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const search = searchParams.toString();
   const [queryInput, setQueryInput] = useState(searchParams.get("q") ?? "");
   const [createOpen, setCreateOpen] = useState(
     searchParams.get("create") === "1",
@@ -49,18 +51,18 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
   const permission = useWorkspaceRole(workspaceId);
 
   useEffect(() => {
+    const href = buildTrackedProfilesSearchHref({
+      workspaceId,
+      search,
+      query: queryInput,
+    });
+    if (!href) return;
+
     const timeout = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (queryInput.trim()) params.set("q", queryInput.trim());
-      else params.delete("q");
-      params.delete("cursor");
-      const suffix = params.toString();
-      router.replace(
-        `/w/${workspaceId}/tracked-profiles${suffix ? `?${suffix}` : ""}`,
-      );
+      router.replace(href, { scroll: false });
     }, 350);
     return () => window.clearTimeout(timeout);
-  }, [queryInput, router, searchParams, workspaceId]);
+  }, [queryInput, router, search, workspaceId]);
 
   const stats = useMemo(() => {
     const items = profiles.data ?? [];
@@ -84,6 +86,7 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
     const suffix = params.toString();
     router.replace(
       `/w/${workspaceId}/tracked-profiles${suffix ? `?${suffix}` : ""}`,
+      { scroll: false },
     );
   }
 
@@ -295,7 +298,11 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
           if (searchParams.has("create")) {
             const params = new URLSearchParams(searchParams.toString());
             params.delete("create");
-            router.replace(`/w/${workspaceId}/tracked-profiles?${params}`);
+            const suffix = params.toString();
+            router.replace(
+              `/w/${workspaceId}/tracked-profiles${suffix ? `?${suffix}` : ""}`,
+              { scroll: false },
+            );
           }
         }}
         open={createOpen && permission.canEdit}
