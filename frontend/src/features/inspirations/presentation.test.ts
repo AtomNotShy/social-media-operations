@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   authorName,
+  contentCoverUrl,
   contentTitle,
   detailStatusLabel,
   formatMetric,
@@ -23,6 +24,19 @@ describe("inspiration presentation", () => {
   it("reads common author snapshot fields", () => {
     expect(authorName({ nickname: "运营研究所" })).toBe("运营研究所");
     expect(authorName({ follower_count: 100 })).toBe("公开内容");
+  });
+
+  it("prefers a cover and falls back to image media", () => {
+    expect(
+      contentCoverUrl([
+        { type: "image", url: "https://example.com/image.jpg" },
+        { type: "cover", url: "https://example.com/cover.jpg" },
+      ]),
+    ).toBe("https://example.com/cover.jpg");
+    expect(
+      contentCoverUrl([{ type: "photo", url: "https://example.com/photo.jpg" }]),
+    ).toBe("https://example.com/photo.jpg");
+    expect(contentCoverUrl([{ type: "video", url: "https://example.com/video.mp4" }])).toBeNull();
   });
 
   it("distinguishes missing metrics from a real zero", () => {

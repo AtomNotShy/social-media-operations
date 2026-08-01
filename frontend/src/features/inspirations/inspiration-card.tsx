@@ -3,6 +3,7 @@ import Link from "next/link";
 import { StatusBadge } from "@/src/components/ui/status-badge";
 import {
   authorName,
+  contentCoverUrl,
   contentTitle,
   detailStatusLabel,
   inspirationStatusLabel,
@@ -27,12 +28,34 @@ export function InspirationCard({
   item: Inspiration;
   href: string;
 }) {
+  const coverUrl = contentCoverUrl(item.content.media_manifest);
+
   return (
     <article className="group overflow-hidden rounded-xl border border-border bg-surface shadow-panel transition hover:-translate-y-0.5 hover:shadow-popover">
       <Link href={href}>
         <div
           className={`relative h-36 bg-gradient-to-br p-4 text-white ${gradients[item.content.platform] ?? "from-primary-700 via-primary-500 to-cyan-400"}`}
         >
+          {coverUrl ? (
+            // Remote provider URLs are intentionally rendered with a native image so
+            // each source can supply its own host without Next image configuration.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              alt=""
+              className="absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-105"
+              decoding="async"
+              loading="lazy"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+              referrerPolicy="no-referrer"
+              src={coverUrl}
+            />
+          ) : null}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/10"
+          />
           <div className="flex items-start justify-between">
             <span className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm">
               {platformLabel(item.content.platform)}

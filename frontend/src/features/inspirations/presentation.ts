@@ -36,6 +36,23 @@ export function authorName(author: Record<string, unknown>) {
   return "公开内容";
 }
 
+export function contentCoverUrl(mediaManifest: unknown[]) {
+  const media = mediaManifest.filter(
+    (item): item is { type?: unknown; url?: unknown } =>
+      typeof item === "object" && item !== null,
+  );
+  const preferredTypes = ["cover", "photo", "image"];
+
+  for (const type of preferredTypes) {
+    const match = media.find(
+      (item) => item.type === type && typeof item.url === "string" && item.url,
+    );
+    if (match && typeof match.url === "string") return match.url;
+  }
+
+  return null;
+}
+
 export function formatMetric(value: number | null | undefined) {
   return value == null ? "—" : new Intl.NumberFormat("zh-CN").format(value);
 }
