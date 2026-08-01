@@ -3681,6 +3681,8 @@ export interface components {
         };
         /** PerformanceRecordRead */
         PerformanceRecordRead: {
+            /** Content Title */
+            content_title: string;
             /** Conversions */
             conversions: number;
             /** Exposure */
@@ -3689,6 +3691,17 @@ export interface components {
             interactions: number;
             /** Latest Review Window */
             latest_review_window: string | null;
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /**
+             * Owned Channel Id
+             * Format: uuid
+             */
+            owned_channel_id: string;
+            /** Platform */
+            platform: string;
             /**
              * Publish Plan Id
              * Format: uuid

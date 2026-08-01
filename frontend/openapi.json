@@ -5331,6 +5331,10 @@
       },
       "PerformanceRecordRead": {
         "properties": {
+          "content_title": {
+            "title": "Content Title",
+            "type": "string"
+          },
           "conversions": {
             "title": "Conversions",
             "type": "integer"
@@ -5353,6 +5357,20 @@
               }
             ],
             "title": "Latest Review Window"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          },
+          "owned_channel_id": {
+            "format": "uuid",
+            "title": "Owned Channel Id",
+            "type": "string"
+          },
+          "platform": {
+            "title": "Platform",
+            "type": "string"
           },
           "publish_plan_id": {
             "format": "uuid",
@@ -5377,9 +5395,13 @@
         "required": [
           "publish_record_id",
           "publish_plan_id",
+          "owned_channel_id",
+          "platform",
+          "content_title",
           "published_at",
           "published_url",
           "latest_review_window",
+          "metrics",
           "exposure",
           "interactions",
           "conversions"

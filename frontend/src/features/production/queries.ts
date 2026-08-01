@@ -589,10 +589,26 @@ export function useToday(workspaceId: string) {
 export function usePerformance(workspaceId: string, days = 30) {
   return useQuery({
     queryKey: queryKeys.production.performance(workspaceId, days),
-    queryFn: () =>
-      workspaceId === "demo"
-        ? clone(demoPerformance)
-        : service.getPerformance(workspaceId, days),
+    queryFn: () => {
+      if (workspaceId !== "demo") return service.getPerformance(workspaceId, days);
+      const source = clone(demoPerformance);
+      const fromAt = Date.now() - days * 86_400_000;
+      const records = source.records.filter(
+        (item) => new Date(item.published_at).getTime() >= fromAt,
+      );
+      return {
+        ...source,
+        from_at: new Date(fromAt).toISOString(),
+        records,
+        totals: {
+          published_count: records.length,
+          review_count: records.filter((item) => item.latest_review_window).length,
+          exposure: records.reduce((sum, item) => sum + item.exposure, 0),
+          interactions: records.reduce((sum, item) => sum + item.interactions, 0),
+          conversions: records.reduce((sum, item) => sum + item.conversions, 0),
+        },
+      };
+    },
   });
 }
 

@@ -106,7 +106,7 @@ test("serves the complete P2 production workflow instead of placeholders", async
     ["/w/demo/channels", /自有账号/],
     [
       "/w/demo/channels/46dddb37-1d09-45c8-8645-852e60cf1001",
-      /正在加载账号定位/,
+      /正在加载账号分析/,
     ],
     ["/w/demo/topics", /候选选题/],
     [

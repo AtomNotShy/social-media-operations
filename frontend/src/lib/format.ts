@@ -29,7 +29,7 @@ export function platformLabel(platform: string) {
       wechat_channels: "视频号",
       tiktok: "TikTok",
       instagram: "Instagram",
-      x: "X",
+      x: "Twitter",
     }[platform] ?? platform
   );
 }

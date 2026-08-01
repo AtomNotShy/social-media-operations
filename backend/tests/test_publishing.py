@@ -148,6 +148,11 @@ def test_manual_publish_package_record_and_review_flow(
         "conversions": 0,
     }
     assert performance.json()["data"]["records"][0]["latest_review_window"] == "24h"
+    performance_record = performance.json()["data"]["records"][0]
+    assert performance_record["owned_channel_id"] == channel["id"]
+    assert performance_record["platform"] == "xiaohongshu"
+    assert performance_record["content_title"] == "高峰期如何减少漏单"
+    assert performance_record["metrics"] == {"views": 1200, "likes": 88}
 
     today = client.get("/api/v1/dashboard/today", headers=headers)
     assert today.status_code == 200

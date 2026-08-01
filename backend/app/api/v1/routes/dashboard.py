@@ -9,6 +9,7 @@ from app.api.dependencies import WorkspaceContext, get_db, get_workspace_context
 from app.db.models import (
     ACTIVE_JOB_STATUSES,
     ContentProject,
+    OwnedChannel,
     PublishPlan,
     PublishRecord,
     ReviewInsight,
@@ -138,15 +139,39 @@ def performance_dashboard(
     for review in reviews:
         latest_review.setdefault(review.publish_record_id, review)
 
+    plans = (
+        db.scalars(
+            select(PublishPlan).where(
+                PublishPlan.workspace_id == context.workspace.id,
+                PublishPlan.id.in_([item.publish_plan_id for item in records]),
+            )
+        ).all()
+        if records
+        else []
+    )
+    plan_by_id = {item.id: item for item in plans}
+    channels = (
+        db.scalars(
+            select(OwnedChannel).where(
+                OwnedChannel.workspace_id == context.workspace.id,
+                OwnedChannel.id.in_([item.owned_channel_id for item in plans]),
+            )
+        ).all()
+        if plans
+        else []
+    )
+    channel_by_id = {item.id: item for item in channels}
+
     total_exposure = 0
     total_interactions = 0
     total_conversions = 0
     rows = []
     for record in records:
         review = latest_review.get(record.id)
-        exposure, interactions, conversions = _metric_groups(
-            review.metrics if review is not None else {}
-        )
+        metrics = review.metrics if review is not None else {}
+        exposure, interactions, conversions = _metric_groups(metrics)
+        plan = plan_by_id[record.publish_plan_id]
+        channel = channel_by_id[plan.owned_channel_id]
         total_exposure += exposure
         total_interactions += interactions
         total_conversions += conversions
@@ -154,9 +179,13 @@ def performance_dashboard(
             PerformanceRecordRead(
                 publish_record_id=record.id,
                 publish_plan_id=record.publish_plan_id,
+                owned_channel_id=plan.owned_channel_id,
+                platform=channel.platform,
+                content_title=str(plan.publish_payload.get("title") or "未命名内容"),
                 published_at=record.published_at,
                 published_url=record.published_url,
                 latest_review_window=review.review_window if review is not None else None,
+                metrics=metrics,
                 exposure=exposure,
                 interactions=interactions,
                 conversions=conversions,

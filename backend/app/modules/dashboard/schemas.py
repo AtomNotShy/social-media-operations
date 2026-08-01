@@ -27,9 +27,13 @@ class PerformanceTotals(BaseModel):
 class PerformanceRecordRead(BaseModel):
     publish_record_id: UUID
     publish_plan_id: UUID
+    owned_channel_id: UUID
+    platform: str
+    content_title: str
     published_at: datetime
     published_url: str
     latest_review_window: str | None
+    metrics: dict
     exposure: int
     interactions: int
     conversions: int
