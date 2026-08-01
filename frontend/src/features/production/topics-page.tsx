@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArrowRight, CheckCircle2, Lightbulb, Plus, XCircle } from "lucide-react";
+import { Archive, ArrowUpRight, CheckCircle2, Lightbulb, Plus, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -136,23 +136,26 @@ export function TopicsPage({ workspaceId }: { workspaceId: string }) {
         </div>
       ) : null}
       {topics.isLoading ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div className="h-64 animate-pulse rounded-xl bg-surface" key={index} />
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] gap-3">
+          {Array.from({ length: 9 }).map((_, index) => (
+            <div className="h-56 animate-pulse rounded-xl bg-surface" key={index} />
           ))}
         </div>
       ) : topics.error ? (
         <ErrorState message="选题列表加载失败。" onRetry={() => topics.refetch()} />
       ) : visible.length ? (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] items-start gap-3">
           {visible.map((topic) => (
-            <article className="rounded-xl border border-border bg-surface p-5 shadow-panel" key={topic.id}>
-              <div className="flex items-start gap-3">
+            <article
+              className="group rounded-xl border border-border bg-surface p-4 shadow-panel transition-[border-color,box-shadow] hover:border-primary-100 hover:shadow-md"
+              key={topic.id}
+            >
+              <div className="flex items-center gap-2.5">
                 {permission.canEdit ? (
                   <input
                     aria-label={`选择${topic.title}`}
                     checked={selected.includes(topic.id)}
-                    className="mt-1 size-4"
+                    className="size-4 shrink-0"
                     onChange={(event) =>
                       setSelected((items) =>
                         event.target.checked
@@ -163,35 +166,33 @@ export function TopicsPage({ workspaceId }: { workspaceId: string }) {
                     type="checkbox"
                   />
                 ) : null}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="grid size-9 place-items-center rounded-lg bg-primary-50 text-primary-600">
-                      <Lightbulb size={17} />
-                    </span>
-                    <StatusBadge label={topicStatus(topic.status)} status={topic.status} />
-                  </div>
-                  <h2 className="mt-4 text-base font-semibold">{topic.title}</h2>
-                  <dl className="mt-4 grid gap-3 text-sm">
-                    <div>
-                      <dt className="text-[11px] font-semibold text-text-muted uppercase">用户问题</dt>
-                      <dd className="mt-1 leading-6">{topic.audience_problem || "尚未补充"}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[11px] font-semibold text-text-muted uppercase">切入角度</dt>
-                      <dd className="mt-1 leading-6">{topic.angle || "尚未补充"}</dd>
-                    </div>
-                    <div className="rounded-lg bg-surface-subtle p-3">
-                      <dt className="text-[11px] font-semibold text-primary-600 uppercase">开场钩子</dt>
-                      <dd className="mt-1 leading-6">{topic.hook || "尚未补充"}</dd>
-                    </div>
-                  </dl>
-                  <Link
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary-600"
-                    href={`/w/${workspaceId}/topics/${topic.id}`}
-                  >
-                    打开选题 <ArrowRight size={15} />
-                  </Link>
+                <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary-50 text-primary-600">
+                  <Lightbulb size={14} />
+                </span>
+                <div className="ml-auto">
+                  <StatusBadge label={topicStatus(topic.status)} status={topic.status} />
                 </div>
+              </div>
+              <h2 className="mt-3 text-[15px] leading-6 font-semibold">
+                <Link
+                  className="inline-flex items-start gap-1.5 transition-colors group-hover:text-primary-600"
+                  href={`/w/${workspaceId}/topics/${topic.id}`}
+                >
+                  <span className="line-clamp-2">{topic.title}</span>
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    className="mt-1 shrink-0 opacity-45 transition-opacity group-hover:opacity-100"
+                    size={14}
+                  />
+                </Link>
+              </h2>
+              <dl className="mt-3 divide-y divide-border text-[13px] leading-5">
+                <TopicSummary label="用户问题" value={topic.audience_problem} />
+                <TopicSummary label="切入角度" value={topic.angle} />
+              </dl>
+              <div className="mt-2.5 rounded-lg bg-surface-subtle px-3 py-2.5 text-[13px] leading-5">
+                <p className="mb-0.5 text-[11px] font-semibold text-primary-600">开场钩子</p>
+                <p className="line-clamp-2">{topic.hook || "尚未补充"}</p>
               </div>
             </article>
           ))}
@@ -207,6 +208,15 @@ export function TopicsPage({ workspaceId }: { workspaceId: string }) {
         workspaceId={workspaceId}
       />
     </>
+  );
+}
+
+function TopicSummary({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="grid grid-cols-[4.25rem_minmax(0,1fr)] gap-2 py-2 first:pt-0 last:pb-0">
+      <dt className="font-medium text-text-muted">{label}</dt>
+      <dd className="line-clamp-2">{value || "尚未补充"}</dd>
+    </div>
   );
 }
 

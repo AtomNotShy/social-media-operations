@@ -14,10 +14,12 @@ import {
   RefreshCw,
   ScanSearch,
   ShieldCheck,
+  Trash2,
   UsersRound,
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -26,12 +28,15 @@ import { StatusBadge } from "@/src/components/ui/status-badge";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
 import { ProfileContentCard } from "@/src/features/inspirations/inspiration-card";
 import { useProfileContents } from "@/src/features/inspirations/queries";
+import { DeleteProfileDialog } from "@/src/features/tracked-profiles/delete-profile-dialog";
 import {
+  useDeleteTrackedProfile,
   useSyncTrackedProfile,
   useToggleTrackedProfile,
   useTrackedProfile,
   useUpdateTrackedProfile,
 } from "@/src/features/tracked-profiles/queries";
+import { ProfileAvatar } from "@/src/features/tracked-profiles/profile-avatar";
 import {
   formatCompactNumber,
   formatRelativeTime,
@@ -52,13 +57,16 @@ export function TrackedProfileDetailPage({
   workspaceId: string;
   profileId: string;
 }) {
+  const router = useRouter();
   const profile = useTrackedProfile(workspaceId, profileId);
   const contents = useProfileContents(workspaceId, profileId);
   const permission = useWorkspaceRole(workspaceId);
   const update = useUpdateTrackedProfile(workspaceId, profileId);
   const toggle = useToggleTrackedProfile(workspaceId);
   const sync = useSyncTrackedProfile(workspaceId);
+  const remove = useDeleteTrackedProfile(workspaceId);
   const [editing, setEditing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const form = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: { display_name: "", priority: 50 },
@@ -103,7 +111,8 @@ export function TrackedProfileDetailPage({
   }
 
   const item = profile.data;
-  const busy = toggle.isPending || sync.isPending || update.isPending;
+  const busy =
+    toggle.isPending || sync.isPending || update.isPending || remove.isPending;
 
   return (
     <>
@@ -119,9 +128,7 @@ export function TrackedProfileDetailPage({
         <div className="h-1.5 bg-gradient-to-r from-primary-600 via-blue-400 to-cyan-300" />
         <div className="flex flex-col gap-5 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-4">
-            <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary-50 text-base font-semibold text-primary-700">
-              {item.display_name.slice(0, 2).toUpperCase()}
-            </span>
+            <ProfileAvatar profile={item} size="lg" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-2xl font-semibold tracking-tight">
@@ -188,6 +195,15 @@ export function TrackedProfileDetailPage({
                     <RefreshCw aria-hidden="true" size={15} />
                   )}
                   立即同步
+                </button>
+                <button
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3.5 py-2.5 text-sm font-medium text-danger hover:bg-red-50 disabled:opacity-50"
+                  disabled={busy}
+                  onClick={() => setDeleteOpen(true)}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" size={15} />
+                  删除
                 </button>
               </>
             ) : (
@@ -413,6 +429,23 @@ export function TrackedProfileDetailPage({
           </form>
         </div>
       ) : null}
+      <DeleteProfileDialog
+        error={remove.error}
+        onClose={() => {
+          if (!remove.isPending) setDeleteOpen(false);
+        }}
+        onConfirm={() => {
+          remove.mutate(item, {
+            onSuccess: () => {
+              setDeleteOpen(false);
+              router.push(`/w/${workspaceId}/tracked-profiles`);
+            },
+          });
+        }}
+        open={deleteOpen}
+        pending={remove.isPending}
+        profile={item}
+      />
     </>
   );
 }

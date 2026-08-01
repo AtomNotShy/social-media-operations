@@ -15,6 +15,7 @@ from app.db.models import (
     ProviderUsageDaily,
     SyncJob,
     TrackedProfile,
+    WorkspaceInspiration,
 )
 from app.jobs.worker import process_one
 from app.providers.social.tikhub.client import TikHubHttpClient
@@ -97,12 +98,17 @@ def test_profile_scan_persists_evidence_content_metrics_and_usage(
         assert db.scalar(select(func.count()).select_from(ExternalContent)) == 3
         assert db.scalar(select(func.count()).select_from(ContentMetricSnapshot)) == 3
         assert db.scalar(select(func.count()).select_from(ContentScore)) == 3
+        assert db.scalar(select(func.count()).select_from(WorkspaceInspiration)) == 0
         request_count = db.scalar(select(func.sum(ProviderUsageDaily.request_count)))
         estimated_cost = db.scalar(select(func.sum(ProviderUsageDaily.estimated_cost_usd)))
         assert request_count == 3
         assert str(estimated_cost) == "0.003000"
         tracked_profile = db.get(TrackedProfile, uuid.UUID(profile["id"]))
         assert tracked_profile is not None
+        assert tracked_profile.avatar_url == (
+            "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?"
+            "imageView2/2/w/540/format/webp"
+        )
         assert tracked_profile.last_synced_at is not None
         assert tracked_profile.next_scan_at is not None
         assert tracked_profile.next_scan_at - tracked_profile.last_synced_at == timedelta(hours=24)
@@ -117,6 +123,16 @@ def test_profile_scan_persists_evidence_content_metrics_and_usage(
         "63c8b257000000001f00d554",
         "6a6b4b0b000000002c004cb2",
     }
+
+    profile_response = client.get(
+        f"/api/v1/tracked-profiles/{profile['id']}",
+        headers=headers,
+    )
+    assert profile_response.status_code == 200
+    assert profile_response.json()["data"]["avatar_url"] == (
+        "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?"
+        "imageView2/2/w/540/format/webp"
+    )
 
     metrics = client.get(
         f"/api/v1/tracked-profiles/{profile['id']}/metrics",

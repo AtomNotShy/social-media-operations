@@ -112,6 +112,33 @@ uv run python -m app.jobs.worker
 uv run python -m app.jobs.worker --once
 ```
 
+### 本地视频生成
+
+视频使用同一张 `sync_jobs` 表作为控制平面，但由独立 Worker 领取
+`VIDEO_PRODUCTION`，因此不需要 `TIKHUB_API_KEY`：
+
+```bash
+# .env 中配置一个真实 Provider；默认 disabled，不会产生外部调用
+VIDEO_TTS_PROVIDER=minimax # 或 elevenlabs
+MINIMAX_API_KEY=...
+# 或 ELEVENLABS_API_KEY=... 与 ELEVENLABS_VOICE_ID=...
+# （请求 body 的 voice_id 可覆盖默认音色。）
+
+uv run python -m app.jobs.video_worker
+```
+
+前端内容项目页的“生成视频”会创建 `VideoRun` 和 `VIDEO_PRODUCTION` 任务并立即返回。
+Worker 把结构化 `request.json`、配音和字幕写入 `VIDEO_RUNS_DIR/<run-id>/`，以无 shell
+的受限 `codex exec --sandbox workspace-write --json` 生成 HyperFrames composition，再由固定
+步骤执行 `lint`、`validate`、`inspect` 和 `render`。密钥仅由 TTS Provider 从环境读取，绝不
+写入 Codex prompt 或传给 Codex/HyperFrames 子进程；Codex 只继承最小系统环境和自身认证变量。
+视频目录可在 Git 仓库外，Codex 调用会显式跳过 Git 仓库检查。检查失败会写入
+`diagnostics.json`，并用同一 Codex thread 最多修复两轮后再次检查。成片会登记为 generated
+Asset，并可通过该视频任务的 artifact API 下载。
+
+默认 `VIDEO_TTS_PROVIDER=disabled`；未配置真实 TTS、Codex 或 HyperFrames 时，API/普通
+Worker 不受影响，视频请求会清晰拒绝或由视频任务显示对应失败原因。`fixture` 仅允许测试环境。
+
 另开一个终端运行只负责创建到期扫描任务的 Scheduler：
 
 ```bash

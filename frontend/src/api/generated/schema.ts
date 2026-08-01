@@ -314,6 +314,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/content-projects/{project_id}/videos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Video Runs */
+        get: operations["list_video_runs_api_v1_content_projects__project_id__videos_get"];
+        put?: never;
+        /** Request Video */
+        post: operations["request_video_api_v1_content_projects__project_id__videos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/content-projects/{project_id}/videos/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Video Run */
+        get: operations["get_video_run_api_v1_content_projects__project_id__videos__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/content-projects/{project_id}/videos/{run_id}/artifact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Video Artifact */
+        get: operations["download_video_artifact_api_v1_content_projects__project_id__videos__run_id__artifact_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboard/performance": {
         parameters: {
             query?: never;
@@ -2807,6 +2859,16 @@ export interface components {
             data: components["schemas"]["TrendingRefreshRead"];
             meta: components["schemas"]["ResponseMeta"];
         };
+        /** DataResponse[VideoRunAccepted] */
+        DataResponse_VideoRunAccepted_: {
+            data: components["schemas"]["VideoRunAccepted"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[VideoRunRead] */
+        DataResponse_VideoRunRead_: {
+            data: components["schemas"]["VideoRunRead"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
         /** DataResponse[WorkspaceMemberRead] */
         DataResponse_WorkspaceMemberRead_: {
             data: components["schemas"]["WorkspaceMemberRead"];
@@ -2965,6 +3027,12 @@ export interface components {
         DataResponse_list_UnifiedSearchResult__: {
             /** Data */
             data: components["schemas"]["UnifiedSearchResult"][];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[list[VideoRunRead]] */
+        DataResponse_list_VideoRunRead__: {
+            /** Data */
+            data: components["schemas"]["VideoRunRead"][];
             meta: components["schemas"]["ResponseMeta"];
         };
         /** DataResponse[list[WorkspaceMemberRead]] */
@@ -4404,6 +4472,8 @@ export interface components {
         TrackedProfileRead: {
             /** Active */
             active: boolean;
+            /** Avatar Url */
+            avatar_url: string | null;
             /**
              * Created At
              * Format: date-time
@@ -4625,6 +4695,102 @@ export interface components {
             total_value: string;
             /** Variant Key */
             variant_key: string;
+        };
+        /** VideoRenderSpec */
+        VideoRenderSpec: {
+            /**
+             * Fps
+             * @default 30
+             */
+            fps: number;
+            /**
+             * Height
+             * @default 1920
+             */
+            height: number;
+            /**
+             * Style
+             * @default dark-tech
+             */
+            style: string;
+            /**
+             * Width
+             * @default 1080
+             */
+            width: number;
+        };
+        /** VideoRunAccepted */
+        VideoRunAccepted: {
+            /** Reused */
+            reused: boolean;
+            video_run: components["schemas"]["VideoRunRead"];
+        };
+        /** VideoRunCreate */
+        VideoRunCreate: {
+            /**
+             * Force
+             * @default false
+             */
+            force: boolean;
+            /** Instruction */
+            instruction?: string | null;
+            render_spec?: components["schemas"]["VideoRenderSpec"];
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Tts Provider */
+            tts_provider?: ("minimax" | "elevenlabs" | "fixture") | null;
+            /** Voice Id */
+            voice_id?: string | null;
+        };
+        /** VideoRunRead */
+        VideoRunRead: {
+            /**
+             * Content Project Id
+             * Format: uuid
+             */
+            content_project_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Render Spec */
+            render_spec: {
+                [key: string]: unknown;
+            };
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Started At */
+            started_at: string | null;
+            /** Status */
+            status: string;
+            /** Sync Job Id */
+            sync_job_id: string | null;
+            /** Tts Provider */
+            tts_provider: string;
+            /** Voice Id */
+            voice_id: string | null;
         };
         /** WorkspaceCreate */
         WorkspaceCreate: {
@@ -5502,6 +5668,144 @@ export interface operations {
             };
         };
     };
+    list_video_runs_api_v1_content_projects__project_id__videos_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_list_VideoRunRead__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_video_api_v1_content_projects__project_id__videos_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VideoRunCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_VideoRunAccepted_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_video_run_api_v1_content_projects__project_id__videos__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_VideoRunRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_video_artifact_api_v1_content_projects__project_id__videos__run_id__artifact_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     performance_dashboard_api_v1_dashboard_performance_get: {
         parameters: {
             query?: {
@@ -6089,6 +6393,7 @@ export interface operations {
                 status?: string | null;
                 query?: string | null;
                 limit?: number;
+                cursor?: string | null;
             };
             header?: {
                 "X-Workspace-Id"?: string | null;

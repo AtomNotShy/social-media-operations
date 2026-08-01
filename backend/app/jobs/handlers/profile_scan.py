@@ -8,16 +8,22 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.db.models import (
+    ContentScore,
     ExternalContent,
     ProfileMetricSnapshot,
     ScanPolicy,
     SyncJob,
     TrackedProfile,
     Workspace,
+    WorkspaceInspiration,
 )
 from app.modules.ai_connections.service import configured_for
 from app.modules.analysis.service import request_analysis
-from app.modules.inspirations.service import upsert_external_content
+from app.modules.inspirations.service import (
+    is_promotion_grade,
+    promote_scored_content,
+    upsert_external_content,
+)
 from app.modules.scoring.service import calculate_content_score
 from app.providers.social.tikhub.errors import TikHubError
 from app.providers.social.tikhub.gateway import TikHubGateway
@@ -99,7 +105,7 @@ class ProfileScanHandler:
             created_count = 0
             updated_count = 0
             pages_fetched = 0
-            new_inspirations: list[tuple[uuid.UUID, uuid.UUID]] = []
+            observed_content_ids: set[uuid.UUID] = set()
             for _ in range(max_pages):
                 page_result = await self._fetch_and_persist(
                     workspace=workspace,
@@ -115,20 +121,21 @@ class ProfileScanHandler:
                 for item in page.items:
                     existed = item.external_id in known_ids
                     page_seen_known = page_seen_known or existed
-                    content, inspiration, _ = upsert_external_content(
+                    content, _, _ = upsert_external_content(
                         self.db,
                         workspace_id=workspace.id,
                         item=item,
                         provider_fetch_id=page_result.provider_fetch_id,
                         source="tracked_profile",
                         tracked_profile_id=profile.id,
+                        create_inspiration=False,
                     )
+                    observed_content_ids.add(content.id)
                     if existed:
                         updated_count += 1
                     else:
                         created_count += 1
                         known_ids.add(item.external_id)
-                        new_inspirations.append((content.id, inspiration.id))
                 cursor = page.next_cursor
                 profile.sync_cursor = {
                     "series": binding.series,
@@ -141,9 +148,28 @@ class ProfileScanHandler:
                     break
 
             scores_created = 0
+            inspirations_promoted = 0
             analyses_queued = 0
             score_errors: list[str] = []
-            for content_id, inspiration_id in new_inspirations:
+            for content_id in observed_content_ids:
+                previous_score = self.db.scalar(
+                    select(ContentScore)
+                    .where(
+                        ContentScore.workspace_id == workspace.id,
+                        ContentScore.external_content_id == content_id,
+                    )
+                    .order_by(ContentScore.calculated_at.desc(), ContentScore.id.desc())
+                    .limit(1)
+                )
+                was_qualified = (
+                    previous_score is not None and is_promotion_grade(previous_score.grade)
+                )
+                existing_inspiration = self.db.scalar(
+                    select(WorkspaceInspiration).where(
+                        WorkspaceInspiration.workspace_id == workspace.id,
+                        WorkspaceInspiration.external_content_id == content_id,
+                    )
+                )
                 try:
                     score = calculate_content_score(
                         self.db,
@@ -152,8 +178,21 @@ class ProfileScanHandler:
                     )
                     self.db.commit()
                     scores_created += 1
+                    inspiration = promote_scored_content(
+                        self.db,
+                        workspace_id=workspace.id,
+                        external_content_id=content_id,
+                        grade=score.grade,
+                        source="tracked_profile",
+                    )
+                    if inspiration is not None:
+                        self.db.commit()
+                    newly_qualified = inspiration is not None and not was_qualified
+                    if newly_qualified:
+                        inspirations_promoted += 1
                     if (
-                        score.grade in {"t1", "t2"}
+                        inspiration is not None
+                        and (existing_inspiration is None or newly_qualified)
                         and self.settings is not None
                         and configured_for(
                             self.db,
@@ -165,7 +204,7 @@ class ProfileScanHandler:
                         _, reused = request_analysis(
                             self.db,
                             workspace_id=workspace.id,
-                            inspiration_id=inspiration_id,
+                            inspiration_id=inspiration.id,
                             level="l1",
                             force=False,
                             settings=self.settings,
@@ -187,6 +226,7 @@ class ProfileScanHandler:
                 "contents_created": created_count,
                 "contents_updated": updated_count,
                 "scores_created": scores_created,
+                "inspirations_promoted": inspirations_promoted,
                 "analyses_queued": analyses_queued,
                 "score_errors": score_errors,
             }

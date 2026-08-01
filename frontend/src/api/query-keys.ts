@@ -130,7 +130,13 @@ export const queryKeys = {
     all: (workspaceId: string) =>
       ["workspaces", workspaceId, "patterns"] as const,
     list: (workspaceId: string, status?: string) =>
-      ["workspaces", workspaceId, "patterns", "list", status || undefined] as const,
+      [
+        "workspaces",
+        workspaceId,
+        "patterns",
+        "list",
+        status || undefined,
+      ] as const,
     detail: (workspaceId: string, patternId: string) =>
       ["workspaces", workspaceId, "patterns", "detail", patternId] as const,
   },
@@ -146,11 +152,16 @@ export const queryKeys = {
     ai: (workspaceId: string, dateFrom?: string, dateTo?: string) =>
       ["workspaces", workspaceId, "usage", "ai", { dateFrom, dateTo }] as const,
     asr: (workspaceId: string, dateFrom?: string, dateTo?: string) =>
-      ["workspaces", workspaceId, "usage", "asr", { dateFrom, dateTo }] as const,
+      [
+        "workspaces",
+        workspaceId,
+        "usage",
+        "asr",
+        { dateFrom, dateTo },
+      ] as const,
   },
   jobs: {
-    all: (workspaceId: string) =>
-      ["workspaces", workspaceId, "jobs"] as const,
+    all: (workspaceId: string) => ["workspaces", workspaceId, "jobs"] as const,
   },
   production: {
     channels: (workspaceId: string) =>
@@ -162,15 +173,39 @@ export const queryKeys = {
     topic: (workspaceId: string, topicId: string) =>
       ["workspaces", workspaceId, "topics", topicId] as const,
     projects: (workspaceId: string, status?: string) =>
-      ["workspaces", workspaceId, "content-projects", status || undefined] as const,
+      [
+        "workspaces",
+        workspaceId,
+        "content-projects",
+        status || undefined,
+      ] as const,
     project: (workspaceId: string, projectId: string) =>
       ["workspaces", workspaceId, "content-projects", projectId] as const,
     scripts: (workspaceId: string, projectId: string) =>
-      ["workspaces", workspaceId, "content-projects", projectId, "scripts"] as const,
+      [
+        "workspaces",
+        workspaceId,
+        "content-projects",
+        projectId,
+        "scripts",
+      ] as const,
     assets: (workspaceId: string, projectId?: string) =>
       ["workspaces", workspaceId, "assets", projectId || undefined] as const,
+    videos: (workspaceId: string, projectId: string) =>
+      [
+        "workspaces",
+        workspaceId,
+        "content-projects",
+        projectId,
+        "videos",
+      ] as const,
     plans: (workspaceId: string, status?: string) =>
-      ["workspaces", workspaceId, "publish-plans", status || undefined] as const,
+      [
+        "workspaces",
+        workspaceId,
+        "publish-plans",
+        status || undefined,
+      ] as const,
     reviews: (workspaceId: string, recordId?: string) =>
       ["workspaces", workspaceId, "reviews", recordId || "all"] as const,
     today: (workspaceId: string) =>
@@ -180,7 +215,12 @@ export const queryKeys = {
     savedViews: (workspaceId: string, entityType: string) =>
       ["workspaces", workspaceId, "saved-views", entityType] as const,
     search: (workspaceId: string, query: string) =>
-      ["workspaces", workspaceId, "search", query.trim().toLowerCase()] as const,
+      [
+        "workspaces",
+        workspaceId,
+        "search",
+        query.trim().toLowerCase(),
+      ] as const,
     experiments: (workspaceId: string) =>
       ["workspaces", workspaceId, "experiments"] as const,
   },

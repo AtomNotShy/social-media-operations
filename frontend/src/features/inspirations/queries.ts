@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { queryKeys, type InspirationFilters } from "@/src/api/query-keys";
 import {
   analyzeInspiration,
@@ -40,15 +45,16 @@ export function useInspirations(
   workspaceId: string,
   filters: InspirationFilters,
 ) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: queryKeys.inspirations.list(workspaceId, filters),
-    queryFn: async () => {
-      const items =
-        workspaceId === "demo"
-          ? structuredClone(demoInspirations)
-          : await listInspirations(workspaceId, filters);
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }) => {
+      if (workspaceId !== "demo") {
+        return listInspirations(workspaceId, filters, pageParam);
+      }
+      const items = structuredClone(demoInspirations);
       const query = filters.q?.trim().toLowerCase();
-      return items.filter(
+      const filtered = items.filter(
         (item) =>
           (!filters.platform || item.content.platform === filters.platform) &&
           (!filters.status || item.status === filters.status) &&
@@ -60,8 +66,21 @@ export function useInspirations(
               item.content.platform,
             ].some((value) => value?.toLowerCase().includes(query))),
       );
+      const offset = Number(pageParam ?? "0");
+      const pageSize = 20;
+      const page = filtered.slice(offset, offset + pageSize);
+      return {
+        items: page,
+        nextCursor:
+          offset + pageSize < filtered.length ? String(offset + pageSize) : null,
+      };
     },
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
+  return {
+    ...query,
+    items: query.data?.pages.flatMap((page) => page.items) ?? [],
+  };
 }
 
 export function useInspiration(
@@ -133,11 +152,9 @@ export function useUpdateInspiration(
         queryKeys.inspirations.detail(workspaceId, inspirationId),
         updated,
       );
-      client.setQueriesData<Inspiration[]>(
-        { queryKey: queryKeys.inspirations.all(workspaceId) },
-        (items) =>
-          items?.map((item) => (item.id === updated.id ? updated : item)),
-      );
+      client.invalidateQueries({
+        queryKey: queryKeys.inspirations.all(workspaceId),
+      });
     },
   });
 }
@@ -238,6 +255,7 @@ export function useCreateTopicFromInspiration(
   workspaceId: string,
   inspirationId: string,
 ) {
+  const client = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
       title?: string | null;
@@ -267,6 +285,14 @@ export function useCreateTopicFromInspiration(
         created_at: now,
         updated_at: now,
       };
+    },
+    onSuccess: () => {
+      client.invalidateQueries({
+        queryKey: queryKeys.inspirations.all(workspaceId),
+      });
+      client.invalidateQueries({
+        queryKey: ["workspaces", workspaceId, "topics"],
+      });
     },
   });
 }

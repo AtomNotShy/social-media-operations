@@ -58,6 +58,16 @@ export async function updateTrackedProfile(
   return data!.data;
 }
 
+export async function deleteTrackedProfile(
+  workspaceId: string,
+  profileId: string,
+) {
+  await api.DELETE("/api/v1/tracked-profiles/{profile_id}", {
+    headers: workspaceHeaders(workspaceId),
+    params: { path: { profile_id: profileId } },
+  });
+}
+
 export async function changeTrackedProfileStatus(
   workspaceId: string,
   profile: TrackedProfile,

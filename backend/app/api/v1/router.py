@@ -24,6 +24,7 @@ from app.api.v1.routes import (
     search,
     topics,
     tracked_profiles,
+    videos,
 )
 
 router = APIRouter()
@@ -50,3 +51,4 @@ router.include_router(scoring.router)
 router.include_router(search.router)
 router.include_router(scripts.router)
 router.include_router(topics.router)
+router.include_router(videos.router)

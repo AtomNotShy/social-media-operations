@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  AlertTriangle,
   BarChart3,
   Check,
   Eye,
@@ -12,8 +13,10 @@ import {
   Settings2,
   Sparkles,
   Target,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ErrorState } from "@/src/components/ui/error-state";
 import {
@@ -28,6 +31,7 @@ import {
 import { useWorkspaceRole } from "@/src/features/identity/queries";
 import {
   useChannel,
+  useDisableChannel,
   usePerformance,
   useSavePositioning,
 } from "@/src/features/production/queries";
@@ -37,6 +41,7 @@ import type {
   PositioningUpdate,
 } from "@/src/features/production/types";
 import {
+  Dialog,
   InlineError,
   inputClass,
   primaryButton,
@@ -63,6 +68,7 @@ export function ChannelDetailPage({
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [period, setPeriod] = useState<Period>(30);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const channel = useChannel(workspaceId, channelId);
   const performance = usePerformance(workspaceId, period);
   const permission = useWorkspaceRole(workspaceId);
@@ -99,6 +105,17 @@ export function ChannelDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {permission.canEdit ? (
+            <button
+              aria-label="删除账号"
+              className="inline-grid size-10 place-items-center rounded-lg border border-border bg-surface text-text-muted transition hover:border-red-200 hover:bg-red-50 hover:text-danger"
+              onClick={() => setDeleteOpen(true)}
+              title="删除账号"
+              type="button"
+            >
+              <Trash2 size={15} />
+            </button>
+          ) : null}
           <button
             className={secondaryButton}
             disabled={refreshing}
@@ -148,7 +165,63 @@ export function ChannelDetailPage({
       ) : (
         <PositioningTab canEdit={permission.canEdit} channel={channel.data} workspaceId={workspaceId} />
       )}
+      <DeleteChannelDialog
+        channel={channel.data}
+        onClose={() => setDeleteOpen(false)}
+        open={deleteOpen && permission.canEdit}
+        workspaceId={workspaceId}
+      />
     </>
+  );
+}
+
+function DeleteChannelDialog({
+  channel,
+  workspaceId,
+  open,
+  onClose,
+}: {
+  channel: OwnedChannel;
+  workspaceId: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const disable = useDisableChannel(workspaceId, channel.id);
+
+  return (
+    <Dialog
+      description="账号将从默认列表移除，并停止用于新的内容项目。"
+      onClose={onClose}
+      open={open}
+      title="删除自有账号"
+    >
+      <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <AlertTriangle className="mt-0.5 shrink-0" size={17} />
+        <p className="text-xs leading-5">
+          「{channel.display_name}」的历史发布、复盘和分析数据会继续保留，避免历史报表断裂。删除后暂不支持在前端自助恢复。
+        </p>
+      </div>
+      <InlineError error={disable.error} />
+      <div className="mt-5 flex justify-end gap-2">
+        <button className={secondaryButton} disabled={disable.isPending} onClick={onClose} type="button">
+          取消
+        </button>
+        <button
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={disable.isPending}
+          onClick={() =>
+            disable.mutate(undefined, {
+              onSuccess: () => router.push(`/w/${workspaceId}/channels`),
+            })
+          }
+          type="button"
+        >
+          <Trash2 size={15} />
+          {disable.isPending ? "正在删除…" : "确认删除"}
+        </button>
+      </div>
+    </Dialog>
   );
 }
 

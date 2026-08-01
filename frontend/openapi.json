@@ -2739,6 +2739,38 @@
         "title": "DataResponse[TrendingRefreshRead]",
         "type": "object"
       },
+      "DataResponse_VideoRunAccepted_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/VideoRunAccepted"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[VideoRunAccepted]",
+        "type": "object"
+      },
+      "DataResponse_VideoRunRead_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/VideoRunRead"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[VideoRunRead]",
+        "type": "object"
+      },
       "DataResponse_WorkspaceMemberRead_": {
         "properties": {
           "data": {
@@ -3269,6 +3301,26 @@
           "meta"
         ],
         "title": "DataResponse[list[UnifiedSearchResult]]",
+        "type": "object"
+      },
+      "DataResponse_list_VideoRunRead__": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/VideoRunRead"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "DataResponse[list[VideoRunRead]]",
         "type": "object"
       },
       "DataResponse_list_WorkspaceMemberRead__": {
@@ -7142,6 +7194,17 @@
             "title": "Active",
             "type": "boolean"
           },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -7245,6 +7308,7 @@
           "external_id",
           "profile_url",
           "display_name",
+          "avatar_url",
           "handle",
           "follower_count_latest",
           "priority",
@@ -7754,6 +7818,255 @@
           "source_refs"
         ],
         "title": "VariantMetricResult",
+        "type": "object"
+      },
+      "VideoRenderSpec": {
+        "properties": {
+          "fps": {
+            "default": 30,
+            "maximum": 60.0,
+            "minimum": 24.0,
+            "title": "Fps",
+            "type": "integer"
+          },
+          "height": {
+            "default": 1920,
+            "maximum": 3840.0,
+            "minimum": 320.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "style": {
+            "default": "dark-tech",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Style",
+            "type": "string"
+          },
+          "width": {
+            "default": 1080,
+            "maximum": 3840.0,
+            "minimum": 320.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "title": "VideoRenderSpec",
+        "type": "object"
+      },
+      "VideoRunAccepted": {
+        "properties": {
+          "reused": {
+            "title": "Reused",
+            "type": "boolean"
+          },
+          "video_run": {
+            "$ref": "#/components/schemas/VideoRunRead"
+          }
+        },
+        "required": [
+          "video_run",
+          "reused"
+        ],
+        "title": "VideoRunAccepted",
+        "type": "object"
+      },
+      "VideoRunCreate": {
+        "properties": {
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "instruction": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instruction"
+          },
+          "render_spec": {
+            "$ref": "#/components/schemas/VideoRenderSpec"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "tts_provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "minimax",
+                  "elevenlabs",
+                  "fixture"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tts Provider"
+          },
+          "voice_id": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Id"
+          }
+        },
+        "required": [
+          "script_version_id"
+        ],
+        "title": "VideoRunCreate",
+        "type": "object"
+      },
+      "VideoRunRead": {
+        "properties": {
+          "content_project_id": {
+            "format": "uuid",
+            "title": "Content Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "render_spec": {
+            "additionalProperties": true,
+            "title": "Render Spec",
+            "type": "object"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "sync_job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Job Id"
+          },
+          "tts_provider": {
+            "title": "Tts Provider",
+            "type": "string"
+          },
+          "voice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Id"
+          }
+        },
+        "required": [
+          "id",
+          "content_project_id",
+          "script_version_id",
+          "sync_job_id",
+          "status",
+          "tts_provider",
+          "voice_id",
+          "render_spec",
+          "result",
+          "error_code",
+          "error_message",
+          "created_at",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "VideoRunRead",
         "type": "object"
       },
       "WorkspaceCreate": {
@@ -9516,6 +9829,288 @@
         ]
       }
     },
+    "/api/v1/content-projects/{project_id}/videos": {
+      "get": {
+        "operationId": "list_video_runs_api_v1_content_projects__project_id__videos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_list_VideoRunRead__"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Video Runs",
+        "tags": [
+          "videos"
+        ]
+      },
+      "post": {
+        "operationId": "request_video_api_v1_content_projects__project_id__videos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VideoRunCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_VideoRunAccepted_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Request Video",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
+    "/api/v1/content-projects/{project_id}/videos/{run_id}": {
+      "get": {
+        "operationId": "get_video_run_api_v1_content_projects__project_id__videos__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_VideoRunRead_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Video Run",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
+    "/api/v1/content-projects/{project_id}/videos/{run_id}/artifact": {
+      "get": {
+        "operationId": "download_video_artifact_api_v1_content_projects__project_id__videos__run_id__artifact_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Video Artifact",
+        "tags": [
+          "videos"
+        ]
+      }
+    },
     "/api/v1/dashboard/performance": {
       "get": {
         "operationId": "performance_dashboard_api_v1_dashboard_performance_get",
@@ -10720,6 +11315,22 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           },
           {

@@ -9,6 +9,7 @@ import { queryKeys, type TrackedProfileFilters } from "@/src/api/query-keys";
 import {
   changeTrackedProfileStatus,
   createTrackedProfile,
+  deleteTrackedProfile,
   getTrackedProfile,
   listTrackedProfiles,
   syncTrackedProfile,
@@ -119,6 +120,7 @@ export function useCreateTrackedProfile(
         id: crypto.randomUUID(),
         workspace_id: "7391ea11-9464-456d-bdc8-f7aa5ebf4d30",
         follower_count_latest: null,
+        avatar_url: null,
         scan_policy_id:
           input.scan_policy_id ??
           "19ca8d53-85db-49c7-b9d0-e5d7f73dc82f",
@@ -152,6 +154,41 @@ export function useToggleTrackedProfile(workspaceId: string) {
         ...profile,
         active: !profile.active,
         sync_status: profile.active ? "paused" : "idle",
+        updated_at: new Date().toISOString(),
+      } satisfies TrackedProfile;
+    },
+    onSuccess: (updated) => {
+      client.setQueryData(
+        queryKeys.trackedProfiles.detail(workspaceId, updated.id),
+        updated,
+      );
+      client.setQueriesData<TrackedProfile[]>(
+        { queryKey: queryKeys.trackedProfiles.all(workspaceId) },
+        (current) =>
+          current?.map((item) => (item.id === updated.id ? updated : item)),
+      );
+    },
+  });
+}
+
+export function useDeleteTrackedProfile(workspaceId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (profile: TrackedProfile) => {
+      if (workspaceId !== "demo") {
+        await deleteTrackedProfile(workspaceId, profile.id);
+        return {
+          ...profile,
+          active: false,
+          sync_status: "paused",
+          next_scan_at: null,
+        };
+      }
+      return {
+        ...profile,
+        active: false,
+        sync_status: "paused",
+        next_scan_at: null,
         updated_at: new Date().toISOString(),
       } satisfies TrackedProfile;
     },

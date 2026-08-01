@@ -74,7 +74,9 @@ def create_job(
         return existing, False
 
 
-def claim_next_job(db: Session, worker_id: str) -> SyncJob | None:
+def claim_next_job(
+    db: Session, worker_id: str, *, job_types: tuple[str, ...] | None = None
+) -> SyncJob | None:
     now = datetime.now(timezone.utc)
     query: Select[tuple[SyncJob]] = (
         select(SyncJob)
@@ -86,6 +88,8 @@ def claim_next_job(db: Session, worker_id: str) -> SyncJob | None:
         .with_for_update(skip_locked=True)
         .limit(1)
     )
+    if job_types is not None:
+        query = query.where(SyncJob.job_type.in_(job_types))
     job = db.scalar(query)
     if job is None:
         return None

@@ -5,6 +5,7 @@ import {
   contentTitle,
   detailStatusLabel,
   formatMetric,
+  inspirationSourceLabel,
   inspirationStatusLabel,
 } from "./presentation";
 
@@ -13,6 +14,13 @@ describe("inspiration presentation", () => {
     expect(inspirationStatusLabel("candidate")).toBe("候选选题");
     expect(detailStatusLabel("detail")).toBe("详情就绪");
     expect(detailStatusLabel("ready")).toBe("详情就绪");
+  });
+
+  it("does not expose internal source codes in the decision UI", () => {
+    expect(inspirationSourceLabel("manual_url")).toBe("手动导入");
+    expect(inspirationSourceLabel("tracked_profile")).toBe("账号追踪");
+    expect(inspirationSourceLabel("profile_scan")).toBe("账号追踪");
+    expect(inspirationSourceLabel("unknown")).toBe("工作区收录");
   });
 
   it("falls back from title to body without inventing content", () => {

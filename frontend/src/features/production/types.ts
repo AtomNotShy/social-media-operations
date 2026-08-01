@@ -7,11 +7,15 @@ export type Topic = components["schemas"]["TopicRead"];
 export type TopicCreate = components["schemas"]["TopicCreate"];
 export type TopicUpdate = components["schemas"]["TopicUpdate"];
 export type ContentProject = components["schemas"]["ContentProjectRead"];
-export type ContentProjectCreate = components["schemas"]["ContentProjectCreate"];
-export type ContentProjectUpdate = components["schemas"]["ContentProjectUpdate"];
+export type ContentProjectCreate =
+  components["schemas"]["ContentProjectCreate"];
+export type ContentProjectUpdate =
+  components["schemas"]["ContentProjectUpdate"];
 export type ScriptVersion = components["schemas"]["ScriptVersionRead"];
 export type ScriptCreate = components["schemas"]["ScriptCreate"];
 export type Asset = components["schemas"]["AssetRead"];
+export type VideoRun = components["schemas"]["VideoRunRead"];
+export type VideoRunCreate = components["schemas"]["VideoRunCreate"];
 export type PublishPlan = components["schemas"]["PublishPlanRead"];
 export type PublishPlanCreate = components["schemas"]["PublishPlanCreate"];
 export type PublishPlanUpdate = components["schemas"]["PublishPlanUpdate"];
@@ -29,4 +33,3 @@ export type SearchResult = components["schemas"]["UnifiedSearchResult"];
 export type Experiment = components["schemas"]["ExperimentRead"];
 export type ExperimentCreate = components["schemas"]["ExperimentCreate"];
 export type ExperimentResult = components["schemas"]["ExperimentResultsRead"];
-

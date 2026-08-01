@@ -18,9 +18,12 @@ import { InspirationCard } from "@/src/features/inspirations/inspiration-card";
 import { buildInspirationsSearchHref } from "@/src/features/inspirations/navigation";
 import {
   contentTitle,
+  detailStatusLabel,
+  inspirationSourceLabel,
   inspirationStatusLabel,
 } from "@/src/features/inspirations/presentation";
 import { useInspirations } from "@/src/features/inspirations/queries";
+import { SavedViewPicker } from "@/src/features/production/ui";
 import { formatRelativeTime, platformLabel } from "@/src/lib/format";
 
 const statuses = [
@@ -45,7 +48,13 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const search = searchParams.toString();
-  const [queryInput, setQueryInput] = useState(searchParams.get("q") ?? "");
+  const queryFromUrl = searchParams.get("q") ?? "";
+  const [queryState, setQueryState] = useState({
+    urlQuery: queryFromUrl,
+    value: queryFromUrl,
+  });
+  const queryInput =
+    queryState.urlQuery === queryFromUrl ? queryState.value : queryFromUrl;
   const [importOpen, setImportOpen] = useState(
     searchParams.get("import") === "1",
   );
@@ -74,14 +83,14 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
   }, [queryInput, router, search, workspaceId]);
 
   const stats = useMemo(() => {
-    const items = inspirations.data ?? [];
+    const items = inspirations.items;
     return {
       total: items.length,
       ready: items.filter((item) => item.content.detail_status === "ready").length,
       analyzed: items.filter((item) => item.status === "analyzed").length,
       candidates: items.filter((item) => item.status === "candidate").length,
     };
-  }, [inspirations.data]);
+  }, [inspirations.items]);
 
   function navigate(params: URLSearchParams) {
     const suffix = params.toString();
@@ -106,26 +115,29 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
         title="灵感库"
         description="沉淀公开内容、分析证据和可执行选题。导入、抓取、转写与分析状态均独立呈现。"
         actions={
-          permission.canEdit ? (
-            <button
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700"
-              onClick={() => setImportOpen(true)}
-              type="button"
-            >
-              <Link2 aria-hidden="true" size={16} />
-              导入内容链接
-            </button>
-          ) : (
-            <span className="rounded-full border border-border bg-surface px-3 py-2 text-xs font-medium text-text-muted">
-              Viewer · 只读
-            </span>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            <SavedViewPicker entityType="inspirations" workspaceId={workspaceId} />
+            {permission.canEdit ? (
+              <button
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-700"
+                onClick={() => setImportOpen(true)}
+                type="button"
+              >
+                <Link2 aria-hidden="true" size={16} />
+                导入内容链接
+              </button>
+            ) : (
+              <span className="rounded-full border border-border bg-surface px-3 py-2 text-xs font-medium text-text-muted">
+                Viewer · 只读
+              </span>
+            )}
+          </div>
         }
       />
 
       <section className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
         {[
-          { label: "当前结果", value: stats.total, detail: "按当前筛选" },
+          { label: "已加载结果", value: stats.total, detail: "当前已加载" },
           { label: "详情就绪", value: stats.ready, detail: "可继续处理" },
           { label: "已分析", value: stats.analyzed, detail: "有结构化结果" },
           { label: "候选选题", value: stats.candidates, detail: "等待进入生产" },
@@ -156,7 +168,12 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
             <input
               aria-label="搜索灵感"
               className="h-10 w-full rounded-lg border border-border bg-canvas/60 pl-9 pr-3 text-sm outline-none focus:border-primary-500 focus:bg-surface"
-              onChange={(event) => setQueryInput(event.target.value)}
+              onChange={(event) =>
+                setQueryState({
+                  urlQuery: queryFromUrl,
+                  value: event.target.value,
+                })
+              }
               placeholder="搜索标题、正文、笔记或平台"
               value={queryInput}
             />
@@ -233,10 +250,10 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
             requestId={(inspirations.error as { requestId?: string }).requestId}
           />
         </section>
-      ) : inspirations.data?.length ? (
+      ) : inspirations.items.length ? (
         view === "grid" ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {inspirations.data.map((item) => (
+            {inspirations.items.map((item) => (
               <InspirationCard
                 href={`/w/${workspaceId}/inspirations/${item.id}`}
                 item={item}
@@ -246,7 +263,7 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
           </div>
         ) : (
           <section className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface shadow-panel">
-            {inspirations.data.map((item) => (
+            {inspirations.items.map((item) => (
               <a
                 className="grid gap-3 p-4 hover:bg-canvas/50 sm:grid-cols-[1fr_140px_120px_120px] sm:items-center"
                 href={`/w/${workspaceId}/inspirations/${item.id}`}
@@ -259,9 +276,12 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
                   <p className="mt-1 truncate text-xs text-text-muted">
                     {item.content.body_text || "当前内容源未提供正文摘要。"}
                   </p>
+                  <p className="mt-1 text-[11px] text-text-muted">
+                    人工评分 {item.manual_score ?? "—"} · {inspirationSourceLabel(item.source)}
+                  </p>
                 </div>
                 <span className="text-xs text-text-muted">
-                  {platformLabel(item.content.platform)}
+                  {platformLabel(item.content.platform)} · {detailStatusLabel(item.content.detail_status)}
                 </span>
                 <StatusBadge
                   label={inspirationStatusLabel(item.status)}
@@ -294,6 +314,19 @@ export function InspirationsPage({ workspaceId }: { workspaceId: string }) {
           />
         </section>
       )}
+
+      {inspirations.hasNextPage ? (
+        <div className="mt-5 flex justify-center">
+          <button
+            className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium hover:bg-surface-subtle disabled:opacity-50"
+            disabled={inspirations.isFetchingNextPage}
+            onClick={() => inspirations.fetchNextPage()}
+            type="button"
+          >
+            {inspirations.isFetchingNextPage ? "正在加载…" : "加载更多"}
+          </button>
+        </div>
+      ) : null}
 
       <ImportInspirationDialog
         onClose={() => setImportOpen(false)}

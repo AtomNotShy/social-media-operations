@@ -2,13 +2,13 @@
 
 import {
   ArrowUpRight,
-  MoreHorizontal,
   Pause,
   Play,
   Plus,
   RefreshCw,
   Search,
   SlidersHorizontal,
+  Trash2,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,8 +19,11 @@ import { ErrorState } from "@/src/components/ui/error-state";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { StatusBadge } from "@/src/components/ui/status-badge";
 import { CreateProfileDialog } from "@/src/features/tracked-profiles/create-profile-dialog";
+import { DeleteProfileDialog } from "@/src/features/tracked-profiles/delete-profile-dialog";
+import { ProfileAvatar } from "@/src/features/tracked-profiles/profile-avatar";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
 import {
+  useDeleteTrackedProfile,
   useSyncTrackedProfile,
   useToggleTrackedProfile,
   useTrackedProfiles,
@@ -48,6 +51,8 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
   const profiles = useTrackedProfiles(workspaceId, filters);
   const toggle = useToggleTrackedProfile(workspaceId);
   const sync = useSyncTrackedProfile(workspaceId);
+  const remove = useDeleteTrackedProfile(workspaceId);
+  const [deleteTarget, setDeleteTarget] = useState<TrackedProfile | null>(null);
   const permission = useWorkspaceRole(workspaceId);
 
   useEffect(() => {
@@ -236,13 +241,15 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
                       busy={
                         (toggle.isPending &&
                           toggle.variables?.id === profile.id) ||
-                        (sync.isPending && sync.variables?.id === profile.id)
+                        (sync.isPending && sync.variables?.id === profile.id) ||
+                        (remove.isPending && remove.variables?.id === profile.id)
                       }
                       detailHref={`/w/${workspaceId}/tracked-profiles/${profile.id}`}
                       canEdit={permission.canEdit}
                       key={profile.id}
                       onSync={() => sync.mutate(profile)}
                       onToggle={() => toggle.mutate(profile)}
+                      onDelete={() => setDeleteTarget(profile)}
                       profile={profile}
                     />
                   ))}
@@ -254,13 +261,15 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
                 <ProfileCard
                   busy={
                     (toggle.isPending && toggle.variables?.id === profile.id) ||
-                    (sync.isPending && sync.variables?.id === profile.id)
+                    (sync.isPending && sync.variables?.id === profile.id) ||
+                    (remove.isPending && remove.variables?.id === profile.id)
                   }
                   detailHref={`/w/${workspaceId}/tracked-profiles/${profile.id}`}
                   canEdit={permission.canEdit}
                   key={profile.id}
                   onSync={() => sync.mutate(profile)}
                   onToggle={() => toggle.mutate(profile)}
+                  onDelete={() => setDeleteTarget(profile)}
                   profile={profile}
                 />
               ))}
@@ -308,6 +317,21 @@ export function TrackedProfilesPage({ workspaceId }: { workspaceId: string }) {
         open={createOpen && permission.canEdit}
         workspaceId={workspaceId}
       />
+      <DeleteProfileDialog
+        error={remove.error}
+        onClose={() => {
+          if (!remove.isPending) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          remove.mutate(deleteTarget, {
+            onSuccess: () => setDeleteTarget(null),
+          });
+        }}
+        open={deleteTarget !== null}
+        pending={remove.isPending}
+        profile={deleteTarget}
+      />
     </>
   );
 }
@@ -316,6 +340,7 @@ function ProfileRow({
   profile,
   onSync,
   onToggle,
+  onDelete,
   busy,
   detailHref,
   canEdit,
@@ -323,6 +348,7 @@ function ProfileRow({
   profile: TrackedProfile;
   onSync: () => void;
   onToggle: () => void;
+  onDelete: () => void;
   busy: boolean;
   detailHref: string;
   canEdit: boolean;
@@ -389,11 +415,13 @@ function ProfileRow({
             )}
           </button>
           <button
-            aria-label={`${profile.display_name} 更多操作`}
-            className="grid size-8 place-items-center rounded-lg text-text-muted hover:bg-surface-subtle hover:text-text"
+            aria-label={`删除 ${profile.display_name}`}
+            className="grid size-8 place-items-center rounded-lg text-text-muted hover:bg-red-50 hover:text-danger"
+            disabled={busy}
+            onClick={onDelete}
             type="button"
           >
-            <MoreHorizontal aria-hidden="true" size={16} />
+            <Trash2 aria-hidden="true" size={15} />
           </button>
         </div> : <span className="text-xs text-text-muted">只读</span>}
       </td>
@@ -405,6 +433,7 @@ function ProfileCard({
   profile,
   onSync,
   onToggle,
+  onDelete,
   busy,
   detailHref,
   canEdit,
@@ -412,6 +441,7 @@ function ProfileCard({
   profile: TrackedProfile;
   onSync: () => void;
   onToggle: () => void;
+  onDelete: () => void;
   busy: boolean;
   detailHref: string;
   canEdit: boolean;
@@ -470,6 +500,16 @@ function ProfileCard({
           )}
           {profile.active ? "暂停" : "恢复"}
         </button>
+        <button
+          aria-label={`删除 ${profile.display_name}`}
+          className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-danger hover:bg-red-50 disabled:opacity-40"
+          disabled={busy}
+          onClick={onDelete}
+          type="button"
+        >
+          <Trash2 aria-hidden="true" size={14} />
+          删除
+        </button>
       </div> : null}
     </article>
   );
@@ -482,12 +522,9 @@ function ProfileIdentity({
   profile: TrackedProfile;
   href: string;
 }) {
-  const initials = profile.display_name.slice(0, 2).toUpperCase();
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-100 to-blue-50 text-xs font-semibold text-primary-700">
-        {initials}
-      </span>
+      <ProfileAvatar profile={profile} />
       <Link className="min-w-0 hover:text-primary-700" href={href}>
         <span className="flex items-center gap-1 font-medium">
           <span className="truncate">{profile.display_name}</span>

@@ -19,7 +19,7 @@ import {
   Tags,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorState } from "@/src/components/ui/error-state";
 import { StatusBadge } from "@/src/components/ui/status-badge";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
@@ -44,6 +44,7 @@ import type {
   ContentMetricSnapshot,
 } from "@/src/features/inspirations/types";
 import { useCreatePatternsFromAnalysis } from "@/src/features/patterns/queries";
+import { useChannels } from "@/src/features/production/queries";
 import { formatRelativeTime, platformLabel } from "@/src/lib/format";
 
 export function InspirationDetailPage({
@@ -61,6 +62,14 @@ export function InspirationDetailPage({
   const action = useInspirationAction(workspaceId, inspirationId);
   const topic = useCreateTopicFromInspiration(workspaceId, inspirationId);
   const [topicOpen, setTopicOpen] = useState(false);
+  const [refreshUntil, setRefreshUntil] = useState<number | null>(null);
+  const [refreshAction, setRefreshAction] = useState<InspirationAction | null>(null);
+  const refetchInspiration = inspiration.refetch;
+  const refetchScores = evidence.scores.refetch;
+  const refetchMetrics = evidence.metrics.refetch;
+  const refetchComments = evidence.comments.refetch;
+  const refetchAnalyses = evidence.analyses.refetch;
+  const refetchTranscripts = evidence.transcripts.refetch;
   const l1 = latestRun(evidence.analyses.data, "l1");
   const l2 = latestRun(evidence.analyses.data, "l2");
   const patternSource = l2?.status === "succeeded" ? l2 : l1;
@@ -68,6 +77,43 @@ export function InspirationDetailPage({
     workspaceId,
     patternSource?.id,
   );
+
+  useEffect(() => {
+    if (!refreshUntil || !refreshAction) return;
+    const refresh = () => {
+      if (refreshAction === "hydrate-detail") {
+        refetchInspiration();
+        refetchMetrics();
+      } else if (refreshAction === "score") {
+        refetchScores();
+      } else if (refreshAction === "comments") {
+        refetchComments();
+      } else if (refreshAction === "transcript") {
+        refetchTranscripts();
+      } else {
+        refetchAnalyses();
+      }
+    };
+    const interval = window.setInterval(() => {
+      if (Date.now() >= refreshUntil) {
+        window.clearInterval(interval);
+        setRefreshUntil(null);
+        setRefreshAction(null);
+      } else {
+        refresh();
+      }
+    }, 5_000);
+    return () => window.clearInterval(interval);
+  }, [
+    refetchAnalyses,
+    refetchComments,
+    refetchInspiration,
+    refetchMetrics,
+    refetchScores,
+    refetchTranscripts,
+    refreshAction,
+    refreshUntil,
+  ]);
 
   if (inspiration.isLoading) {
     return (
@@ -118,7 +164,14 @@ export function InspirationDetailPage({
     ) {
       return;
     }
-    action.mutate(next);
+    action.mutate(next, {
+      onSuccess: () => {
+        if (next !== "score") {
+          setRefreshAction(next);
+          setRefreshUntil(Date.now() + 30_000);
+        }
+      },
+    });
   }
 
   return (
@@ -221,6 +274,7 @@ export function InspirationDetailPage({
             {action.data?.action === "hydrate-detail"
               ? "详情刷新任务已受理；任务完成后会写入最新正文、媒体和互动指标。"
               : "请求已受理。异步操作仍需等待任务完成，当前页面不会提前标记为已完成。"}
+            {refreshUntil ? " 页面会在接下来的 30 秒内自动刷新证据。" : ""}
           </span>
           <Link className="shrink-0 font-semibold underline" href={`/w/${workspaceId}/jobs`}>
             查看任务
@@ -534,6 +588,7 @@ export function InspirationDetailPage({
           defaultTitle={contentTitle(item.content.title, item.content.body_text)}
           mutation={topic}
           onClose={() => setTopicOpen(false)}
+          workspaceId={workspaceId}
         />
       ) : null}
     </>
@@ -544,11 +599,14 @@ function TopicDialog({
   defaultTitle,
   mutation,
   onClose,
+  workspaceId,
 }: {
   defaultTitle: string;
   mutation: ReturnType<typeof useCreateTopicFromInspiration>;
   onClose: () => void;
+  workspaceId: string;
 }) {
+  const channels = useChannels(workspaceId);
   return (
     <div
       aria-modal="true"
@@ -566,6 +624,7 @@ function TopicDialog({
             audience_problem: String(data.get("audience_problem") ?? "") || null,
             angle: String(data.get("angle") ?? "") || null,
             hook: String(data.get("hook") ?? "") || null,
+            owned_channel_id: String(data.get("owned_channel_id") ?? "") || null,
           });
         }}
       >
@@ -579,13 +638,12 @@ function TopicDialog({
             <p className="mt-2 text-sm text-emerald-700">
               已保留灵感和内容证据引用。选题 ID：{mutation.data.id.slice(0, 8)}
             </p>
-            <button
-              className="mt-4 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white"
-              onClick={onClose}
-              type="button"
+            <Link
+              className="mt-4 inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white"
+              href={`/w/${workspaceId}/topics/${mutation.data.id}`}
             >
-              完成
-            </button>
+              进入选题详情
+            </Link>
           </div>
         ) : (
           <>
@@ -606,6 +664,20 @@ function TopicDialog({
                   />
                 </label>
               ))}
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium">目标自有账号</span>
+                <select
+                  className="h-10 w-full rounded-lg border border-border px-3 text-sm"
+                  name="owned_channel_id"
+                >
+                  <option value="">暂不指定</option>
+                  {channels.data?.map((channel) => (
+                    <option key={channel.id} value={channel.id}>
+                      {channel.display_name} · {platformLabel(channel.platform)}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             {mutation.error ? (
               <p className="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-700">

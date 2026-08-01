@@ -12,6 +12,7 @@ from app.db.models import (
     Topic,
     WorkspaceInspiration,
 )
+from app.modules.inspirations.service import latest_score_is_qualified_clause
 from app.modules.search.schemas import SearchEntityType, UnifiedSearchResult
 from app.schemas.common import DataResponse, ResponseMeta
 
@@ -73,6 +74,13 @@ def unified_search(
             .where(
                 WorkspaceInspiration.workspace_id == context.workspace.id,
                 ExternalContent.workspace_id == context.workspace.id,
+                or_(
+                    WorkspaceInspiration.source != "tracked_profile",
+                    latest_score_is_qualified_clause(
+                        workspace_id=context.workspace.id,
+                        external_content_id=ExternalContent.id,
+                    ),
+                ),
                 or_(
                     ExternalContent.title.ilike(pattern),
                     ExternalContent.body_text.ilike(pattern),

@@ -91,6 +91,10 @@ def test_topic_optimistic_lock_and_inspiration_evidence(
     topic = created.json()["data"]
     assert topic["title"] == "如何减少高峰期漏单"
     assert topic["evidence_refs"][0] == f"inspiration:{inspiration_id}"
+    inspiration_response = client.get(
+        f"/api/v1/inspirations/{inspiration_id}", headers=headers
+    )
+    assert inspiration_response.json()["data"]["status"] == "candidate"
 
     updated = client.patch(
         f"/api/v1/topics/{topic['id']}",

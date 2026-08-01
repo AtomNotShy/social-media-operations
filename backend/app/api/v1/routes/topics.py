@@ -11,7 +11,7 @@ from app.api.dependencies import (
     get_workspace_context,
     require_editor,
 )
-from app.db.models import Topic
+from app.db.models import Topic, WorkspaceInspiration
 from app.modules.analysis.service import inspiration_content
 from app.modules.workflow.schemas import (
     TopicCreate,
@@ -121,6 +121,17 @@ def create_topic_from_inspiration(
         created_by=context.membership.user_id,
     )
     db.add(topic)
+    inspiration = db.scalar(
+        select(WorkspaceInspiration).where(
+            WorkspaceInspiration.workspace_id == context.workspace.id,
+            WorkspaceInspiration.id == inspiration_id,
+        )
+    )
+    # The topic and its source now belong to the same workflow stage. Keeping
+    # this in the transaction prevents a created topic from leaving its source
+    # looking like an unreviewed inbox item.
+    if inspiration is not None:
+        inspiration.status = "candidate"
     db.commit()
     return DataResponse(
         data=TopicRead.model_validate(topic),

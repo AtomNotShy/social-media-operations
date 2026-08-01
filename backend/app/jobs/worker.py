@@ -46,7 +46,19 @@ async def process_one(
 ) -> bool:
     recover_stale_jobs(db, lock_timeout_seconds=lock_timeout_seconds)
     db.commit()
-    job = claim_next_job(db, worker_id)
+    job = claim_next_job(
+        db,
+        worker_id,
+        job_types=(
+            "PROFILE_SCAN",
+            "CONTENT_DETAIL_FETCH",
+            "AI_ANALYSIS",
+            "TRANSCRIBE",
+            "CONTENT_GENERATION",
+            "COMMENT_FETCH",
+            "DISCOVERY_SEARCH",
+        ),
+    )
     if job is None:
         touch_process_heartbeat(
             db,

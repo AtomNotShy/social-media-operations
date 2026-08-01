@@ -13,6 +13,7 @@ import type {
   ScriptCreate,
   TopicCreate,
   TopicUpdate,
+  VideoRunCreate,
 } from "@/src/features/production/types";
 
 export async function listChannels(workspaceId: string) {
@@ -37,6 +38,14 @@ export async function createChannel(
   const { data } = await api.POST("/api/v1/owned-channels", {
     headers: workspaceHeaders(workspaceId),
     body: input,
+  });
+  return data!.data;
+}
+
+export async function disableChannel(workspaceId: string, channelId: string) {
+  const { data } = await api.DELETE("/api/v1/owned-channels/{channel_id}", {
+    headers: workspaceHeaders(workspaceId),
+    params: { path: { channel_id: channelId } },
   });
   return data!.data;
 }
@@ -200,6 +209,50 @@ export async function generateScript(
   return data!.data;
 }
 
+export async function listVideoRuns(workspaceId: string, projectId: string) {
+  const { data } = await api.GET(
+    "/api/v1/content-projects/{project_id}/videos",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: { path: { project_id: projectId } },
+    },
+  );
+  return data?.data ?? [];
+}
+
+export async function requestVideo(
+  workspaceId: string,
+  projectId: string,
+  input: VideoRunCreate,
+) {
+  const { data } = await api.POST(
+    "/api/v1/content-projects/{project_id}/videos",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: { path: { project_id: projectId } },
+      body: input,
+    },
+  );
+  return data!.data;
+}
+
+export async function downloadVideoArtifact(
+  workspaceId: string,
+  projectId: string,
+  runId: string,
+) {
+  const { data } = await api.GET(
+    "/api/v1/content-projects/{project_id}/videos/{run_id}/artifact",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: { path: { project_id: projectId, run_id: runId } },
+      parseAs: "blob",
+    },
+  );
+  if (!data) throw new Error("视频文件下载失败。");
+  return data;
+}
+
 export async function listAssets(
   workspaceId: string,
   contentProjectId?: string,
@@ -227,18 +280,21 @@ export async function uploadAsset(
   rightsNote: string,
 ) {
   const checksum = await sha256(file);
-  const { data: intentResponse } = await api.POST("/api/v1/assets/upload-intents", {
-    headers: workspaceHeaders(workspaceId),
-    body: {
-      content_project_id: projectId,
-      asset_type: assetType,
-      mime_type: file.type || "application/octet-stream",
-      size_bytes: file.size,
-      checksum,
-      source_type: "uploaded",
-      rights_note: rightsNote || null,
+  const { data: intentResponse } = await api.POST(
+    "/api/v1/assets/upload-intents",
+    {
+      headers: workspaceHeaders(workspaceId),
+      body: {
+        content_project_id: projectId,
+        asset_type: assetType,
+        mime_type: file.type || "application/octet-stream",
+        size_bytes: file.size,
+        checksum,
+        source_type: "uploaded",
+        rights_note: rightsNote || null,
+      },
     },
-  });
+  );
   const intent = intentResponse!.data;
   const upload = await fetch(intent.upload_url, {
     method: "PUT",

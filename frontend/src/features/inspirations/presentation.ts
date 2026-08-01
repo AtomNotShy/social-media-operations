@@ -21,6 +21,19 @@ export function detailStatusLabel(status: string) {
   );
 }
 
+export function inspirationSourceLabel(source: string) {
+  return (
+    {
+      manual_url: "手动导入",
+      tracked_profile: "账号追踪",
+      profile_scan: "账号追踪",
+      discovery_search: "内容发现",
+      workspace_metric_snapshot: "指标快照",
+      test: "测试数据",
+    }[source] ?? "工作区收录"
+  );
+}
+
 export function contentTitle(
   title: string | null,
   body: string | null,

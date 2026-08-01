@@ -324,6 +324,7 @@ def calculate_content_score(
         baseline_value=baseline_value,
         is_initial=is_initial,
         evidence=evidence,
+        calculated_at=datetime.now(timezone.utc),
     )
     db.add(score)
     db.flush()

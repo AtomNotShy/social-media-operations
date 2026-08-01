@@ -1,9 +1,10 @@
+import base64
 import hashlib
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query, Request, Response
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import (
@@ -27,6 +28,10 @@ from app.modules.inspirations.schemas import (
     InspirationRead,
     InspirationUpdate,
 )
+from app.modules.inspirations.service import (
+    ensure_workspace_inspiration,
+    latest_score_is_qualified_clause,
+)
 from app.modules.tracked_profiles.schemas import ExternalContentRead
 from app.providers.social.url_normalization import (
     UnsupportedSocialURL,
@@ -35,6 +40,26 @@ from app.providers.social.url_normalization import (
 from app.schemas.common import DataResponse, JobAccepted, ResponseMeta
 
 router = APIRouter(prefix="/api/v1/inspirations", tags=["inspirations"])
+
+
+def _encode_cursor(inspiration: WorkspaceInspiration) -> str:
+    value = f"{inspiration.created_at.isoformat()}|{inspiration.id}"
+    return base64.urlsafe_b64encode(value.encode()).decode().rstrip("=")
+
+
+def _decode_cursor(value: str) -> tuple[datetime, uuid.UUID]:
+    try:
+        padded = value + "=" * (-len(value) % 4)
+        raw = base64.urlsafe_b64decode(padded).decode()
+        timestamp, inspiration_id = raw.split("|", 1)
+        return datetime.fromisoformat(timestamp), uuid.UUID(inspiration_id)
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise AppError(
+            422,
+            "VALIDATION_ERROR",
+            "Invalid cursor",
+            "The pagination cursor is invalid.",
+        ) from exc
 
 
 def _read_model(
@@ -135,21 +160,12 @@ def import_url(
     content = db.scalar(content_query)
     inspiration = None
     if content is not None:
-        inspiration = db.scalar(
-            select(WorkspaceInspiration).where(
-                WorkspaceInspiration.workspace_id == context.workspace.id,
-                WorkspaceInspiration.external_content_id == content.id,
-            )
+        inspiration = ensure_workspace_inspiration(
+            db,
+            workspace_id=context.workspace.id,
+            external_content_id=content.id,
+            source="manual_url",
         )
-        if inspiration is None:
-            inspiration = WorkspaceInspiration(
-                workspace_id=context.workspace.id,
-                external_content_id=content.id,
-                status="inbox",
-                source="manual_url",
-            )
-            db.add(inspiration)
-            db.flush()
         now = datetime.now(timezone.utc)
         fresh_fetch_id = (
             db.scalar(
@@ -211,6 +227,7 @@ def list_inspirations(
     status: str | None = None,
     query: str | None = None,
     limit: int = Query(default=20, ge=1, le=100),
+    cursor: str | None = None,
     context: WorkspaceContext = Depends(get_workspace_context),
     db: Session = Depends(get_db),
 ) -> DataResponse:
@@ -225,27 +242,60 @@ def list_inspirations(
             ExternalContent.workspace_id == context.workspace.id,
         )
     )
+    # Older profile scans created inspirations before score qualification. Keep
+    # their notes/status intact but hide them until the latest evidence reaches
+    # the same t1/t2 threshold used by current scan promotion.
+    statement = statement.where(
+        or_(
+            WorkspaceInspiration.source != "tracked_profile",
+            latest_score_is_qualified_clause(
+                workspace_id=context.workspace.id,
+                external_content_id=ExternalContent.id,
+            ),
+        )
+    )
     if platform:
         statement = statement.where(ExternalContent.platform == platform)
     if status:
         statement = statement.where(WorkspaceInspiration.status == status)
     if query:
-        pattern = f"%{query.strip()}%"
+        query_text = query.strip()
+        if query_text:
+            pattern = f"%{query_text}%"
+            statement = statement.where(
+                or_(
+                    ExternalContent.title.ilike(pattern),
+                    ExternalContent.body_text.ilike(pattern),
+                    WorkspaceInspiration.notes.ilike(pattern),
+                    ExternalContent.platform.ilike(pattern),
+                )
+            )
+    if cursor:
+        created_at, inspiration_id = _decode_cursor(cursor)
         statement = statement.where(
             or_(
-                ExternalContent.title.ilike(pattern),
-                ExternalContent.body_text.ilike(pattern),
+                WorkspaceInspiration.created_at < created_at,
+                and_(
+                    WorkspaceInspiration.created_at == created_at,
+                    WorkspaceInspiration.id < inspiration_id,
+                ),
             )
         )
     rows = db.execute(
         statement.order_by(
             WorkspaceInspiration.created_at.desc(),
-            WorkspaceInspiration.id,
-        ).limit(limit)
+            WorkspaceInspiration.id.desc(),
+        ).limit(limit + 1)
     ).all()
+    has_more = len(rows) > limit
+    page = rows[:limit]
+    next_cursor = _encode_cursor(page[-1][0]) if has_more and page else None
     return DataResponse(
-        data=[_read_model(row[0], row[1]) for row in rows],
-        meta=ResponseMeta(request_id=request.state.request_id),
+        data=[_read_model(row[0], row[1]) for row in page],
+        meta=ResponseMeta(
+            request_id=request.state.request_id,
+            next_cursor=next_cursor,
+        ),
     )
 
 

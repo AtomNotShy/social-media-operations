@@ -247,6 +247,7 @@ class ExternalContent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         UniqueConstraint("workspace_id", "platform", "external_id"),
         Index("ix_external_contents_workspace_published", "workspace_id", "published_at"),
         Index("ix_external_contents_profile_published", "tracked_profile_id", "published_at"),
+        Index("ix_external_contents_last_seen", "last_seen_at", "id"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
@@ -628,6 +629,56 @@ class GenerationRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class VideoRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A durable request for a locally rendered social video.
+
+    The run owns the job metadata, while all render artifacts live beneath the
+    configured local video-runs directory.  Keep the local path out of the API
+    surface: it is an implementation detail and must never be client supplied.
+    """
+
+    __tablename__ = "video_runs"
+    __table_args__ = (
+        Index("ix_video_runs_project_created", "content_project_id", "created_at"),
+        Index("ix_video_runs_workspace_status", "workspace_id", "status"),
+        Index(
+            "uq_video_runs_active_dedupe",
+            "workspace_id",
+            "dedupe_key",
+            unique=True,
+            postgresql_where=text("status IN ('queued', 'running')"),
+            sqlite_where=text("status IN ('queued', 'running')"),
+        ),
+    )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    content_project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("content_projects.id", ondelete="CASCADE"), nullable=False
+    )
+    script_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("script_versions.id", ondelete="RESTRICT"), nullable=False
+    )
+    sync_job_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("sync_jobs.id", ondelete="SET NULL"), index=True
+    )
+    dedupe_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="queued", nullable=False)
+    tts_provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    voice_id: Mapped[str | None] = mapped_column(String(255))
+    render_spec: Mapped[dict] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    request_payload: Mapped[dict] = mapped_column(JSON_TYPE, default=dict, nullable=False)
+    result: Mapped[dict | None] = mapped_column(JSON_TYPE)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
 
 
 class AICostLedger(UUIDPrimaryKeyMixin, TimestampMixin, Base):

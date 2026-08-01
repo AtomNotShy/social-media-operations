@@ -46,6 +46,7 @@ class TrackedProfileRead(BaseModel):
     external_id: str
     profile_url: str
     display_name: str
+    avatar_url: str | None
     handle: str | None
     follower_count_latest: int | None
     priority: int

@@ -7,6 +7,7 @@ import {
   contentTitle,
   detailStatusLabel,
   inspirationStatusLabel,
+  inspirationSourceLabel,
 } from "@/src/features/inspirations/presentation";
 import type {
   ExternalContent,
@@ -85,13 +86,13 @@ export function InspirationCard({
           {item.content.body_text || "当前内容源未提供正文摘要。"}
         </p>
         <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-[11px] text-text-muted">
-          <span className="inline-flex items-center gap-1" title="打开详情页可补全互动指标">
+          <span className="inline-flex items-center gap-1" title="人工评分">
             <Gauge aria-hidden="true" size={13} />
-            指标 —
+            人工 {item.manual_score ?? "—"}
           </span>
-          <span className="inline-flex items-center gap-1" title="打开详情页可补全评论总量">
+          <span className="inline-flex items-center gap-1" title="收录来源">
             <MessageCircle aria-hidden="true" size={13} />
-            评论 —
+            {inspirationSourceLabel(item.source)}
           </span>
           <span className="inline-flex items-center justify-end gap-1">
             <Calendar aria-hidden="true" size={13} />

@@ -9,6 +9,7 @@ import type {
 export async function listInspirations(
   workspaceId: string,
   filters: InspirationFilters,
+  cursor?: string,
 ) {
   const { data } = await api.GET("/api/v1/inspirations", {
     headers: workspaceHeaders(workspaceId),
@@ -17,11 +18,15 @@ export async function listInspirations(
         platform: filters.platform,
         status: filters.status,
         query: filters.q,
-        limit: 100,
+        limit: 20,
+        cursor,
       },
     },
   });
-  return data?.data ?? [];
+  return {
+    items: data?.data ?? [],
+    nextCursor: data?.meta.next_cursor ?? null,
+  };
 }
 
 export async function getInspiration(

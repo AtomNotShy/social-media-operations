@@ -4,14 +4,109 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.models import (
     ContentMetricSnapshot,
+    ContentScore,
     ExternalContent,
     WorkspaceInspiration,
 )
 from app.providers.social.base import NormalizedContent
+
+EXPLICIT_IMPORT_SOURCES = frozenset({"manual_url", "discovery_search"})
+
+
+def ensure_workspace_inspiration(
+    db: Session,
+    *,
+    workspace_id: uuid.UUID,
+    external_content_id: uuid.UUID,
+    source: str,
+) -> WorkspaceInspiration:
+    """Return the one workspace inspiration for content, creating it if needed."""
+    inspiration = db.scalar(
+        select(WorkspaceInspiration).where(
+            WorkspaceInspiration.workspace_id == workspace_id,
+            WorkspaceInspiration.external_content_id == external_content_id,
+        )
+    )
+    if inspiration is not None:
+        if inspiration.source == "tracked_profile" and source in EXPLICIT_IMPORT_SOURCES:
+            inspiration.source = source
+        return inspiration
+
+    inspiration = WorkspaceInspiration(
+        workspace_id=workspace_id,
+        external_content_id=external_content_id,
+        status="inbox",
+        source=source,
+    )
+    try:
+        with db.begin_nested():
+            db.add(inspiration)
+            db.flush()
+    except IntegrityError:
+        inspiration = db.scalar(
+            select(WorkspaceInspiration).where(
+                WorkspaceInspiration.workspace_id == workspace_id,
+                WorkspaceInspiration.external_content_id == external_content_id,
+            )
+        )
+        if inspiration is None:
+            raise
+    return inspiration
+
+
+PROMOTION_GRADES = frozenset({"t1", "t2"})
+
+
+def is_promotion_grade(grade: str) -> bool:
+    return grade in PROMOTION_GRADES
+
+
+def latest_score_is_qualified_clause(
+    *,
+    workspace_id: uuid.UUID,
+    external_content_id,
+):
+    latest_score_id = (
+        select(ContentScore.id)
+        .where(
+            ContentScore.workspace_id == workspace_id,
+            ContentScore.external_content_id == external_content_id,
+        )
+        .order_by(ContentScore.calculated_at.desc(), ContentScore.id.desc())
+        .limit(1)
+        .correlate(ExternalContent)
+        .scalar_subquery()
+    )
+    return (
+        select(ContentScore.grade)
+        .where(ContentScore.id == latest_score_id)
+        .scalar_subquery()
+        .in_(PROMOTION_GRADES)
+    )
+
+
+def promote_scored_content(
+    db: Session,
+    *,
+    workspace_id: uuid.UUID,
+    external_content_id: uuid.UUID,
+    grade: str,
+    source: str,
+) -> WorkspaceInspiration | None:
+    """Promote only score-qualified collected content into the inspiration workflow."""
+    if not is_promotion_grade(grade):
+        return None
+    return ensure_workspace_inspiration(
+        db,
+        workspace_id=workspace_id,
+        external_content_id=external_content_id,
+        source=source,
+    )
 
 
 def upsert_external_content(
@@ -23,7 +118,8 @@ def upsert_external_content(
     source: str,
     tracked_profile_id: uuid.UUID | None = None,
     detail_status: str = "summary",
-) -> tuple[ExternalContent, WorkspaceInspiration, bool]:
+    create_inspiration: bool = True,
+) -> tuple[ExternalContent, WorkspaceInspiration | None, bool]:
     content = db.scalar(
         select(ExternalContent).where(
             ExternalContent.workspace_id == workspace_id,
@@ -77,20 +173,16 @@ def upsert_external_content(
         content.latest_provider_fetch_id = provider_fetch_id
         content.last_seen_at = now
 
-    inspiration = db.scalar(
-        select(WorkspaceInspiration).where(
-            WorkspaceInspiration.workspace_id == workspace_id,
-            WorkspaceInspiration.external_content_id == content.id,
-        )
-    )
-    if inspiration is None:
-        inspiration = WorkspaceInspiration(
+    inspiration = (
+        ensure_workspace_inspiration(
+            db,
             workspace_id=workspace_id,
             external_content_id=content.id,
-            status="inbox",
             source=source,
         )
-        db.add(inspiration)
+        if create_inspiration
+        else None
+    )
 
     snapshot_exists = db.scalar(
         select(ContentMetricSnapshot.id).where(

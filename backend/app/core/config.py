@@ -45,6 +45,21 @@ class Settings(BaseSettings):
     asr_provider: str = "disabled"
     asr_model: str = "disabled"
     asr_estimated_cost_usd: Decimal = Field(default=Decimal("0.10"), ge=0)
+    video_tts_provider: str = "disabled"
+    video_tts_timeout_seconds: int = Field(default=60, ge=5, le=600)
+    minimax_api_key: SecretStr | None = None
+    # Retained only so existing local .env files continue loading; current v2 TTS does not use it.
+    minimax_group_id: str | None = None
+    minimax_tts_model: str = "speech-2.8-hd"
+    elevenlabs_api_key: SecretStr | None = None
+    elevenlabs_base_url: str = "https://api.elevenlabs.io"
+    elevenlabs_model_id: str = "eleven_multilingual_v2"
+    elevenlabs_voice_id: str | None = None
+    video_runs_dir: str = "storage/video-runs"
+    video_codex_bin: str = "codex"
+    video_codex_timeout_seconds: int = Field(default=900, ge=30, le=7200)
+    video_hyperframes_bin: str = "npx"
+    video_hyperframes_timeout_seconds: int = Field(default=900, ge=30, le=7200)
     object_storage_provider: str = "disabled"
     object_storage_bucket: str | None = None
     object_storage_region: str = "ap-southeast-2"
@@ -58,6 +73,7 @@ class Settings(BaseSettings):
     provider_circuit_open_seconds: int = Field(default=300, ge=10, le=86400)
     provider_payload_retention_days: int = Field(default=90, ge=7, le=3650)
     failed_provider_payload_retention_days: int = Field(default=30, ge=1, le=3650)
+    unpromoted_content_retention_days: int = Field(default=30, ge=1, le=3650)
 
     @field_validator("tikhub_base_url", mode="before")
     @classmethod
@@ -105,6 +121,11 @@ class Settings(BaseSettings):
             ("AI_PROVIDER", self.ai_provider, {"disabled", "fixture"}),
             ("ASR_PROVIDER", self.asr_provider, {"disabled", "fixture"}),
             (
+                "VIDEO_TTS_PROVIDER",
+                self.video_tts_provider,
+                {"disabled", "fixture", "minimax", "elevenlabs"},
+            ),
+            (
                 "OBJECT_STORAGE_PROVIDER",
                 self.object_storage_provider,
                 {"disabled", "fixture", "s3"},
@@ -117,6 +138,12 @@ class Settings(BaseSettings):
                 raise ValueError(f"{name}=fixture is only allowed in the test environment")
         if self.object_storage_provider == "s3" and not self.object_storage_bucket:
             raise ValueError("OBJECT_STORAGE_BUCKET is required when OBJECT_STORAGE_PROVIDER=s3")
+        if self.video_tts_provider == "fixture" and self.app_env != "test":
+            raise ValueError("VIDEO_TTS_PROVIDER=fixture is only allowed in the test environment")
+        if self.video_tts_provider == "minimax" and self.minimax_api_key is None:
+            raise ValueError("MiniMax TTS requires MINIMAX_API_KEY")
+        if self.video_tts_provider == "elevenlabs" and self.elevenlabs_api_key is None:
+            raise ValueError("ElevenLabs TTS requires ELEVENLABS_API_KEY")
         if self.app_env == "production":
             if urlparse(self.app_base_url).scheme != "https":
                 raise ValueError("APP_BASE_URL must use HTTPS in production")

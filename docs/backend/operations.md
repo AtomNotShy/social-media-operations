@@ -105,6 +105,7 @@ METRICS_BEARER_TOKEN=
 TRUSTED_HOSTS=
 PROVIDER_PAYLOAD_RETENTION_DAYS=
 FAILED_PROVIDER_PAYLOAD_RETENTION_DAYS=
+UNPROMOTED_CONTENT_RETENTION_DAYS=
 ```
 
 要求：
@@ -307,6 +308,28 @@ uv run python -m app.cli.retention \
 成功响应只有在超过保留期且没有被内容、指标、评论或发现结果引用时才会去除
 `response_payload`。失败响应使用单独的较短保留期。ProviderFetch 费用、状态和
 请求证据行不会删除。生产执行前必须先备份并保存 dry-run 输出。
+
+### 未晋升采集内容保留
+
+账号扫描产生的内容只有最新评分达到 t1/t2 才会进入灵感库。未晋升内容默认保留
+30 天（`UNPROMOTED_CONTENT_RETENTION_DAYS`），之后可以单独报告或清理。清理条件是
+内容已过期且没有任何 `WorkspaceInspiration`，因此已晋升内容、手动导入和发现导入
+都不会被删除；已删除账号留下的候选内容也会按相同规则清理。
+
+```bash
+# 只报告候选内容，不修改数据
+uv run python -m app.cli.retention --delete-expired-unpromoted-content
+
+# 只删除候选内容；Provider payload 保持 dry-run
+uv run python -m app.cli.retention \
+  --execute \
+  --delete-expired-unpromoted-content \
+  --confirm-delete-expired-unpromoted-content
+```
+
+如需同时执行 Provider payload 去除，另加
+`--confirm-redact-provider-payloads`；旧的 Provider-only 执行命令保持可用。
+生产环境应先保存 dry-run 数量，再由平台 Cron 每日执行一次候选清理命令。
 
 ### 恢复目标
 
