@@ -96,7 +96,7 @@ class ContentDetailHandler:
                     params=params,
                     sync_job_id=job.id,
                 )
-                content_type = "video"
+                content_type = "tweet" if platform == "x" else "video"
         except TikHubError as exc:
             if exc.code == "SOURCE_CONTENT_UNAVAILABLE":
                 self._mark_source_unavailable(

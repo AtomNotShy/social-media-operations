@@ -355,7 +355,7 @@ export function DiscoveryPage({ workspaceId }: { workspaceId: string }) {
                 <section className="rounded-xl border border-red-100 bg-red-50 p-6">
                   <h2 className="font-semibold text-red-800">搜索任务失败</h2>
                   <p className="mt-2 text-sm text-red-700">
-                    {search.data.error_code ?? "供应商暂时不可用"}。已入库历史内容仍可正常浏览。
+                    {searchErrorLabel(search.data.error_code)}。已入库历史内容仍可正常浏览。
                   </p>
                 </section>
               ) : (
@@ -472,6 +472,16 @@ function searchStatusLabel(status: string) {
       failed: "失败",
     }[status] ?? status
   );
+}
+
+function searchErrorLabel(code: string | null | undefined) {
+  if (code === "PROVIDER_PAYMENT_REQUIRED") {
+    return "TikHub 账户需充值或增加配额，本次失败未计费";
+  }
+  if (code === "PROVIDER_BUDGET_EXCEEDED") {
+    return "工作区今日第三方调用预算已用完";
+  }
+  return code ?? "供应商暂时不可用";
 }
 
 function sortLabel(value: unknown) {

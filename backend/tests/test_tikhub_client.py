@@ -68,6 +68,40 @@ def test_client_does_not_retry_authentication_failure():
     assert "invalid-test-token" not in repr(error)
 
 
+def test_client_maps_payment_required_without_retaining_provider_payload():
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            402,
+            json={
+                "detail": {
+                    "headers": {"Authorization": "Bearer secret-test-token"},
+                    "message": "payment required",
+                }
+            },
+        )
+
+    async def run():
+        async with httpx.AsyncClient(
+            base_url="https://api.example.test",
+            transport=httpx.MockTransport(handler),
+        ) as raw_client:
+            client = TikHubHttpClient(
+                base_url="https://api.example.test",
+                api_key="secret-test-token",
+                client=raw_client,
+            )
+            with pytest.raises(TikHubError) as captured:
+                await client.request(get_endpoint("xhs.profile"), {"user_id": "abc"})
+            return captured.value
+
+    error = asyncio.run(run())
+
+    assert error.code == "PROVIDER_PAYMENT_REQUIRED"
+    assert error.retryable is False
+    assert error.payload is None
+    assert "secret-test-token" not in repr(error)
+
+
 def test_client_retries_rate_limit_with_backoff():
     calls = 0
     delays: list[float] = []

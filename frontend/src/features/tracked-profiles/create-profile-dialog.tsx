@@ -16,6 +16,7 @@ const schema = z.object({
     "wechat_channels",
     "tiktok",
     "instagram",
+    "x",
   ]),
   profile_url: z.url("请输入有效的主页链接"),
   external_id: z.string().min(1, "请输入平台账号 ID"),
@@ -119,6 +120,7 @@ export function CreateProfileDialog({
                   <option value="wechat_channels">视频号</option>
                   <option value="tiktok">TikTok</option>
                   <option value="instagram">Instagram</option>
+                  <option value="x">X</option>
                 </select>
               </Field>
               <Field label="优先级" error={form.formState.errors.priority?.message}>

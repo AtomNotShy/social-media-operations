@@ -3,6 +3,7 @@ from typing import Any
 
 from app.providers.social.tikhub.bilibili import BilibiliAdapter
 from app.providers.social.tikhub.douyin import DouyinAppV3Adapter
+from app.providers.social.tikhub.twitter import TwitterAdapter
 from app.providers.social.tikhub.xiaohongshu import XiaohongshuAppV2Adapter
 
 
@@ -17,6 +18,8 @@ class TikHubPlatformBinding:
     adapter: Any
 
     def profile_params(self, external_id: str) -> dict[str, Any]:
+        if self.platform == "x":
+            return _x_user_params(external_id)
         return {
             "xiaohongshu": {"user_id": external_id},
             "douyin": {"sec_user_id": external_id},
@@ -29,6 +32,11 @@ class TikHubPlatformBinding:
         cursor: str | None,
         limit: int,
     ) -> dict[str, Any]:
+        if self.platform == "x":
+            params = _x_user_params(external_id)
+            if cursor:
+                params["cursor"] = cursor
+            return params
         if self.platform == "xiaohongshu":
             return {"user_id": external_id, "cursor": cursor}
         if self.platform == "douyin":
@@ -46,6 +54,8 @@ class TikHubPlatformBinding:
         }
 
     def detail_params(self, external_id: str | None, canonical_url: str) -> dict[str, Any]:
+        if self.platform == "x":
+            return {"tweet_id": external_id} if external_id else {"url": canonical_url}
         if self.platform == "xiaohongshu":
             return {"note_id": external_id} if external_id else {"share_text": canonical_url}
         if self.platform == "douyin":
@@ -59,6 +69,8 @@ class TikHubPlatformBinding:
         limit: int,
         sort_strategy: str,
     ) -> dict[str, Any]:
+        if self.platform == "x":
+            return {"tweet_id": external_id, "cursor": cursor}
         if self.platform == "xiaohongshu":
             return {
                 "note_id": external_id,
@@ -81,7 +93,22 @@ class TikHubPlatformBinding:
         }
 
 
+def _x_user_params(external_id: str) -> dict[str, Any]:
+    if external_id.isdigit():
+        return {"rest_id": int(external_id)}
+    return {"screen_name": external_id}
+
+
 PLATFORM_BINDINGS = {
+    "x": TikHubPlatformBinding(
+        platform="x",
+        series="web",
+        profile_endpoint="x.profile",
+        contents_endpoint="x.profile_contents",
+        detail_endpoint="x.content_detail",
+        comments_endpoint="x.comments",
+        adapter=TwitterAdapter(),
+    ),
     "xiaohongshu": TikHubPlatformBinding(
         platform="xiaohongshu",
         series="app_v2",

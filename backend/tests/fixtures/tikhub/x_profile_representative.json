@@ -1,0 +1,27 @@
+{
+  "code": 200,
+  "request_id": "x-profile-contract",
+  "message": "Request successful. This request will incur a charge.",
+  "data": {
+    "status": "active",
+    "profile": "elonmusk",
+    "rest_id": "44196397",
+    "blue_verified": true,
+    "verification_type": null,
+    "affiliates": {},
+    "business_account": [],
+    "avatar": "https://pbs.twimg.com/profile_images/2053244804520427520/m8mdWZCG_normal.jpg",
+    "header_image": "https://pbs.twimg.com/profile_banners/44196397/1774145451",
+    "desc": "",
+    "name": "Elon Musk",
+    "protected": false,
+    "location": null,
+    "friends": 1378,
+    "sub_count": 241091948,
+    "statuses_count": 106511,
+    "media_count": 4676,
+    "pinned_tweet_ids_str": ["2083034836097192096"],
+    "created_at": "Tue Jun 02 20:12:29 +0000 2009",
+    "id": "44196397"
+  }
+}

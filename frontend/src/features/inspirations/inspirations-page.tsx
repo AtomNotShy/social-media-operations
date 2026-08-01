@@ -36,6 +36,7 @@ const platforms = [
   { label: "抖音", value: "douyin" },
   { label: "哔哩哔哩", value: "bilibili" },
   { label: "YouTube", value: "youtube" },
+  { label: "X", value: "x" },
 ];
 
 export function InspirationsPage({ workspaceId }: { workspaceId: string }) {

@@ -103,7 +103,6 @@ class TikHubHttpClient:
                         provider_code=provider_code,
                         provider_request_id=provider_request_id,
                         latency_ms=latency_ms,
-                        payload=payload,
                     )
                     if retryable and attempt < endpoint.max_attempts:
                         await self._backoff(attempt)

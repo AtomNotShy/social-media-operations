@@ -1,12 +1,12 @@
 # 后端实现状态与证据边界
 
-更新日期：2026-07-31。
+更新日期：2026-08-01。
 
 ## 已实现并自动验证
 
 | 阶段 | 当前实现 |
 |---|---|
-| P0 | 小红书、抖音、Bilibili 链接导入/账号扫描 Adapter；小红书详情、评论与发现；Provider 证据、预算/缓存、任务调度与恢复 |
+| P0 | 小红书、抖音、Bilibili、X 链接导入/账号扫描 Adapter；小红书详情、评论与发现；Provider 证据、预算/缓存、任务调度与恢复 |
 | P1 | 评分证据冻结、分析/转写账本、DeepSeek/OpenAI/OpenAI-Compatible 真实模型适配器、工作区模型路由、加密凭据、严格结果 Schema、L2 门控、AI/ASR 预算预留与结算、模式库、趋势证据流 |
 | P2 | 自有账号、选题、项目状态机、人工/AI 脚本追加版本、S3 直传与远端校验、审核排期、人工发布、生成式复盘与看板 |
 | P3 | 保存视图、统一关键词搜索、版本化运营实验、项目分组、幂等归因事件与证据化结果 |
@@ -15,7 +15,7 @@
 当前本地证据：
 
 - Ruff 通过。
-- 112 项后端测试通过；2 项 PostgreSQL 集成测试和 1 项 PostgreSQL 性能测试在普通套件中跳过，并在 PostgreSQL 环境单独通过。
+- 134 项后端测试通过；2 项 PostgreSQL 集成测试和 1 项 PostgreSQL 性能测试在普通套件中跳过，并在 PostgreSQL 环境单独通过。
 - SQLite 空库可从 0001 顺序升级至 0017。
 - PostgreSQL 16 容器可在线升级至 0017。
 - SQLite 与 PostgreSQL 的 `alembic check` 均无模型/迁移漂移。
@@ -29,7 +29,7 @@
 
 - 自动化测试使用代表性去敏 Fixture，不是 TikHub 真实账户响应。
 - PostgreSQL 工作区预算行锁并发已验证；更高并发压力与托管实例性能仍未验收。
-- 抖音/Bilibili 使用官方端点契约与去敏 Fixture；尚未完成三个平台各 5 条真实内容与 10 个真实账号扫描。
+- 抖音/Bilibili 使用官方端点契约与去敏 Fixture；小红书/抖音/Bilibili 的目标仍是各 5 条真实内容与 10 个真实账号扫描。X 的四个端点（用户资料/发帖/详情/评论）已用真实 TikHub 响应核对并固化为契约测试，尚未完成真实 X 对标账号的端到端同步验收。
 - AI 已实现 DeepSeek、OpenAI 和通用 OpenAI-Compatible Provider、真实 HTTP
   错误映射、JSON Mode、L1/L2/内容生成模型路由及加密凭据；当前仓库没有用户
   Provider Key，因此自动测试使用 MockTransport，仍需用户凭据完成首次付费 Smoke

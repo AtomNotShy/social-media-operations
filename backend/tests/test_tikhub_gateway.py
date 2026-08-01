@@ -178,6 +178,7 @@ def test_gateway_records_failed_call_without_marking_it_billable(app, workspace)
     with app.state.database.session_factory() as db:
         fetch = db.scalar(select(ProviderFetch))
         assert fetch.error_code == "PROVIDER_AUTHENTICATION_FAILED"
+        assert fetch.response_payload is None
         assert fetch.billable is False
         assert fetch.estimated_cost_usd == 0
         assert db.scalar(select(func.count()).select_from(ProviderUsageDaily)) == 0

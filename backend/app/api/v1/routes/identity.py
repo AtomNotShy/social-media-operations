@@ -145,6 +145,42 @@ def create_workspace(
             active=True,
         )
     )
+    db.add(
+        ScoringPolicy(
+            workspace_id=workspace.id,
+            platform="x",
+            version=1,
+            core_metric_formula={
+                "required_metrics": ["likes", "comments", "favorites"],
+                "core_metric_weights": {
+                    "likes": 1,
+                    "comments": 2,
+                    "favorites": 2,
+                    "shares": 3,
+                },
+                "reach_proxy_weights": {
+                    "likes": 1,
+                    "comments": 2,
+                    "favorites": 2,
+                    "shares": 3,
+                },
+            },
+            tier_thresholds={
+                "micro_max": 10000,
+                "small_max": 100000,
+                "medium_max": 1000000,
+            },
+            grade_thresholds={
+                "t1": {"minimum_r": 5, "minimum_m": 0.1},
+                "t2": {"minimum_r": 3, "minimum_m": 0.05},
+                "t3": {"minimum_r": 2, "minimum_m": 0},
+                "low_quality": {"maximum_r": 0.5},
+            },
+            minimum_age_minutes=60,
+            minimum_baseline_count=5,
+            active=True,
+        )
+    )
     db.commit()
     return DataResponse(
         data=WorkspaceRead.model_validate(workspace),

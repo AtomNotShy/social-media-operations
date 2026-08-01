@@ -138,7 +138,9 @@ class TikHubGateway:
                 latency_ms=exc.latency_ms,
                 billable=False,
                 estimated_cost_usd=Decimal("0"),
-                response_payload=exc.payload,
+                # Provider error bodies are not persisted because upstream services may
+                # echo request headers (including authorization credentials) in them.
+                response_payload=None,
                 fetched_at=now,
                 error_code=exc.code,
             )

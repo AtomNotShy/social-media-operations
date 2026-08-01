@@ -28,6 +28,9 @@ _BILIBILI_CONTENT_PATTERNS = (
     re.compile(r"^/video/(?P<id>BV[A-Za-z0-9]{8,20})/?$", re.IGNORECASE),
     re.compile(r"^/video/(?P<id>av[0-9]{1,20})/?$", re.IGNORECASE),
 )
+_TWITTER_CONTENT_PATTERNS = (
+    re.compile(r"^/(?P<handle>[A-Za-z0-9_]{1,15})/status/(?P<id>[0-9]{1,32})/?$"),
+)
 
 
 def normalize_content_url(value: str) -> SocialURLReference:
@@ -110,6 +113,25 @@ def normalize_content_url(value: str) -> SocialURLReference:
         return SocialURLReference(
             platform="bilibili",
             canonical_url=f"https://www.bilibili.com/video/{external_id}",
+            external_id=external_id,
+            share_text=value.strip(),
+        )
+
+    if _is_host(host, "twitter.com") or _is_host(host, "x.com"):
+        external_id = None
+        handle = None
+        for pattern in _TWITTER_CONTENT_PATTERNS:
+            matched = pattern.fullmatch(path)
+            if matched:
+                external_id = matched.group("id")
+                handle = matched.group("handle")
+                break
+        if external_id is None:
+            raise UnsupportedSocialURL("The URL is not a supported X/Twitter content URL")
+        canonical_url = f"https://x.com/{handle}/status/{external_id}"
+        return SocialURLReference(
+            platform="x",
+            canonical_url=canonical_url,
             external_id=external_id,
             share_text=value.strip(),
         )

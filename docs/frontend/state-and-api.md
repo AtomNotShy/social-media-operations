@@ -405,6 +405,7 @@ type AppError = {
 | `PROVIDER_RATE_LIMITED` | 显示预计重试时间 |
 | `PROVIDER_UNAVAILABLE` | 保留历史数据，允许稍后重试 |
 | `PROVIDER_BUDGET_EXCEEDED` | 显示预算和可恢复时间 |
+| `PROVIDER_PAYMENT_REQUIRED` | 提示第三方账户需充值或增加配额 |
 | `SOURCE_CONTENT_UNAVAILABLE` | 标记来源不可见 |
 
 ## 18. Null 与零

@@ -15,6 +15,38 @@ class TikHubEndpoint:
 
 
 ENDPOINTS: dict[str, TikHubEndpoint] = {
+    "x.profile": TikHubEndpoint(
+        key="x.profile",
+        platform="x",
+        path="/api/v1/twitter/web/fetch_user_profile",
+        version="web",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=24 * 60 * 60,
+    ),
+    "x.profile_contents": TikHubEndpoint(
+        key="x.profile_contents",
+        platform="x",
+        path="/api/v1/twitter/web/fetch_user_post_tweet",
+        version="web",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=3 * 60 * 60,
+    ),
+    "x.content_detail": TikHubEndpoint(
+        key="x.content_detail",
+        platform="x",
+        path="/api/v1/twitter/web/fetch_tweet_detail",
+        version="web",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=24 * 60 * 60,
+    ),
+    "x.comments": TikHubEndpoint(
+        key="x.comments",
+        platform="x",
+        path="/api/v1/twitter/web/fetch_post_comments",
+        version="web",
+        estimated_cost_usd=Decimal("0.001"),
+        freshness_seconds=24 * 60 * 60,
+    ),
     "xhs.profile": TikHubEndpoint(
         key="xhs.profile",
         platform="xiaohongshu",

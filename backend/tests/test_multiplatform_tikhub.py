@@ -62,6 +62,48 @@ BILIBILI_DETAIL = {
     },
 }
 
+X_TWEET_DETAIL = {
+    "code": 200,
+    "request_id": "x-contract",
+    "data": {
+        "likes": 285015,
+        "created_at": "Tue Jul 02 15:59:23 +0000 2024",
+        "text": "The New York Times is attacking *your* freedom of speech!",
+        "retweets": 52791,
+        "bookmarks": 6666,
+        "quotes": 3934,
+        "replies": 26965,
+        "views": "53720034",
+        "conversation_id": "1808168603721650364",
+        "entities": {
+            "media": [
+                {
+                    "media_url_https": "https://pbs.twimg.com/media/GRfnwy5X0AAwIK2.jpg",
+                    "id_str": "1808168600894689280",
+                    "type": "photo",
+                    "url": "https://t.co/TRIa13TWdY",
+                }
+            ]
+        },
+        "author": {
+            "rest_id": "44196397",
+            "name": "Elon Musk",
+            "screen_name": "elonmusk",
+            "sub_count": 241091952,
+            "blue_verified": True,
+        },
+        "media": {
+            "photo": [
+                {
+                    "media_url_https": "https://pbs.twimg.com/media/GRfnwy5X0AAwIK2.jpg",
+                    "id": "1808168600894689280",
+                }
+            ]
+        },
+        "id": "1808168603721650364",
+    },
+}
+
 
 def _headers(auth_headers, workspace):
     return {**auth_headers, "X-Workspace-Id": workspace["id"]}
@@ -102,6 +144,13 @@ def test_bilibili_contract_shape_is_normalized():
             BILIBILI_DETAIL,
             "bilibili",
             "BV1S5uKzzE4r",
+        ),
+        (
+            "https://x.com/elonmusk/status/1808168603721650364",
+            "/api/v1/twitter/web/fetch_tweet_detail",
+            X_TWEET_DETAIL,
+            "x",
+            "1808168603721650364",
         ),
     ],
 )
@@ -155,3 +204,10 @@ def test_multiplatform_url_import_uses_registered_adapter(
     content = listing.json()["data"][0]["content"]
     assert content["platform"] == expected_platform
     assert content["external_id"] == expected_external_id
+    if expected_platform == "x":
+        assert content["content_type"] == "tweet"
+        assert content["canonical_url"] == "https://x.com/elonmusk/status/1808168603721650364"
+        assert content["media_manifest"][0] == {
+            "type": "photo",
+            "url": "https://pbs.twimg.com/media/GRfnwy5X0AAwIK2.jpg",
+        }

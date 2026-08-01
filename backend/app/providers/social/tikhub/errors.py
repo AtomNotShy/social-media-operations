@@ -18,7 +18,7 @@ def map_status(status: int) -> tuple[str, bool]:
     if status in {401, 403}:
         return "PROVIDER_AUTHENTICATION_FAILED", False
     if status == 402:
-        return "PROVIDER_BUDGET_EXCEEDED", False
+        return "PROVIDER_PAYMENT_REQUIRED", False
     if status == 404:
         return "SOURCE_CONTENT_UNAVAILABLE", False
     if status == 422:

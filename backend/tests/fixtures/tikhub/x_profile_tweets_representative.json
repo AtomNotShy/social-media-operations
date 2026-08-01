@@ -1,0 +1,159 @@
+{
+  "code": 200,
+  "request_id": "x-profile-contents-contract",
+  "message": "Request successful. This request will incur a charge.",
+  "data": {
+    "next_cursor": "DAAHCgABG-mgUrv__-kLAAIAAAATMjAxMTE4OTkzODkyMjk0NzAzNwgAAwAAAAIAAA",
+    "prev_cursor": "",
+    "status": "ok",
+    "pinned": {
+      "author": {
+        "avatar": "https://pbs.twimg.com/profile_images/2008546467615580160/57KcqsTA_normal.jpg",
+        "blue_verified": true,
+        "followers_count": 232092404,
+        "name": "Elon Musk",
+        "rest_id": "44196397",
+        "screen_name": "elonmusk"
+      },
+      "bookmarks": 2441,
+      "conversation_id": "2010873739349823764",
+      "created_at": "Tue Jan 13 00:37:14 +0000 2026",
+      "favorites": 47967,
+      "lang": "en",
+      "media": [],
+      "quotes": 265,
+      "replies": 4428,
+      "retweets": 8451,
+      "source": "Twitter for iPhone",
+      "text": "Live at @StarbaseTX!",
+      "tweet_id": "2010873739349823764",
+      "views": "16072495"
+    },
+    "timeline": [
+      {
+        "author": {
+          "avatar": "https://pbs.twimg.com/profile_images/2008546467615580160/57KcqsTA_normal.jpg",
+          "blue_verified": true,
+          "followers_count": 232092404,
+          "name": "Elon Musk",
+          "rest_id": "44196397",
+          "screen_name": "elonmusk"
+        },
+        "bookmarks": 0,
+        "conversation_id": "2011313989737959548",
+        "created_at": "Wed Jan 14 05:46:38 +0000 2026",
+        "entities": {"hashtags": [], "symbols": [], "timestamps": [], "urls": [], "user_mentions": []},
+        "favorites": 0,
+        "lang": "en",
+        "media": [],
+        "quotes": 0,
+        "replies": 0,
+        "retweeted": {"id": "2011295728300437848"},
+        "retweeted_tweet": {
+          "author": {
+            "avatar": "https://pbs.twimg.com/profile_images/1876785200010539008/2_HFJjq9_normal.jpg",
+            "blue_verified": true,
+            "name": "X Freeze",
+            "rest_id": "1818311005698678784",
+            "screen_name": "XFreeze"
+          },
+          "bookmarks": 10,
+          "conversation_id": "2011295728300437848",
+          "created_at": "Wed Jan 14 04:34:04 +0000 2026",
+          "entities": {"hashtags": [], "symbols": [], "timestamps": [], "urls": [], "user_mentions": []},
+          "favorites": 121,
+          "lang": "en",
+          "media": [],
+          "quotes": 3,
+          "replies": 7,
+          "retweets": 18,
+          "source": "Twitter Web App",
+          "text": "Representative retweeted tweet text",
+          "tweet_id": "2011295728300437848",
+          "views": "9123"
+        },
+        "retweets": 0,
+        "source": "Twitter for iPhone",
+        "text": "",
+        "tweet_id": "2011313989737959548",
+        "views": "0"
+      },
+      {
+        "author": {
+          "avatar": "https://pbs.twimg.com/profile_images/2008546467615580160/57KcqsTA_normal.jpg",
+          "blue_verified": true,
+          "followers_count": 232092404,
+          "name": "Elon Musk",
+          "rest_id": "44196397",
+          "screen_name": "elonmusk"
+        },
+        "bookmarks": 88,
+        "conversation_id": "2011313989737959547",
+        "created_at": "2026-01-14T05:00:00Z",
+        "entities": {"hashtags": [], "symbols": [], "timestamps": [], "urls": [], "user_mentions": []},
+        "favorites": 1234,
+        "lang": "en",
+        "media": {
+          "video": [
+            {
+              "media_url_https": "https://pbs.twimg.com/ext_tw_video_thumb/2011313989737959547/pu/img/cover.jpg",
+              "expanded_url": "https://x.com/elonmusk/status/2011313989737959547/video/1",
+              "video_info": {"duration_millis": 214000},
+              "variants": [
+                {
+                  "bitrate": 632000,
+                  "content_type": "video/mp4",
+                  "url": "https://video.twimg.com/2011313989737959547/vid/320x398/low.mp4?tag=29"
+                },
+                {
+                  "bitrate": 2176000,
+                  "content_type": "video/mp4",
+                  "url": "https://video.twimg.com/2011313989737959547/vid/1080x1344/high.mp4?tag=29"
+                }
+              ],
+              "id": "2011313989737959547"
+            }
+          ]
+        },
+        "quotes": 12,
+        "replies": 34,
+        "retweets": 56,
+        "source": "Twitter for iPhone",
+        "text": "Representative X text post with video",
+        "tweet_id": "2011313989737959547",
+        "views": "654321"
+      },
+      {
+        "author": {
+          "avatar": "https://pbs.twimg.com/profile_images/2008546467615580160/57KcqsTA_normal.jpg",
+          "blue_verified": true,
+          "followers_count": 232092404,
+          "name": "Elon Musk",
+          "rest_id": "44196397",
+          "screen_name": "elonmusk"
+        },
+        "bookmarks": 9,
+        "conversation_id": "2011313989737959546",
+        "created_at": "2026-01-14T04:00:00Z",
+        "entities": {"hashtags": [], "symbols": [], "timestamps": [], "urls": [], "user_mentions": []},
+        "favorites": 77,
+        "lang": "en",
+        "media": {
+          "photo": [
+            {
+              "media_url_https": "https://pbs.twimg.com/media/photo_1.jpg",
+              "id": "media-photo-1"
+            }
+          ]
+        },
+        "quotes": 0,
+        "replies": 1,
+        "retweets": 2,
+        "source": "Twitter for iPhone",
+        "text": "Representative X photo tweet",
+        "tweet_id": "2011313989737959546",
+        "views": "1000"
+      }
+    ]
+  }
+}

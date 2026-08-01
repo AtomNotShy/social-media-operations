@@ -39,14 +39,40 @@ def test_accepts_share_domain_without_following_redirect():
             "BV1S5uKzzE4r",
             "https://www.bilibili.com/video/BV1S5uKzzE4r",
         ),
+        (
+            "https://x.com/elonmusk/status/1808168603721650364?s=20",
+            "x",
+            "1808168603721650364",
+            "https://x.com/elonmusk/status/1808168603721650364",
+        ),
+        (
+            "https://mobile.twitter.com/elonmusk/status/1808168603721650364",
+            "x",
+            "1808168603721650364",
+            "https://x.com/elonmusk/status/1808168603721650364",
+        ),
     ],
 )
-def test_normalizes_douyin_and_bilibili_urls(url, platform, external_id, canonical_url):
+def test_normalizes_supported_content_urls(url, platform, external_id, canonical_url):
     reference = normalize_content_url(url)
 
     assert reference.platform == platform
     assert reference.external_id == external_id
     assert reference.canonical_url == canonical_url
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://x.com/elonmusk",
+        "https://twitter.com/elonmusk/status/abc",
+        "https://t.co/abc123",
+        "https://x.com/elonmusk/status/",
+    ],
+)
+def test_rejects_unsupported_twitter_urls(url):
+    with pytest.raises(UnsupportedSocialURL):
+        normalize_content_url(url)
 
 
 def test_accepts_bilibili_share_domain_without_following_redirect():

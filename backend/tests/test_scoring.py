@@ -250,7 +250,10 @@ def test_new_policy_version_can_be_activated_without_rewriting_history(
     with app.state.database.session_factory() as db:
         policies = db.scalars(
             select(ScoringPolicy)
-            .where(ScoringPolicy.workspace_id == UUID(workspace["id"]))
+            .where(
+                ScoringPolicy.workspace_id == UUID(workspace["id"]),
+                ScoringPolicy.platform == "xiaohongshu",
+            )
             .order_by(ScoringPolicy.version)
         ).all()
         assert [policy.active for policy in policies] == [False, True]

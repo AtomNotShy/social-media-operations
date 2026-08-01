@@ -5,7 +5,7 @@
 
 - FastAPI 应用、统一响应和 `application/problem+json` 错误。
 - 开发/OIDC 身份、工作区、成员管理和 `owner/editor/viewer` 权限边界。
-- 小红书、抖音、Bilibili 安全链接导入与对标账号增量扫描；小红书搜索发现。
+- 小红书、抖音、Bilibili、X 安全链接导入与对标账号增量扫描；小红书搜索发现。
 - PostgreSQL 持久任务、自然幂等、Scheduler、超时锁恢复和队列健康。
 - TikHub 预算/缓存、调用证据、每日用量、运行状态和持久熔断。
 - 版本化爆款评分、首次证据冻结、L1/L2 与转写任务账本。
@@ -195,7 +195,8 @@ OpenAPI/文档契约、容器启动、本地测试套件、1000 行核心查询 
 以下仍然是生产发布阻塞项：
 
 - PostgreSQL 并发压测和托管实例验收。
-- 三个平台各 5 条真实内容、10 个真实账号的预算内 Smoke Test。
+- 小红书/抖音/Bilibili 三个平台各 5 条真实内容、10 个真实账号的预算内 Smoke
+  Test；X 适配器与契约测试已落地，但尚无真实 TikHub 响应验收。
 - 使用用户 DeepSeek/OpenAI/兼容 Provider Key 的首次付费 Smoke Test、真实 ASR
   Provider；S3 Provider 已实现但尚无用户 Bucket 凭据验收。
 - 托管环境 PITR、告警投递、Secret Store 和 Staging E2E。
