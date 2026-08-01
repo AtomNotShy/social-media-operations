@@ -236,7 +236,7 @@ export function InspirationDetailPage({
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <section className="rounded-xl border border-border bg-surface p-5 shadow-panel sm:p-6">
             <SectionTitle
               icon={Sparkles}
