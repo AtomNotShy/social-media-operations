@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
@@ -26,6 +27,22 @@ class InspirationUpdate(BaseModel):
     manual_score: int | None = Field(default=None, ge=0, le=100)
 
 
+class InspirationScoreSummary(BaseModel):
+    grade: str
+    r_value: Decimal | None
+    m_value: Decimal | None
+    calculated_at: datetime
+
+
+class InspirationMetricSummary(BaseModel):
+    captured_at: datetime
+    views: int | None
+    likes: int | None
+    comments: int | None
+    favorites: int | None
+    shares: int | None
+
+
 class InspirationRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,6 +54,8 @@ class InspirationRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     content: ExternalContentRead
+    latest_score: InspirationScoreSummary | None = None
+    latest_metrics: InspirationMetricSummary | None = None
 
 
 class ContentMetricSnapshotRead(BaseModel):

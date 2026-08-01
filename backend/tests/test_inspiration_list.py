@@ -1,9 +1,17 @@
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
 
-from app.db.models import ContentScore, ExternalContent, ScoringPolicy, WorkspaceInspiration
+from app.db.models import (
+    ContentMetricSnapshot,
+    ContentScore,
+    ExternalContent,
+    ProviderFetch,
+    ScoringPolicy,
+    WorkspaceInspiration,
+)
 
 
 def _headers(auth_headers, workspace):
@@ -192,3 +200,92 @@ def test_inspiration_list_hides_legacy_unqualified_tracked_profile_items(
     assert [item["entity_id"] for item in promoted_search.json()["data"]] == [
         str(tracked_inspiration_id)
     ]
+
+
+def test_inspiration_list_includes_latest_score_and_metric_summary(
+    client, app, auth_headers, workspace
+):
+    workspace_id = UUID(workspace["id"])
+    captured_at = datetime.now(timezone.utc)
+    with app.state.database.session_factory() as db:
+        inspiration = _inspiration(
+            db,
+            workspace_id=workspace_id,
+            external_id="card-summary",
+            source="manual_url",
+        )
+        policy = db.scalar(
+            select(ScoringPolicy).where(
+                ScoringPolicy.workspace_id == workspace_id,
+                ScoringPolicy.platform == "xiaohongshu",
+                ScoringPolicy.active.is_(True),
+            )
+        )
+        assert policy is not None
+        fetch = ProviderFetch(
+            workspace_id=workspace_id,
+            provider="fixture",
+            platform="xiaohongshu",
+            endpoint_key="fixture.content",
+            endpoint_path="/fixture",
+            request_fingerprint="card-summary-fetch",
+            request_params_redacted={},
+            billable=False,
+            estimated_cost_usd=Decimal("0"),
+        )
+        db.add(fetch)
+        db.flush()
+        db.add_all(
+            [
+                ContentScore(
+                    workspace_id=workspace_id,
+                    external_content_id=inspiration.external_content_id,
+                    scoring_policy_id=policy.id,
+                    grade="ordinary",
+                    r_value=Decimal("1.2"),
+                    is_initial=True,
+                    evidence={},
+                    calculated_at=captured_at - timedelta(minutes=1),
+                ),
+                ContentScore(
+                    workspace_id=workspace_id,
+                    external_content_id=inspiration.external_content_id,
+                    scoring_policy_id=policy.id,
+                    grade="t2",
+                    r_value=Decimal("3.5"),
+                    is_initial=False,
+                    evidence={},
+                    calculated_at=captured_at,
+                ),
+                ContentMetricSnapshot(
+                    workspace_id=workspace_id,
+                    external_content_id=inspiration.external_content_id,
+                    provider_fetch_id=fetch.id,
+                    captured_at=captured_at,
+                    views=12_000,
+                    likes=600,
+                    comments=30,
+                    favorites=70,
+                    shares=8,
+                    metrics={},
+                ),
+            ]
+        )
+        db.commit()
+
+    response = client.get("/api/v1/inspirations", headers=_headers(auth_headers, workspace))
+    assert response.status_code == 200
+    item = response.json()["data"][0]
+    assert item["latest_score"]["grade"] == "t2"
+    assert item["latest_score"]["r_value"] == "3.500000"
+    assert item["latest_metrics"]["captured_at"].startswith(
+        captured_at.isoformat().replace("+00:00", "")
+    )
+    assert item["latest_metrics"] | {"captured_at": None} == {
+        "captured_at": None,
+        "views": 12_000,
+        "likes": 600,
+        "comments": 30,
+        "favorites": 70,
+        "shares": 8,
+    }

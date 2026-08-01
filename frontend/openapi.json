@@ -4478,6 +4478,80 @@
         "title": "ImportURLRequest",
         "type": "object"
       },
+      "InspirationMetricSummary": {
+        "properties": {
+          "captured_at": {
+            "format": "date-time",
+            "title": "Captured At",
+            "type": "string"
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "favorites": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Favorites"
+          },
+          "likes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          }
+        },
+        "required": [
+          "captured_at",
+          "views",
+          "likes",
+          "comments",
+          "favorites",
+          "shares"
+        ],
+        "title": "InspirationMetricSummary",
+        "type": "object"
+      },
       "InspirationRead": {
         "properties": {
           "content": {
@@ -4492,6 +4566,26 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "latest_metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InspirationMetricSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InspirationScoreSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "manual_score": {
             "anyOf": [
@@ -4540,6 +4634,51 @@
           "content"
         ],
         "title": "InspirationRead",
+        "type": "object"
+      },
+      "InspirationScoreSummary": {
+        "properties": {
+          "calculated_at": {
+            "format": "date-time",
+            "title": "Calculated At",
+            "type": "string"
+          },
+          "grade": {
+            "title": "Grade",
+            "type": "string"
+          },
+          "m_value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "M Value"
+          },
+          "r_value": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R Value"
+          }
+        },
+        "required": [
+          "grade",
+          "r_value",
+          "m_value",
+          "calculated_at"
+        ],
+        "title": "InspirationScoreSummary",
         "type": "object"
       },
       "InspirationUpdate": {

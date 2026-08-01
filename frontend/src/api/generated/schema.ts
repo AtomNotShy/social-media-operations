@@ -3437,6 +3437,24 @@ export interface components {
             /** Url */
             url: string;
         };
+        /** InspirationMetricSummary */
+        InspirationMetricSummary: {
+            /**
+             * Captured At
+             * Format: date-time
+             */
+            captured_at: string;
+            /** Comments */
+            comments: number | null;
+            /** Favorites */
+            favorites: number | null;
+            /** Likes */
+            likes: number | null;
+            /** Shares */
+            shares: number | null;
+            /** Views */
+            views: number | null;
+        };
         /** InspirationRead */
         InspirationRead: {
             content: components["schemas"]["ExternalContentRead"];
@@ -3450,6 +3468,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            latest_metrics?: components["schemas"]["InspirationMetricSummary"] | null;
+            latest_score?: components["schemas"]["InspirationScoreSummary"] | null;
             /** Manual Score */
             manual_score: number | null;
             /** Notes */
@@ -3463,6 +3483,20 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** InspirationScoreSummary */
+        InspirationScoreSummary: {
+            /**
+             * Calculated At
+             * Format: date-time
+             */
+            calculated_at: string;
+            /** Grade */
+            grade: string;
+            /** M Value */
+            m_value: string | null;
+            /** R Value */
+            r_value: string | null;
         };
         /** InspirationUpdate */
         InspirationUpdate: {

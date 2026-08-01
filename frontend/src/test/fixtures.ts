@@ -224,6 +224,26 @@ export const demoInspirations: Inspiration[] = demoContents.map(
     created_at: content.first_seen_at,
     updated_at: content.last_seen_at,
     content,
+    latest_score:
+      index === 0
+        ? {
+            grade: "t1",
+            r_value: "5.74",
+            m_value: "0.81",
+            calculated_at: new Date(now - 17 * 60_000).toISOString(),
+          }
+        : null,
+    latest_metrics:
+      index === 0
+        ? {
+            captured_at: new Date(now - 17 * 60_000).toISOString(),
+            views: null,
+            likes: 6280,
+            comments: 214,
+            favorites: 1900,
+            shares: null,
+          }
+        : null,
   }),
 );
 

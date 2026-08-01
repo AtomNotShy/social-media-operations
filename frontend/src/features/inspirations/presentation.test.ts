@@ -4,9 +4,12 @@ import {
   contentCoverUrl,
   contentTitle,
   detailStatusLabel,
+  engagementTotal,
   formatMetric,
+  formatScoreRatio,
   inspirationSourceLabel,
   inspirationStatusLabel,
+  scoreGradeBadge,
 } from "./presentation";
 
 describe("inspiration presentation", () => {
@@ -52,5 +55,18 @@ describe("inspiration presentation", () => {
     expect(formatMetric(null)).toBe("—");
     expect(formatMetric(0)).toBe("0");
     expect(formatMetric(12800)).toBe("12,800");
+  });
+
+  it("formats card decision signals only when evidence exists", () => {
+    expect(scoreGradeBadge("t1")).toBe("T1");
+    expect(scoreGradeBadge("ordinary")).toBeNull();
+    expect(formatScoreRatio("2.75")).toBe("R 2.75×");
+    expect(formatScoreRatio(null)).toBeNull();
+    expect(
+      engagementTotal({ likes: 12, comments: 3, favorites: null, shares: 1 }),
+    ).toBe(16);
+    expect(
+      engagementTotal({ likes: null, comments: null, favorites: null, shares: null }),
+    ).toBeNull();
   });
 });

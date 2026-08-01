@@ -16,6 +16,7 @@ from app.api.dependencies import (
 from app.core.errors import AppError
 from app.db.models import (
     ContentMetricSnapshot,
+    ContentScore,
     ExternalContent,
     ProviderFetch,
     WorkspaceInspiration,
@@ -25,12 +26,14 @@ from app.modules.inspirations.schemas import (
     ContentMetricSnapshotRead,
     ImportURLRead,
     ImportURLRequest,
+    InspirationMetricSummary,
     InspirationRead,
+    InspirationScoreSummary,
     InspirationUpdate,
 )
 from app.modules.inspirations.service import (
+    PROMOTION_GRADES,
     ensure_workspace_inspiration,
-    latest_score_is_qualified_clause,
 )
 from app.modules.tracked_profiles.schemas import ExternalContentRead
 from app.providers.social.url_normalization import (
@@ -65,6 +68,8 @@ def _decode_cursor(value: str) -> tuple[datetime, uuid.UUID]:
 def _read_model(
     inspiration: WorkspaceInspiration,
     content: ExternalContent,
+    latest_score: ContentScore | None = None,
+    latest_metrics: ContentMetricSnapshot | None = None,
 ) -> InspirationRead:
     return InspirationRead(
         id=inspiration.id,
@@ -75,6 +80,28 @@ def _read_model(
         created_at=inspiration.created_at,
         updated_at=inspiration.updated_at,
         content=ExternalContentRead.model_validate(content),
+        latest_score=(
+            InspirationScoreSummary(
+                grade=latest_score.grade,
+                r_value=latest_score.r_value,
+                m_value=latest_score.m_value,
+                calculated_at=latest_score.calculated_at,
+            )
+            if latest_score is not None
+            else None
+        ),
+        latest_metrics=(
+            InspirationMetricSummary(
+                captured_at=latest_metrics.captured_at,
+                views=latest_metrics.views,
+                likes=latest_metrics.likes,
+                comments=latest_metrics.comments,
+                favorites=latest_metrics.favorites,
+                shares=latest_metrics.shares,
+            )
+            if latest_metrics is not None
+            else None
+        ),
     )
 
 
@@ -231,12 +258,44 @@ def list_inspirations(
     context: WorkspaceContext = Depends(get_workspace_context),
     db: Session = Depends(get_db),
 ) -> DataResponse:
+    latest_score_id = (
+        select(ContentScore.id)
+        .where(
+            ContentScore.workspace_id == context.workspace.id,
+            ContentScore.external_content_id == ExternalContent.id,
+        )
+        .order_by(ContentScore.calculated_at.desc(), ContentScore.id.desc())
+        .limit(1)
+        .correlate(ExternalContent)
+        .scalar_subquery()
+    )
+    latest_metric_id = (
+        select(ContentMetricSnapshot.id)
+        .where(
+            ContentMetricSnapshot.workspace_id == context.workspace.id,
+            ContentMetricSnapshot.external_content_id == ExternalContent.id,
+        )
+        .order_by(
+            ContentMetricSnapshot.captured_at.desc(),
+            ContentMetricSnapshot.id.desc(),
+        )
+        .limit(1)
+        .correlate(ExternalContent)
+        .scalar_subquery()
+    )
     statement = (
-        select(WorkspaceInspiration, ExternalContent)
+        select(
+            WorkspaceInspiration,
+            ExternalContent,
+            ContentScore,
+            ContentMetricSnapshot,
+        )
         .join(
             ExternalContent,
             ExternalContent.id == WorkspaceInspiration.external_content_id,
         )
+        .outerjoin(ContentScore, ContentScore.id == latest_score_id)
+        .outerjoin(ContentMetricSnapshot, ContentMetricSnapshot.id == latest_metric_id)
         .where(
             WorkspaceInspiration.workspace_id == context.workspace.id,
             ExternalContent.workspace_id == context.workspace.id,
@@ -248,10 +307,7 @@ def list_inspirations(
     statement = statement.where(
         or_(
             WorkspaceInspiration.source != "tracked_profile",
-            latest_score_is_qualified_clause(
-                workspace_id=context.workspace.id,
-                external_content_id=ExternalContent.id,
-            ),
+            ContentScore.grade.in_(PROMOTION_GRADES),
         )
     )
     if platform:
@@ -291,7 +347,7 @@ def list_inspirations(
     page = rows[:limit]
     next_cursor = _encode_cursor(page[-1][0]) if has_more and page else None
     return DataResponse(
-        data=[_read_model(row[0], row[1]) for row in page],
+        data=[_read_model(row[0], row[1], row[2], row[3]) for row in page],
         meta=ResponseMeta(
             request_id=request.state.request_id,
             next_cursor=next_cursor,

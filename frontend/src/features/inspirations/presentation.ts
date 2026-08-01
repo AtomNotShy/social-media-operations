@@ -70,3 +70,35 @@ export function contentCoverUrl(mediaManifest: unknown[]) {
 export function formatMetric(value: number | null | undefined) {
   return value == null ? "—" : new Intl.NumberFormat("zh-CN").format(value);
 }
+
+export function scoreGradeBadge(grade: string | null | undefined) {
+  return grade === "t1" ? "T1" : grade === "t2" ? "T2" : null;
+}
+
+export function formatScoreRatio(value: string | number | null | undefined) {
+  if (value == null) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return `R ${new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(parsed)}×`;
+}
+
+export function engagementTotal(
+  metrics:
+    | {
+        likes: number | null;
+        comments: number | null;
+        favorites: number | null;
+        shares: number | null;
+      }
+    | null
+    | undefined,
+) {
+  if (!metrics) return null;
+  const values = [
+    metrics.likes,
+    metrics.comments,
+    metrics.favorites,
+    metrics.shares,
+  ].filter((value): value is number => value != null);
+  return values.length ? values.reduce((total, value) => total + value, 0) : null;
+}

@@ -6,14 +6,21 @@ import {
   contentCoverUrl,
   contentTitle,
   detailStatusLabel,
+  engagementTotal,
+  formatScoreRatio,
   inspirationStatusLabel,
   inspirationSourceLabel,
+  scoreGradeBadge,
 } from "@/src/features/inspirations/presentation";
 import type {
   ExternalContent,
   Inspiration,
 } from "@/src/features/inspirations/types";
-import { formatRelativeTime, platformLabel } from "@/src/lib/format";
+import {
+  formatCompactNumber,
+  formatRelativeTime,
+  platformLabel,
+} from "@/src/lib/format";
 
 const gradients: Record<string, string> = {
   xiaohongshu: "from-rose-500 via-orange-400 to-amber-300",
@@ -30,6 +37,9 @@ export function InspirationCard({
   href: string;
 }) {
   const coverUrl = contentCoverUrl(item.content.media_manifest);
+  const gradeBadge = scoreGradeBadge(item.latest_score?.grade);
+  const scoreRatio = formatScoreRatio(item.latest_score?.r_value);
+  const interactions = engagementTotal(item.latest_metrics);
 
   return (
     <article className="group overflow-hidden rounded-xl border border-border bg-surface shadow-panel transition hover:-translate-y-0.5 hover:shadow-popover">
@@ -61,11 +71,18 @@ export function InspirationCard({
             <span className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-medium backdrop-blur-sm">
               {platformLabel(item.content.platform)}
             </span>
-            <ArrowUpRight
-              aria-hidden="true"
-              className="opacity-70 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100"
-              size={18}
-            />
+            <div className="flex items-center gap-2">
+              {gradeBadge ? (
+                <span className="rounded-full bg-amber-300 px-2 py-1 text-[11px] font-bold text-amber-950 shadow-sm">
+                  {gradeBadge}
+                </span>
+              ) : null}
+              <ArrowUpRight
+                aria-hidden="true"
+                className="opacity-70 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100"
+                size={18}
+              />
+            </div>
           </div>
           <p className="absolute bottom-4 left-4 right-4 line-clamp-2 text-lg font-semibold leading-6">
             {contentTitle(item.content.title, item.content.body_text)}
@@ -85,6 +102,21 @@ export function InspirationCard({
         <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-text-muted">
           {item.content.body_text || "当前内容源未提供正文摘要。"}
         </p>
+        {scoreRatio || item.latest_metrics?.views != null || interactions != null ? (
+          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium text-text-muted">
+            {scoreRatio ? <span title="相对同账号历史基线的 R 倍数">{scoreRatio}</span> : null}
+            {item.latest_metrics?.views != null ? (
+              <span title="最新采集播放/浏览量">
+                热度 {formatCompactNumber(item.latest_metrics.views)}
+              </span>
+            ) : null}
+            {interactions != null ? (
+              <span title="点赞、评论、收藏与分享的已知合计">
+                互动 {formatCompactNumber(interactions)}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-[11px] text-text-muted">
           <span className="inline-flex items-center gap-1" title="人工评分">
             <Gauge aria-hidden="true" size={13} />
