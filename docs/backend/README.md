@@ -1,4 +1,4 @@
-# 社媒运营工作台：后端架构
+# Xuzhang · 社媒运营工作台：后端架构
 
 状态：Draft v0.1  
 适用阶段：内部单工作区 MVP，可平滑扩展到小团队  
@@ -566,4 +566,3 @@ backend/
 - [TikHub API 文档](https://docs.tikhub.io/)
 - [TikHub 小红书接口说明](https://tikhub.io/xiaohongshu-api)
 - [TikHub 价格](https://tikhub.io/pricing)
-

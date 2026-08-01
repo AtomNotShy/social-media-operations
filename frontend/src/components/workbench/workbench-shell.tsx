@@ -256,8 +256,8 @@ export function WorkbenchShell({
         </span>
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-tight">序章</p>
-            <p className="truncate text-[11px] text-text-muted">SOCIAL OPS</p>
+            <p className="truncate text-sm font-semibold tracking-tight">Xuzhang</p>
+            <p className="truncate text-[11px] text-text-muted">SOCIAL CONTENT OPS</p>
           </div>
         ) : null}
       </div>

@@ -1,4 +1,4 @@
-# 序章 · 社媒运营工作台前端
+# Xuzhang · 社媒运营工作台前端
 
 P0–P3 前端契约主链实现，基于 Next.js 16、React 19、Tailwind CSS v4、
 TanStack Query 与 OpenAPI 生成类型。

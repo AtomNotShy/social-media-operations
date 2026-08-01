@@ -100,7 +100,7 @@ def main() -> int:
                     headers={"Authorization": f"Bearer {metrics_token}"},
                 )
                 if "social_ops_http_requests_total" not in response.text:
-                    raise SmokeFailure("/metrics did not expose Social Ops HTTP metrics")
+                    raise SmokeFailure("/metrics did not expose Xuzhang HTTP metrics")
                 checks.append("/metrics")
         print(
             json.dumps(

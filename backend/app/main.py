@@ -31,7 +31,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         database.dispose()
 
     application = FastAPI(
-        title="社媒运营工作台 API",
+        title="Xuzhang API",
         version="0.1.0",
         lifespan=lifespan,
     )

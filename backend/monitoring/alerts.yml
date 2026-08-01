@@ -11,7 +11,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Social Ops API 5xx rate is above 5%
+          summary: Xuzhang API 5xx rate is above 5%
 
       - alert: SocialOpsDatabaseMetricsCollectionFailed
         expr: social_ops_database_metrics_collection_success == 0
@@ -19,7 +19,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Social Ops cannot collect database-backed health metrics
+          summary: Xuzhang cannot collect database-backed health metrics
 
       - alert: SocialOpsQueueOldestJobTooOld
         expr: social_ops_job_oldest_active_seconds > 900
@@ -27,7 +27,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: A Social Ops job has remained active for more than 15 minutes
+          summary: A Xuzhang job has remained active for more than 15 minutes
 
       - alert: SocialOpsWorkerHeartbeatStale
         expr: social_ops_process_heartbeat_age_seconds{service="worker"} > 120
@@ -35,7 +35,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: A Social Ops worker heartbeat is stale
+          summary: A Xuzhang worker heartbeat is stale
 
       - alert: SocialOpsSchedulerHeartbeatStale
         expr: social_ops_process_heartbeat_age_seconds{service="scheduler"} > 180
@@ -43,7 +43,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: The Social Ops scheduler heartbeat is stale
+          summary: The Xuzhang scheduler heartbeat is stale
 
   - name: social-ops-providers
     rules:

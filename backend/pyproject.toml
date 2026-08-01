@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "social-media-operations-backend"
+name = "xuzhang-backend"
 version = "0.1.0"
-description = "Backend for the social media operations workbench"
+description = "Backend for Xuzhang, a social media operations workbench"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

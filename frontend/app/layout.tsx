@@ -7,12 +7,12 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
   title: {
-    default: "序章 · 社媒运营工作台",
-    template: "%s · 序章",
+    default: "Xuzhang · 社媒运营工作台",
+    template: "%s · Xuzhang",
   },
   description: "从对标账号、灵感、选题到发布复盘的一体化社媒运营工作台。",
   openGraph: {
-    title: "序章 · 社媒运营工作台",
+    title: "Xuzhang · 社媒运营工作台",
     description: "从洞察到发布，让内容运营有序发生。",
     images: [{ url: "/og.png", width: 1734, height: 909 }],
     locale: "zh_CN",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "序章 · 社媒运营工作台",
+    title: "Xuzhang · 社媒运营工作台",
     description: "从洞察到发布，让内容运营有序发生。",
     images: ["/og.png"],
   },

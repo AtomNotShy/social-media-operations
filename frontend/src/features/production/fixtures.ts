@@ -22,7 +22,7 @@ export const demoChannels: OwnedChannel[] = [
     id: "46dddb37-1d09-45c8-8645-852e60cf1001",
     platform: "xiaohongshu",
     external_id: "ordrly-growth",
-    display_name: "序章增长实验室",
+    display_name: "Xuzhang 增长实验室",
     handle: "@growth_lab",
     positioning: "帮助小团队把零散灵感变成可验证、可持续的内容增长实验。",
     audience: {

@@ -20,9 +20,9 @@ export function AuthShell({
             <GalleryVerticalEnd aria-hidden="true" size={19} />
           </span>
           <span>
-            <span className="block text-sm font-semibold">序章</span>
+            <span className="block text-sm font-semibold">Xuzhang</span>
             <span className="block text-[10px] tracking-[0.16em] text-white/55">
-              SOCIAL OPS
+              SOCIAL CONTENT OPS
             </span>
           </span>
         </Link>

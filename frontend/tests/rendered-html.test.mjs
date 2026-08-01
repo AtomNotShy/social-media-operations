@@ -40,7 +40,7 @@ test("server-renders the tracked profiles workbench", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>对标账号 · 序章<\/title>/i);
+  assert.match(html, /<title>对标账号 · Xuzhang<\/title>/i);
   assert.match(html, /对标账号/);
   assert.match(html, /演示工作区/);
   assert.match(html, /搜索或跳转/);
@@ -80,7 +80,7 @@ test("serves the inspiration library and detail routes", async () => {
   ]);
   assert.equal(library.status, 200);
   assert.equal(detail.status, 200);
-  assert.match(await library.text(), /<title>灵感库 · 序章<\/title>/i);
+  assert.match(await library.text(), /<title>灵感库 · Xuzhang<\/title>/i);
   assert.match(await detail.text(), /正在加载灵感详情/);
 });
 
@@ -163,7 +163,7 @@ test("serves the live settings center without milestone placeholder copy", async
   const response = await render("/w/demo/settings");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /<title>工作区设置 · 序章<\/title>/i);
+  assert.match(html, /<title>工作区设置 · Xuzhang<\/title>/i);
   assert.match(html, /管理工作区信息、调用预算、运行安全与成员权限/);
   assert.match(html, /数据连接/);
   assert.match(html, /任务通知/);
@@ -177,7 +177,7 @@ test("removes all disposable starter-preview artifacts", async () => {
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
 
-  assert.match(layout, /序章 · 社媒运营工作台/);
+  assert.match(layout, /Xuzhang · 社媒运营工作台/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview|_sites-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 
