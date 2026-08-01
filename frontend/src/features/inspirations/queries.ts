@@ -6,6 +6,7 @@ import {
   analyzeInspiration,
   fetchComments,
   getInspiration,
+  hydrateInspirationDetail,
   importInspirationURL,
   listAnalyses,
   listComments,
@@ -271,6 +272,7 @@ export function useCreateTopicFromInspiration(
 }
 
 export type InspirationAction =
+  | "hydrate-detail"
   | "score"
   | "comments"
   | "transcript"
@@ -285,6 +287,12 @@ export function useInspirationAction(
   return useMutation({
     mutationFn: async (action: InspirationAction) => {
       if (workspaceId === "demo") return { action, accepted: true };
+      if (action === "hydrate-detail") {
+        return {
+          action,
+          data: await hydrateInspirationDetail(workspaceId, inspirationId),
+        };
+      }
       if (action === "score") {
         return { action, data: await recalculateScore(workspaceId, inspirationId) };
       }
@@ -308,14 +316,21 @@ export function useInspirationAction(
     },
     onSuccess: (_, action) => {
       const key =
-        action === "score"
-          ? queryKeys.inspirations.scores(workspaceId, inspirationId)
-          : action === "comments"
-            ? queryKeys.inspirations.comments(workspaceId, inspirationId)
-            : action === "transcript"
-              ? queryKeys.inspirations.transcripts(workspaceId, inspirationId)
-              : queryKeys.inspirations.analyses(workspaceId, inspirationId);
+        action === "hydrate-detail"
+          ? queryKeys.inspirations.detail(workspaceId, inspirationId)
+          : action === "score"
+            ? queryKeys.inspirations.scores(workspaceId, inspirationId)
+            : action === "comments"
+              ? queryKeys.inspirations.comments(workspaceId, inspirationId)
+              : action === "transcript"
+                ? queryKeys.inspirations.transcripts(workspaceId, inspirationId)
+                : queryKeys.inspirations.analyses(workspaceId, inspirationId);
       client.invalidateQueries({ queryKey: key });
+      if (action === "hydrate-detail") {
+        client.invalidateQueries({
+          queryKey: queryKeys.inspirations.metrics(workspaceId, inspirationId),
+        });
+      }
       client.invalidateQueries({ queryKey: queryKeys.jobs.all(workspaceId) });
     },
   });

@@ -10,6 +10,7 @@ import {
   Gauge,
   LoaderCircle,
   MessageCircle,
+  RefreshCw,
   RotateCcw,
   Sparkles,
   Tags,
@@ -138,7 +139,12 @@ export function InspirationDetailPage({
               />
               <StatusBadge
                 label={detailStatusLabel(item.content.detail_status)}
-                status={item.content.detail_status === "ready" ? "succeeded" : "pending"}
+                status={
+                  item.content.detail_status === "ready" ||
+                  item.content.detail_status === "detail"
+                    ? "succeeded"
+                    : "pending"
+                }
               />
             </div>
             <h1 className="mt-3 max-w-4xl text-2xl font-semibold leading-9 tracking-tight sm:text-3xl">
@@ -164,6 +170,18 @@ export function InspirationDetailPage({
             </a>
             {permission.canEdit ? (
               <>
+                <button
+                  className="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3.5 py-2.5 text-sm font-medium text-primary-700 hover:bg-primary-100 disabled:opacity-50"
+                  disabled={action.isPending}
+                  onClick={() => run("hydrate-detail")}
+                  type="button"
+                >
+                  <RefreshCw aria-hidden="true" size={15} />
+                  {item.content.detail_status === "ready" ||
+                  item.content.detail_status === "detail"
+                    ? "刷新指标"
+                    : "补全详情"}
+                </button>
                 <button
                   className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3.5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
                   onClick={() => setTopicOpen(true)}
@@ -194,7 +212,9 @@ export function InspirationDetailPage({
       {action.isSuccess ? (
         <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-blue-100 bg-primary-50 px-4 py-3 text-sm text-primary-700">
           <span>
-            请求已受理。异步操作仍需等待任务完成，当前页面不会提前标记为已完成。
+            {action.data?.action === "hydrate-detail"
+              ? "详情刷新任务已受理；任务完成后会写入最新正文、媒体和互动指标。"
+              : "请求已受理。异步操作仍需等待任务完成，当前页面不会提前标记为已完成。"}
           </span>
           <Link className="shrink-0 font-semibold underline" href={`/w/${workspaceId}/jobs`}>
             查看任务
@@ -229,7 +249,7 @@ export function InspirationDetailPage({
                 label="最新互动快照"
                 value={
                   latestMetrics
-                    ? `赞 ${formatMetric(latestMetrics.likes)} · 评 ${formatMetric(latestMetrics.comments)} · 藏 ${formatMetric(latestMetrics.favorites)}`
+                    ? `浏览 ${formatMetric(latestMetrics.views)} · 赞 ${formatMetric(latestMetrics.likes)} · 评 ${formatMetric(latestMetrics.comments)} · 藏 ${formatMetric(latestMetrics.favorites)}`
                     : "尚无快照"
                 }
               />

@@ -14,6 +14,7 @@ export function detailStatusLabel(status: string) {
     {
       pending: "等待详情",
       summary: "摘要就绪",
+      detail: "详情就绪",
       ready: "详情就绪",
       failed: "详情失败",
     }[status] ?? status

@@ -11,6 +11,7 @@ import {
 describe("inspiration presentation", () => {
   it("uses stable Chinese labels for workflow states", () => {
     expect(inspirationStatusLabel("candidate")).toBe("候选选题");
+    expect(detailStatusLabel("detail")).toBe("详情就绪");
     expect(detailStatusLabel("ready")).toBe("详情就绪");
   });
 

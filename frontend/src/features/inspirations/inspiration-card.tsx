@@ -85,11 +85,11 @@ export function InspirationCard({
           {item.content.body_text || "当前内容源未提供正文摘要。"}
         </p>
         <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-[11px] text-text-muted">
-          <span className="inline-flex items-center gap-1" title="当前接口未提供互动指标">
+          <span className="inline-flex items-center gap-1" title="打开详情页可补全互动指标">
             <Gauge aria-hidden="true" size={13} />
             指标 —
           </span>
-          <span className="inline-flex items-center gap-1" title="当前接口未提供评论总量">
+          <span className="inline-flex items-center gap-1" title="打开详情页可补全评论总量">
             <MessageCircle aria-hidden="true" size={13} />
             评论 —
           </span>
@@ -99,7 +99,7 @@ export function InspirationCard({
           </span>
         </div>
         <p className="mt-2 text-[10px] text-text-muted">
-          {detailStatusLabel(item.content.detail_status)} · 互动量尚未进入当前读取契约
+          {detailStatusLabel(item.content.detail_status)} · 打开详情页可补全互动指标
         </p>
       </div>
     </article>

@@ -38,6 +38,30 @@ export async function getInspiration(
   return data!.data;
 }
 
+/**
+ * Queue a detail refresh for an imported inspiration.
+ *
+ * Account/profile collection may only persist a lightweight summary. This
+ * endpoint asks the backend to fetch the platform detail payload so metrics,
+ * media, and the full body can be stored as a new snapshot.
+ */
+export async function hydrateInspirationDetail(
+  workspaceId: string,
+  inspirationId: string,
+) {
+  const { data } = await api.POST(
+    "/api/v1/inspirations/{inspiration_id}/hydrate-detail",
+    {
+      headers: {
+        ...workspaceHeaders(workspaceId),
+        "Idempotency-Key": crypto.randomUUID(),
+      },
+      params: { path: { inspiration_id: inspirationId } },
+    },
+  );
+  return data!.data;
+}
+
 export async function importInspirationURL(
   workspaceId: string,
   input: ImportURLRequest,
