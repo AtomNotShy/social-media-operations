@@ -117,6 +117,9 @@ def test_analysis_and_transcript_requests_are_deduplicated(
     assert second_analysis.status_code == 202
     assert first_analysis.json()["data"]["reused"] is False
     assert second_analysis.json()["data"]["reused"] is True
+    assert first_analysis.json()["data"]["analysis"]["prompt_version"].endswith(
+        ":zh-cn-v1"
+    )
     assert (
         first_analysis.json()["data"]["analysis"]["id"]
         == second_analysis.json()["data"]["analysis"]["id"]

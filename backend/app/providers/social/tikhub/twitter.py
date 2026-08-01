@@ -143,6 +143,17 @@ def _tweet_external_id(raw: dict[str, Any], fallback: str | None) -> str | None:
     return fallback
 
 
+def _article_cover_url(article: dict[str, Any]) -> str | None:
+    cover = article.get("cover_media")
+    if isinstance(cover, str) and cover.strip():
+        return cover.strip()
+    if isinstance(cover, dict):
+        value = _first(cover, "url", "media_url_https", "media_url")
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
 def _parse_tweet(
     raw: dict[str, Any], *, fallback_external_id: str | None = None
 ) -> NormalizedContent | None:
@@ -156,9 +167,27 @@ def _parse_tweet(
     if not tweet_id:
         return None
     author = _author_dict(merged)
-    text = _first(merged, "full_text", "text", "body_text")
+    article = merged.get("article") if isinstance(merged.get("article"), dict) else None
+    article_title = _first(article or {}, "title")
+    article_text = _first(article or {}, "full_text", "preview_text")
+    has_article_title = isinstance(article_title, str) and bool(article_title.strip())
+    has_article_text = isinstance(article_text, str) and bool(article_text.strip())
+    is_article = article is not None and (has_article_title or has_article_text)
+    text = (
+        article_text
+        if is_article
+        else _first(merged, "full_text", "text", "body_text")
+    )
+    title = (
+        article_title.strip()
+        if isinstance(article_title, str) and article_title.strip()
+        else None
+    )
     handle = author.get("handle") or "i"
     media = _media_items(merged)
+    cover_url = _article_cover_url(article) if article is not None else None
+    if cover_url and not any(entry.get("url") == cover_url for entry in media):
+        media.append({"type": "cover", "url": cover_url})
     duration_ms = parse_count(_first(merged, "duration_ms", "duration_millis"))
     if duration_ms is None:
         for entry in media:
@@ -172,8 +201,8 @@ def _parse_tweet(
         platform="x",
         external_id=tweet_id,
         canonical_url=f"https://x.com/{handle}/status/{tweet_id}",
-        content_type="tweet",
-        title=None,
+        content_type="article" if is_article else "tweet",
+        title=title,
         body_text=text,
         published_at=_parse_twitter_time(_first(merged, "created_at")),
         duration_ms=duration_ms,

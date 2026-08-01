@@ -325,6 +325,40 @@ def test_x_content_detail_flat_shape_is_normalized():
     assert item.canonical_url == "https://x.com/elonmusk/status/1808168603721650364"
 
 
+def test_x_article_detail_prefers_article_title_body_and_cover():
+    item = TwitterAdapter().parse_content_detail(
+        _payload(
+            {
+                "id": "2083090241683128626",
+                "text": "https://t.co/C3sEAMGsu1",
+                "created_at": "Fri Jul 31 07:19:50 +0000 2026",
+                "author": {
+                    "screen_name": "AdrianPunk115",
+                    "name": "Adrian Punk",
+                },
+                "article": {
+                    "title": "最近大火的 AI 岗位，FDE 到底是干嘛的？普通人怎么上车？",
+                    "preview_text": "这两年，AI 圈最抢手的人……",
+                    "full_text": "这两年，AI 圈最抢手的人。\n\n这是完整长文。",
+                    "cover_media": "https://pbs.twimg.com/media/article-cover.jpg",
+                },
+            }
+        ),
+        fallback_external_id=None,
+    )
+
+    assert item.external_id == "2083090241683128626"
+    assert item.content_type == "article"
+    assert item.title == "最近大火的 AI 岗位，FDE 到底是干嘛的？普通人怎么上车？"
+    assert item.body_text == "这两年，AI 圈最抢手的人。\n\n这是完整长文。"
+    assert item.media == [
+        {"type": "cover", "url": "https://pbs.twimg.com/media/article-cover.jpg"}
+    ]
+    assert item.canonical_url == (
+        "https://x.com/AdrianPunk115/status/2083090241683128626"
+    )
+
+
 def test_x_content_detail_real_response_contract():
     import json
     from pathlib import Path

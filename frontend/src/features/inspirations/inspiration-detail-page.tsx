@@ -3,23 +3,23 @@
 import {
   Archive,
   ArrowLeft,
-  BarChart3,
   Bot,
   Check,
+  Clock3,
   ExternalLink,
   FileAudio,
   Gauge,
-  Heart,
   LoaderCircle,
   MessageCircle,
+  MoreHorizontal,
   RefreshCw,
-  Repeat2,
   RotateCcw,
   Sparkles,
   Tags,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ErrorState } from "@/src/components/ui/error-state";
 import { StatusBadge } from "@/src/components/ui/status-badge";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
@@ -39,6 +39,7 @@ import {
   useCreateTopicFromInspiration,
   useUpdateInspiration,
 } from "@/src/features/inspirations/queries";
+import { metricPresentation } from "@/src/features/inspirations/metric-presentation";
 import type {
   AnalysisRun,
   ContentMetricSnapshot,
@@ -46,6 +47,8 @@ import type {
 import { useCreatePatternsFromAnalysis } from "@/src/features/patterns/queries";
 import { useChannels } from "@/src/features/production/queries";
 import { formatRelativeTime, platformLabel } from "@/src/lib/format";
+
+type BackgroundAction = Exclude<InspirationAction, "score">;
 
 export function InspirationDetailPage({
   workspaceId,
@@ -62,6 +65,11 @@ export function InspirationDetailPage({
   const action = useInspirationAction(workspaceId, inspirationId);
   const topic = useCreateTopicFromInspiration(workspaceId, inspirationId);
   const [topicOpen, setTopicOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<BackgroundAction | null>(
+    null,
+  );
+  const [toast, setToast] = useState<TaskToast | null>(null);
   const [refreshUntil, setRefreshUntil] = useState<number | null>(null);
   const [refreshAction, setRefreshAction] = useState<InspirationAction | null>(null);
   const refetchInspiration = inspiration.refetch;
@@ -155,23 +163,32 @@ export function InspirationDetailPage({
   ].find(Boolean);
   const latestMetrics = evidence.metrics.data?.[0];
 
-  function run(next: InspirationAction) {
-    if (
-      next !== "score" &&
-      !window.confirm(
-        "这会创建 1 个外部或 AI 任务，并受工作区预算限制。任务创建不代表处理完成，是否继续？",
-      )
-    ) {
-      return;
-    }
+  function dispatchAction(next: InspirationAction) {
+    setToast(null);
     action.mutate(next, {
       onSuccess: () => {
+        setToast({ action: next, tone: "success" });
         if (next !== "score") {
           setRefreshAction(next);
           setRefreshUntil(Date.now() + 30_000);
         }
       },
+      onError: (error) => {
+        setToast({
+          action: next,
+          message: (error as { message?: string }).message ?? "操作失败，请重试。",
+          tone: "error",
+        });
+      },
     });
+  }
+
+  function run(next: InspirationAction) {
+    if (next === "score") {
+      dispatchAction(next);
+      return;
+    }
+    setPendingAction(next);
   }
 
   return (
@@ -184,9 +201,8 @@ export function InspirationDetailPage({
         返回灵感库
       </Link>
 
-      <section className="mb-5 overflow-hidden rounded-2xl border border-border bg-surface shadow-panel">
-        <div className="h-1.5 bg-gradient-to-r from-violet-600 via-primary-500 to-cyan-300" />
-        <div className="grid gap-6 p-5 sm:p-7 xl:grid-cols-[1fr_auto]">
+      <section className="mb-5 rounded-2xl border border-border bg-surface shadow-panel">
+        <div className="grid gap-6 p-5 sm:p-7 xl:grid-cols-[minmax(0,1fr)_auto]">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold tracking-[0.12em] text-primary-600 uppercase">
@@ -216,8 +232,24 @@ export function InspirationDetailPage({
                 : "未知时间"}{" "}
               · 收录于 {formatRelativeTime(item.created_at)}
             </p>
+            <InlineMetrics
+              isLoading={evidence.metrics.isLoading}
+              metrics={latestMetrics}
+              onOpenHistory={() => setHistoryOpen(true)}
+              platform={item.content.platform}
+            />
           </div>
-          <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-wrap items-start gap-2 xl:max-w-md xl:justify-end">
+            {permission.canEdit ? (
+              <button
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3.5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+                onClick={() => setTopicOpen(true)}
+                type="button"
+              >
+                <Sparkles aria-hidden="true" size={15} />
+                转成选题
+              </button>
+            ) : null}
             <a
               className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium hover:bg-surface-subtle"
               href={item.content.canonical_url}
@@ -241,51 +273,17 @@ export function InspirationDetailPage({
                     ? "刷新指标"
                     : "补全详情"}
                 </button>
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3.5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
-                  onClick={() => setTopicOpen(true)}
-                  type="button"
-                >
-                  <Sparkles aria-hidden="true" size={15} />
-                  转成选题
-                </button>
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2.5 text-sm font-medium hover:bg-surface-subtle disabled:opacity-50"
-                  disabled={archive.isPending}
-                  onClick={() => archive.mutate(item.status !== "archived")}
-                  type="button"
-                >
-                  {item.status === "archived" ? (
-                    <RotateCcw aria-hidden="true" size={15} />
-                  ) : (
-                    <Archive aria-hidden="true" size={15} />
-                  )}
-                  {item.status === "archived" ? "恢复" : "归档"}
-                </button>
+                <MoreActionsMenu
+                  archived={item.status === "archived"}
+                  busy={archive.isPending}
+                  onToggleArchive={() => archive.mutate(item.status !== "archived")}
+                />
               </>
             ) : null}
           </div>
         </div>
       </section>
 
-      {action.isSuccess ? (
-        <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-blue-100 bg-primary-50 px-4 py-3 text-sm text-primary-700">
-          <span>
-            {action.data?.action === "hydrate-detail"
-              ? "详情刷新任务已受理；任务完成后会写入最新正文、媒体和互动指标。"
-              : "请求已受理。异步操作仍需等待任务完成，当前页面不会提前标记为已完成。"}
-            {refreshUntil ? " 页面会在接下来的 30 秒内自动刷新证据。" : ""}
-          </span>
-          <Link className="shrink-0 font-semibold underline" href={`/w/${workspaceId}/jobs`}>
-            查看任务
-          </Link>
-        </div>
-      ) : null}
-      {action.error ? (
-        <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {(action.error as { message?: string }).message ?? "操作失败，请重试。"}
-        </div>
-      ) : null}
       {anyEvidenceError ? (
         <div className="mb-5 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           部分证据读取失败；原内容仍可查看，分析结果没有被推测或补造。
@@ -304,48 +302,11 @@ export function InspirationDetailPage({
               {item.content.body_text || "当前内容源未提供可读取的正文。"}
             </p>
             <div className="mt-5 border-t border-border pt-5">
-              <LatestMetricSnapshot metrics={latestMetrics} />
-              <div className="mt-5 grid gap-3 text-xs sm:grid-cols-2">
+              <div className="grid gap-3 text-xs sm:grid-cols-2">
                 <Fact label="详情状态" value={detailStatusLabel(item.content.detail_status)} />
                 <Fact label="最后看见" value={formatRelativeTime(item.content.last_seen_at)} />
               </div>
             </div>
-          </section>
-
-          <section className="rounded-xl border border-border bg-surface p-5 shadow-panel sm:p-6">
-            <SectionTitle icon={Gauge} eyebrow="Snapshot" title="指标快照" />
-            {evidence.metrics.isLoading ? (
-              <div className="mt-5"><LoadingLine /></div>
-            ) : evidence.metrics.data?.length ? (
-              <div className="mt-5 overflow-x-auto">
-                <table className="w-full min-w-[620px] text-left text-xs">
-                  <thead className="text-text-muted">
-                    <tr>
-                      <th className="pb-3 font-medium">采集时间</th>
-                      <th className="pb-3 text-right font-medium">播放</th>
-                      <th className="pb-3 text-right font-medium">点赞</th>
-                      <th className="pb-3 text-right font-medium">评论</th>
-                      <th className="pb-3 text-right font-medium">收藏</th>
-                      <th className="pb-3 text-right font-medium">分享</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {evidence.metrics.data.map((snapshot) => (
-                      <tr key={snapshot.id}>
-                        <td className="py-3">{new Date(snapshot.captured_at).toLocaleString("zh-CN")}</td>
-                        {[snapshot.views, snapshot.likes, snapshot.comments, snapshot.favorites, snapshot.shares].map((value, index) => (
-                          <td className="py-3 text-right tabular-nums" key={index}>
-                            {formatMetric(value)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="mt-5"><Absent text="还没有已入库的指标快照；缺失值不会显示为 0。" /></div>
-            )}
           </section>
 
           <EvidenceSection
@@ -591,7 +552,447 @@ export function InspirationDetailPage({
           workspaceId={workspaceId}
         />
       ) : null}
+      {pendingAction ? (
+        <TaskConfirmationDialog
+          action={pendingAction}
+          onClose={() => setPendingAction(null)}
+          onConfirm={() => {
+            const confirmedAction = pendingAction;
+            setPendingAction(null);
+            dispatchAction(confirmedAction);
+          }}
+        />
+      ) : null}
+      {historyOpen ? (
+        <MetricHistoryDrawer
+          isLoading={evidence.metrics.isLoading}
+          metrics={evidence.metrics.data ?? []}
+          onClose={() => setHistoryOpen(false)}
+          platform={item.content.platform}
+        />
+      ) : null}
+      {toast ? (
+        <ActionToast
+          toast={toast}
+          onClose={() => setToast(null)}
+          workspaceId={workspaceId}
+        />
+      ) : null}
     </>
+  );
+}
+
+type TaskToast = {
+  action: InspirationAction;
+  message?: string;
+  tone: "success" | "error";
+};
+
+const TASK_ACTION_COPY: Record<
+  BackgroundAction,
+  { title: string; description: string; confirmLabel: string }
+> = {
+  "hydrate-detail": {
+    title: "确认刷新内容详情？",
+    description:
+      "将创建一个后台采集任务，重新获取正文、媒体和互动指标。任务受工作区预算限制，创建成功不代表已处理完成。",
+    confirmLabel: "确认刷新",
+  },
+  "analysis-l1": {
+    title: "确认运行 L1 结构化分析？",
+    description:
+      "将创建一个后台 AI 任务，根据当前内容与证据生成结构化结果。任务受工作区预算限制，可在任务中心查看真实进度。",
+    confirmLabel: "确认运行",
+  },
+  "analysis-l2": {
+    title: "确认运行 L2 深度分析？",
+    description:
+      "将创建一个后台 AI 任务，对当前内容进行更深层的证据分析。任务受工作区预算限制，可在任务中心查看真实进度。",
+    confirmLabel: "确认运行",
+  },
+  transcript: {
+    title: "确认创建内容转写？",
+    description:
+      "将创建一个后台转写任务，从已采集的媒体中识别文本。任务受工作区预算限制，可在任务中心查看真实进度。",
+    confirmLabel: "创建转写",
+  },
+  comments: {
+    title: "确认抓取最新评论？",
+    description:
+      "将创建一个后台采集任务，读取内容的最新评论样本。任务受工作区预算限制，创建成功不代表已处理完成。",
+    confirmLabel: "确认抓取",
+  },
+};
+
+export function taskActionCopy(action: BackgroundAction) {
+  return TASK_ACTION_COPY[action];
+}
+
+export function TaskConfirmationDialog({
+  action,
+  onClose,
+  onConfirm,
+}: {
+  action: BackgroundAction;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const copy = taskActionCopy(action);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      aria-describedby="task-confirmation-description"
+      aria-labelledby="task-confirmation-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] grid place-items-center bg-text/35 p-4 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      role="dialog"
+    >
+      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-popover sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold" id="task-confirmation-title">
+              {copy.title}
+            </h2>
+            <p
+              className="mt-3 text-sm leading-6 text-text-muted"
+              id="task-confirmation-description"
+            >
+              {copy.description}
+            </p>
+          </div>
+          <button
+            aria-label="关闭确认弹窗"
+            className="grid size-8 shrink-0 place-items-center rounded-lg text-text-muted hover:bg-surface-subtle"
+            onClick={onClose}
+            type="button"
+          >
+            <X aria-hidden="true" size={17} />
+          </button>
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface-subtle"
+            onClick={onClose}
+            ref={cancelRef}
+            type="button"
+          >
+            取消
+          </button>
+          <button
+            className="rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+            onClick={onConfirm}
+            type="button"
+          >
+            {copy.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function InlineMetrics({
+  isLoading,
+  metrics,
+  onOpenHistory,
+  platform,
+}: {
+  isLoading: boolean;
+  metrics?: ContentMetricSnapshot;
+  onOpenHistory: () => void;
+  platform: string;
+}) {
+  const items = metrics
+    ? metricPresentation(platform, metrics).filter((item) => item.value != null)
+    : [];
+
+  return (
+    <div className="mt-5 border-t border-border/80 pt-4">
+      {isLoading ? (
+        <div
+          aria-label="正在加载最新指标"
+          className="h-11 w-full max-w-2xl animate-pulse rounded-lg bg-surface-subtle"
+        />
+      ) : items.length ? (
+        <dl
+          aria-label="最新指标"
+          className="flex flex-wrap gap-x-7 gap-y-3"
+        >
+          {items.map((metric) => (
+            <div className="flex min-w-14 flex-col" key={metric.field}>
+              <dt className="order-2 mt-0.5 text-[11px] text-text-muted">
+                {metric.label}
+              </dt>
+              <dd className="order-1 text-lg font-semibold tracking-tight tabular-nums text-text sm:text-xl">
+                {formatMetric(metric.value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="text-sm text-text-muted">暂无已入库的互动指标</p>
+      )}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <Clock3 aria-hidden="true" size={13} />
+          {metrics
+            ? `数据更新于 ${formatRelativeTime(metrics.captured_at)}`
+            : "尚无更新记录"}
+        </span>
+        <button
+          className="font-medium text-primary-700 hover:text-primary-800 hover:underline"
+          onClick={onOpenHistory}
+          type="button"
+        >
+          查看历史指标
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MoreActionsMenu({
+  archived,
+  busy,
+  onToggleArchive,
+}: {
+  archived: boolean;
+  busy: boolean;
+  onToggleArchive: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="更多操作"
+        className="grid size-10 place-items-center rounded-lg border border-border text-text-muted hover:bg-surface-subtle hover:text-text"
+        disabled={busy}
+        onClick={() => setOpen((current) => !current)}
+        ref={triggerRef}
+        type="button"
+      >
+        <MoreHorizontal aria-hidden="true" size={17} />
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 top-12 z-30 min-w-36 rounded-xl border border-border bg-surface p-1.5 shadow-popover"
+          role="menu"
+        >
+          <button
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-subtle"
+            onClick={() => {
+              setOpen(false);
+              onToggleArchive();
+            }}
+            role="menuitem"
+            type="button"
+          >
+            {archived ? (
+              <RotateCcw aria-hidden="true" size={15} />
+            ) : (
+              <Archive aria-hidden="true" size={15} />
+            )}
+            {archived ? "恢复灵感" : "归档灵感"}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function MetricHistoryDrawer({
+  isLoading,
+  metrics,
+  onClose,
+  platform,
+}: {
+  isLoading: boolean;
+  metrics: ContentMetricSnapshot[];
+  onClose: () => void;
+  platform: string;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const columns = metrics.length ? metricPresentation(platform, metrics[0]) : [];
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      aria-labelledby="metric-history-title"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] flex justify-end bg-text/30 backdrop-blur-sm"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      role="dialog"
+    >
+      <section className="flex h-full w-full max-w-2xl flex-col border-l border-border bg-surface shadow-popover">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-7 sm:py-6">
+          <div>
+            <h2 className="text-xl font-semibold" id="metric-history-title">
+              历史指标
+            </h2>
+            <p className="mt-1 text-sm text-text-muted">
+              按采集时间查看已入库的真实数据，缺失值不会显示为 0。
+            </p>
+          </div>
+          <button
+            aria-label="关闭历史指标"
+            className="grid size-9 shrink-0 place-items-center rounded-lg text-text-muted hover:bg-surface-subtle"
+            onClick={onClose}
+            ref={closeRef}
+            type="button"
+          >
+            <X aria-hidden="true" size={18} />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7">
+          {isLoading ? (
+            <div className="space-y-3" aria-label="正在加载历史指标">
+              <LoadingLine />
+              <LoadingLine />
+            </div>
+          ) : metrics.length ? (
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-[620px] text-left text-xs">
+                <thead className="bg-surface-subtle text-text-muted">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">采集时间</th>
+                    {columns.map((column) => (
+                      <th
+                        className="px-4 py-3 text-right font-medium"
+                        key={column.field}
+                      >
+                        {column.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {metrics.map((snapshot) => {
+                    const values = metricPresentation(platform, snapshot);
+                    return (
+                      <tr key={snapshot.id}>
+                        <td className="whitespace-nowrap px-4 py-3.5">
+                          {new Date(snapshot.captured_at).toLocaleString("zh-CN")}
+                        </td>
+                        {values.map((value) => (
+                          <td
+                            className="px-4 py-3.5 text-right tabular-nums"
+                            key={value.field}
+                          >
+                            {formatMetric(value.value)}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <Absent text="还没有已入库的历史指标。" />
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ActionToast({
+  onClose,
+  toast,
+  workspaceId,
+}: {
+  onClose: () => void;
+  toast: TaskToast;
+  workspaceId: string;
+}) {
+  const queued = toast.action !== "score";
+  const successMessage =
+    toast.action === "score"
+      ? "评分已重新计算。"
+      : toast.action === "hydrate-detail"
+        ? "详情刷新任务已创建，页面将短暂自动刷新。"
+        : "后台任务已创建，完成后会写入最新结果。";
+
+  return (
+    <div
+      className={`fixed bottom-4 left-4 right-4 z-[90] ml-auto max-w-md rounded-xl border px-4 py-3 shadow-popover sm:left-auto ${
+        toast.tone === "success"
+          ? "border-emerald-200 bg-surface text-text"
+          : "border-red-200 bg-red-50 text-red-800"
+      }`}
+      role={toast.tone === "error" ? "alert" : "status"}
+    >
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm leading-5">
+            {toast.tone === "error" ? toast.message : successMessage}
+          </p>
+          {toast.tone === "success" && queued ? (
+            <Link
+              className="mt-2 inline-flex text-xs font-semibold text-primary-700 hover:underline"
+              href={`/w/${workspaceId}/jobs`}
+            >
+              查看任务
+            </Link>
+          ) : null}
+        </div>
+        <button
+          aria-label="关闭提示"
+          className="grid size-7 shrink-0 place-items-center rounded-md text-text-muted hover:bg-surface-subtle"
+          onClick={onClose}
+          type="button"
+        >
+          <X aria-hidden="true" size={15} />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -841,45 +1242,6 @@ function Fact({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-[11px] text-text-muted">{label}</p>
       <p className="mt-1 break-words text-sm font-medium">{value}</p>
-    </div>
-  );
-}
-
-function LatestMetricSnapshot({
-  metrics,
-}: {
-  metrics?: ContentMetricSnapshot;
-}) {
-  const items = metrics
-    ? [
-        { label: "回复", value: metrics.comments, icon: MessageCircle },
-        { label: "转推", value: metrics.shares, icon: Repeat2 },
-        { label: "喜欢", value: metrics.likes, icon: Heart },
-        { label: "浏览", value: metrics.views, icon: BarChart3 },
-      ]
-    : [];
-
-  return (
-    <div aria-label="最新互动快照">
-      <p className="text-sm text-text-muted">最新互动快照</p>
-      {metrics ? (
-        <div className="mt-3 flex flex-wrap items-center gap-x-7 gap-y-3 text-xl font-medium tracking-tight text-text-muted sm:text-2xl">
-          {items.map(({ label, value, icon: Icon }) => (
-            <span
-              aria-label={`${label} ${formatMetric(value)}`}
-              className="inline-flex items-center gap-2"
-              key={label}
-            >
-              <Icon aria-hidden="true" size={24} strokeWidth={2} />
-              <span aria-hidden="true" className="tabular-nums">
-                {formatMetric(value)}
-              </span>
-            </span>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-1 text-sm text-text-muted">尚无快照</p>
-      )}
     </div>
   );
 }

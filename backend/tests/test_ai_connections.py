@@ -195,6 +195,10 @@ def test_openai_compatible_provider_sends_json_mode_and_parses_l1():
     assert seen["authorization"] == "Bearer secret-token"
     assert seen["body"]["response_format"] == {"type": "json_object"}
     assert seen["body"]["model"] == "deepseek-v4-flash"
+    system_prompt = seen["body"]["messages"][0]["content"]
+    assert "Simplified Chinese (zh-CN)" in system_prompt
+    assert "Keep JSON keys, schema enum values" in system_prompt
+    assert "timely and evergreen" in system_prompt
     assert result.result["recommended_for_l2"] is True
     assert result.input_tokens == 1000
     assert result.output_tokens == 500

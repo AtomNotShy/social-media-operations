@@ -18,6 +18,8 @@ from app.jobs.service import create_job
 from app.modules.ai_connections.service import resolve_route
 from app.modules.analysis.budget import reserve_ai_budget
 
+ANALYSIS_PROMPT_LOCALE_REVISION = "zh-cn-v1"
+
 
 def inspiration_content(
     db: Session,
@@ -159,7 +161,9 @@ def request_analysis(
         content_id=content.id,
     )
     prompt_version = (
-        settings.ai_prompt_version if level == "l1" else f"{settings.ai_prompt_version}:l2"
+        f"{settings.ai_prompt_version}:{ANALYSIS_PROMPT_LOCALE_REVISION}"
+        if level == "l1"
+        else f"{settings.ai_prompt_version}:l2:{ANALYSIS_PROMPT_LOCALE_REVISION}"
     )
     input_hash = _hash(
         {
