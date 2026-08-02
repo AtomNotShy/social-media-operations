@@ -24,6 +24,12 @@ export const demoChannels: OwnedChannel[] = [
     external_id: "ordrly-growth",
     display_name: "Xuzhang 增长实验室",
     handle: "@growth_lab",
+    bio: "帮助小团队把零散灵感变成可验证、可持续的内容增长实验。",
+    avatar_url:
+      "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?imageView2/2/w/540/format/webp",
+    last_synced_at: at(-8),
+    sync_status: "synced",
+    sync_error: null,
     positioning: "帮助小团队把零散灵感变成可验证、可持续的内容增长实验。",
     audience: {
       primary: "5–30 人品牌与内容团队",
@@ -43,6 +49,12 @@ export const demoChannels: OwnedChannel[] = [
     external_id: "ordrly-video",
     display_name: "一分钟内容系统",
     handle: "@one_minute_ops",
+    bio: "用一分钟演示一个可直接照做的内容运营动作。",
+    avatar_url:
+      "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?imageView2/2/w/540/format/webp",
+    last_synced_at: at(-12),
+    sync_status: "synced",
+    sync_error: null,
     positioning: "用一分钟演示一个可直接照做的内容运营动作。",
     audience: { primary: "创业者与运营负责人", problem: "时间少、试错成本高" },
     content_pillars: ["一分钟拆解", "现场改稿", "工具实测"],
@@ -59,6 +71,12 @@ export const demoChannels: OwnedChannel[] = [
     external_id: "build-in-public",
     display_name: "Build in Public",
     handle: "@bip_lab",
+    bio: "用透明、具体的产品进展，连接海外独立开发者与增长从业者。",
+    avatar_url:
+      "https://sns-avatar-qc.rednotecdn.com/avatar/623d98cdbda33525f18be3a0.jpg?imageView2/2/w/540/format/webp",
+    last_synced_at: at(-18),
+    sync_status: "synced",
+    sync_error: null,
     positioning: "用透明、具体的产品进展，连接海外独立开发者与增长从业者。",
     audience: {
       primary: "独立开发者与早期产品团队",

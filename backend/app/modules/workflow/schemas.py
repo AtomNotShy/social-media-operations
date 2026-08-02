@@ -59,6 +59,11 @@ class OwnedChannelRead(BaseModel):
     external_id: str | None
     display_name: str
     handle: str | None
+    bio: str | None
+    avatar_url: str | None
+    last_synced_at: datetime | None
+    sync_status: str
+    sync_error: str | None
     positioning: str
     audience: dict
     content_pillars: list

@@ -25,9 +25,12 @@ import {
   InsightList,
   nativeMetric,
   PerformanceTrendChart,
-  PlatformMark,
   summarizePerformance,
 } from "@/src/features/production/channel-analytics";
+import {
+  ChannelAvatar,
+  SyncStatusChip,
+} from "@/src/features/production/channel-identity";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
 import {
   useChannel,
@@ -93,7 +96,7 @@ export function ChannelDetailPage({
       </Link>
       <header className="flex flex-col gap-5 border-b border-border pb-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <PlatformMark platform={channel.data.platform} size="lg" />
+          <ChannelAvatar channel={channel.data} size="lg" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="truncate text-2xl font-semibold tracking-tight">{channel.data.display_name}</h1>
@@ -102,6 +105,13 @@ export function ChannelDetailPage({
             <p className="mt-1.5 text-xs text-text-muted">
               {channel.data.handle || "未设置 handle"} · {platformLabel(channel.data.platform)} · 数据源：已登记发布复盘
             </p>
+            <div className="mt-1.5">
+              <SyncStatusChip
+                canEdit={permission.canEdit}
+                channel={channel.data}
+                workspaceId={workspaceId}
+              />
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

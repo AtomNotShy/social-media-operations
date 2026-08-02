@@ -1055,6 +1055,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/owned-channels/{channel_id}/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scan Channel */
+        post: operations["scan_channel_api_v1_owned_channels__channel_id__scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/patterns": {
         parameters: {
             query?: never;
@@ -3890,6 +3907,10 @@ export interface components {
             audience: {
                 [key: string]: unknown;
             };
+            /** Avatar Url */
+            avatar_url: string | null;
+            /** Bio */
+            bio: string | null;
             /** Content Pillars */
             content_pillars: unknown[];
             /**
@@ -3908,6 +3929,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Last Synced At */
+            last_synced_at: string | null;
             /** Platform */
             platform: string;
             /** Positioning */
@@ -3916,6 +3939,10 @@ export interface components {
             prohibited_topics: unknown[];
             /** Publishing Mode */
             publishing_mode: string;
+            /** Sync Error */
+            sync_error: string | null;
+            /** Sync Status */
+            sync_status: string;
             /** Tone Rules */
             tone_rules: unknown[];
             /**
@@ -7857,6 +7884,39 @@ export interface operations {
             };
         };
     };
+    scan_channel_api_v1_owned_channels__channel_id__scan_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_JobAccepted_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_patterns_api_v1_patterns_get: {
         parameters: {
             query?: {
@@ -7939,7 +7999,7 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

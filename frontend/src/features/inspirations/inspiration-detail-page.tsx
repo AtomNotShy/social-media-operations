@@ -363,7 +363,9 @@ export function InspirationDetailPage({
             </p>
             {patterns.isSuccess ? (
               <div className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
-                已创建 {patterns.data.length} 个模式草稿。
+                {patterns.data.length
+                  ? `已创建 ${patterns.data.length} 个模式草稿（本次新增）。`
+                  : "该分析的模式草稿已经提炼过，本次没有重复创建。"}
                 <Link className="ml-2 font-semibold underline" href={`/w/${workspaceId}/patterns`}>
                   前往查看
                 </Link>

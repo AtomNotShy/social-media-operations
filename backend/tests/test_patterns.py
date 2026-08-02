@@ -1,6 +1,8 @@
 from uuid import UUID
 
-from app.db.models import AnalysisRun, ExternalContent
+from sqlalchemy import func, select
+
+from app.db.models import AnalysisRun, ExternalContent, ReusablePattern
 
 
 def _headers(auth_headers, workspace):
@@ -87,3 +89,70 @@ def test_patterns_can_be_created_from_successful_l2_with_evidence(
         "错误示范后给解决方案",
     ]
     assert patterns[0]["evidence"]["analysis_id"] == str(analysis_id)
+
+
+def test_patterns_from_analysis_are_deduplicated_and_idempotent(
+    client,
+    app,
+    auth_headers,
+    workspace,
+):
+    workspace_id = UUID(workspace["id"])
+    with app.state.database.session_factory() as db:
+        content = ExternalContent(
+            workspace_id=workspace_id,
+            platform="x",
+            external_id="pattern-source-x",
+            canonical_url="https://x.com/user/status/pattern-source-x",
+            content_type="tweet",
+            author_snapshot={},
+            media_manifest=[],
+        )
+        db.add(content)
+        db.flush()
+        analysis = AnalysisRun(
+            workspace_id=workspace_id,
+            external_content_id=content.id,
+            analysis_level="l2",
+            model_provider="fixture",
+            model="fixture-l2",
+            prompt_version="l1-v1:l2",
+            input_hash="pattern-analysis-dupes",
+            status="succeeded",
+            result={
+                "reusable_patterns": [
+                    "三秒痛点钩子",
+                    "三秒痛点钩子",
+                    " 三秒痛点钩子 ",
+                    "错误示范后给解决方案",
+                ],
+            },
+            evidence_refs=[f"content:{content.id}"],
+        )
+        db.add(analysis)
+        db.commit()
+        analysis_id = analysis.id
+
+    headers = _headers(auth_headers, workspace)
+    first = client.post(
+        f"/api/v1/patterns/from-analysis/{analysis_id}",
+        headers=headers,
+    )
+    assert first.status_code == 201
+    assert [item["name"] for item in first.json()["data"]] == [
+        "三秒痛点钩子",
+        "错误示范后给解决方案",
+    ]
+
+    second = client.post(
+        f"/api/v1/patterns/from-analysis/{analysis_id}",
+        headers=headers,
+    )
+    assert second.status_code == 200
+    assert second.json()["data"] == []
+
+    with app.state.database.session_factory() as db:
+        count = db.scalar(
+            select(func.count()).select_from(ReusablePattern)
+        )
+        assert count == 2

@@ -66,6 +66,11 @@
 | `external_id` | text nullable | 平台账号 ID |
 | `display_name` | text | 账号名称 |
 | `handle` | text nullable | 平台账号名 |
+| `bio` | text nullable | 扫描回填的账号简介 |
+| `avatar_url` | text nullable | 扫描回填的头像地址 |
+| `last_synced_at` | timestamptz nullable | 最近一次扫描成功时间 |
+| `sync_status` | text | `idle/pending/syncing/synced/error/paused` |
+| `sync_error` | text nullable | 扫描失败原因 |
 | `positioning` | text | 定位 |
 | `audience` | jsonb | 目标受众 |
 | `content_pillars` | jsonb | 内容支柱 |

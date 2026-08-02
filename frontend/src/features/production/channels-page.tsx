@@ -27,6 +27,10 @@ import {
   useCreateChannel,
   usePerformance,
 } from "@/src/features/production/queries";
+import {
+  ChannelAvatar,
+  SyncStatusChip,
+} from "@/src/features/production/channel-identity";
 import type { OwnedChannelCreate } from "@/src/features/production/types";
 import {
   Dialog,
@@ -150,12 +154,19 @@ export function ChannelsPage({ workspaceId }: { workspaceId: string }) {
                   key={channel.id}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <PlatformMark platform={channel.platform} />
+                    <ChannelAvatar channel={channel} />
                     <div className="min-w-0">
                       <h2 className="truncate text-sm font-semibold">{channel.display_name}</h2>
                       <p className="mt-1 truncate text-xs text-text-muted">
                         {channel.handle || "未设置 handle"} · {platformLabel(channel.platform)}
                       </p>
+                      <div className="mt-1.5">
+                        <SyncStatusChip
+                          canEdit={permission.canEdit}
+                          channel={channel}
+                          workspaceId={workspaceId}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -305,6 +316,9 @@ function CreateChannelDialog({
           <label className="text-sm font-medium">
             平台账号 ID
             <input className={`${inputClass} mt-2`} onChange={(event) => setValue({ ...value, external_id: event.target.value || null })} placeholder="用于匹配同步数据" value={value.external_id ?? ""} />
+            <span className="mt-1 block text-[11px] leading-4 text-text-muted">
+              填写后会立即扫描平台账号，自动回填头像与昵称，用于确认账号添加正确。
+            </span>
           </label>
         </div>
         <label className="text-sm font-medium">

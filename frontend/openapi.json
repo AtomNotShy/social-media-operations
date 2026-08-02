@@ -5645,6 +5645,28 @@
             "title": "Audience",
             "type": "object"
           },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
           "content_pillars": {
             "items": {},
             "title": "Content Pillars",
@@ -5686,6 +5708,18 @@
             "title": "Id",
             "type": "string"
           },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
           "platform": {
             "title": "Platform",
             "type": "string"
@@ -5701,6 +5735,21 @@
           },
           "publishing_mode": {
             "title": "Publishing Mode",
+            "type": "string"
+          },
+          "sync_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Error"
+          },
+          "sync_status": {
+            "title": "Sync Status",
             "type": "string"
           },
           "tone_rules": {
@@ -5720,6 +5769,11 @@
           "external_id",
           "display_name",
           "handle",
+          "bio",
+          "avatar_url",
+          "last_synced_at",
+          "sync_status",
+          "sync_error",
           "positioning",
           "audience",
           "content_pillars",
@@ -14443,6 +14497,70 @@
         ]
       }
     },
+    "/api/v1/owned-channels/{channel_id}/scan": {
+      "post": {
+        "operationId": "scan_channel_api_v1_owned_channels__channel_id__scan_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "channel_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Channel Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataResponse_JobAccepted_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Scan Channel",
+        "tags": [
+          "owned-channels"
+        ]
+      }
+    },
     "/api/v1/patterns": {
       "get": {
         "operationId": "list_patterns_api_v1_patterns_get",
@@ -14607,7 +14725,7 @@
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {

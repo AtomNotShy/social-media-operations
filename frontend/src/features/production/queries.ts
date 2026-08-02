@@ -54,6 +54,15 @@ export function useChannels(workspaceId: string) {
           : await service.listChannels(workspaceId);
       return items.filter((item) => item.active);
     },
+    refetchInterval: (query) => {
+      if (workspaceId === "demo") return false;
+      const items = query.state.data as OwnedChannel[] | undefined;
+      return items?.some(
+        (item) => item.sync_status === "pending" || item.sync_status === "syncing",
+      )
+        ? 3000
+        : false;
+    },
   });
 }
 
@@ -66,6 +75,14 @@ export function useChannel(workspaceId: string, channelId: string) {
       const channel = clone(demoChannels).find((item) => item.id === channelId);
       if (!channel) throw new Error("没有找到这个自有账号。");
       return channel;
+    },
+    refetchInterval: (query) => {
+      if (workspaceId === "demo") return false;
+      const item = query.state.data as OwnedChannel | undefined;
+      return item &&
+        (item.sync_status === "pending" || item.sync_status === "syncing")
+        ? 3000
+        : false;
     },
   });
 }
@@ -82,6 +99,11 @@ export function useCreateChannel(workspaceId: string) {
         id: crypto.randomUUID(),
         external_id: input.external_id ?? null,
         handle: input.handle ?? null,
+        bio: null,
+        avatar_url: null,
+        last_synced_at: null,
+        sync_status: "pending",
+        sync_error: null,
         audience: input.audience ?? {},
         content_pillars: input.content_pillars ?? [],
         tone_rules: input.tone_rules ?? [],
@@ -91,11 +113,102 @@ export function useCreateChannel(workspaceId: string) {
         updated_at: now,
       } satisfies OwnedChannel;
     },
-    onSuccess: (created) =>
+    onSuccess: (created) => {
       client.setQueryData<OwnedChannel[]>(
         queryKeys.production.channels(workspaceId),
         (items = clone(demoChannels)) => [created, ...items],
-      ),
+      );
+      if (workspaceId === "demo") {
+        window.setTimeout(() => {
+          client.setQueryData<OwnedChannel[]>(
+            queryKeys.production.channels(workspaceId),
+            (items = clone(demoChannels)) =>
+              items.map((item) =>
+                item.id === created.id
+                  ? {
+                      ...item,
+                      sync_status: "synced",
+                      sync_error: null,
+                      last_synced_at: stamp(),
+                    }
+                  : item,
+              ),
+          );
+          client.setQueryData<OwnedChannel>(
+            queryKeys.production.channel(workspaceId, created.id),
+            (item) =>
+              item && item.id === created.id
+                ? {
+                    ...item,
+                    sync_status: "synced",
+                    sync_error: null,
+                    last_synced_at: stamp(),
+                  }
+                : item,
+          );
+        }, 1500);
+      }
+    },
+  });
+}
+
+export function useScanChannel(workspaceId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (channelId: string) => {
+      if (workspaceId !== "demo")
+        return service.scanChannel(workspaceId, channelId);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      return { job_id: crypto.randomUUID(), status: "pending" };
+    },
+    onMutate: (channelId) => {
+      const patch = (item: OwnedChannel): OwnedChannel => ({
+        ...item,
+        sync_status: "pending",
+        sync_error: null,
+      });
+      client.setQueryData<OwnedChannel>(
+        queryKeys.production.channel(workspaceId, channelId),
+        (item) => (item ? patch(item) : item),
+      );
+      client.setQueryData<OwnedChannel[]>(
+        queryKeys.production.channels(workspaceId),
+        (items = []) =>
+          items.map((item) =>
+            item.id === channelId ? patch(item) : item,
+          ),
+      );
+    },
+    onSuccess: (_result, channelId) => {
+      if (workspaceId !== "demo") {
+        client.invalidateQueries({
+          queryKey: queryKeys.production.channels(workspaceId),
+        });
+        client.invalidateQueries({
+          queryKey: queryKeys.production.channel(workspaceId, channelId),
+        });
+        return;
+      }
+      window.setTimeout(() => {
+        const markSynced = (item: OwnedChannel): OwnedChannel => ({
+          ...item,
+          sync_status: "synced",
+          sync_error: null,
+          last_synced_at: stamp(),
+        });
+        client.setQueryData<OwnedChannel[]>(
+          queryKeys.production.channels(workspaceId),
+          (items = []) =>
+            items.map((item) =>
+              item.id === channelId ? markSynced(item) : item,
+            ),
+        );
+        client.setQueryData<OwnedChannel>(
+          queryKeys.production.channel(workspaceId, channelId),
+          (item) => (item ? markSynced(item) : item),
+        );
+      }, 1500);
+    },
   });
 }
 

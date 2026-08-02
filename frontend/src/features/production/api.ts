@@ -42,6 +42,17 @@ export async function createChannel(
   return data!.data;
 }
 
+export async function scanChannel(workspaceId: string, channelId: string) {
+  const { data } = await api.POST(
+    "/api/v1/owned-channels/{channel_id}/scan",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: { path: { channel_id: channelId } },
+    },
+  );
+  return data!.data;
+}
+
 export async function disableChannel(workspaceId: string, channelId: string) {
   const { data } = await api.DELETE("/api/v1/owned-channels/{channel_id}", {
     headers: workspaceHeaders(workspaceId),

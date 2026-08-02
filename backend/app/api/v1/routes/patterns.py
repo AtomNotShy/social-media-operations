@@ -153,11 +153,11 @@ def delete_pattern(
 @router.post(
     "/from-analysis/{analysis_id}",
     response_model=DataResponse[list[PatternRead]],
-    status_code=status.HTTP_201_CREATED,
 )
 def create_patterns_from_analysis(
     analysis_id: uuid.UUID,
     request: Request,
+    response: Response,
     context: WorkspaceContext = Depends(require_editor),
     db: Session = Depends(get_db),
 ) -> DataResponse:
@@ -183,34 +183,60 @@ def create_patterns_from_analysis(
             "No reusable patterns found",
             "The analysis did not produce reusable patterns.",
         )
+    analysis_id_text = str(analysis.id)
+    existing_patterns = db.scalars(
+        select(ReusablePattern).where(
+            ReusablePattern.workspace_id == context.workspace.id
+        )
+    ).all()
+    existing_names = {
+        pattern.name.strip()
+        for pattern in existing_patterns
+        if (pattern.evidence or {}).get("analysis_id") == analysis_id_text
+    }
+
+    candidates = [
+        value.strip()
+        for value in candidates[:20]
+        if isinstance(value, str) and value.strip()
+    ]
+    unique_candidates = list(dict.fromkeys(candidates))
     patterns = []
-    for value in candidates[:20]:
-        if not isinstance(value, str) or not value.strip():
+    for value in unique_candidates:
+        name = value[:255]
+        if name in existing_names:
             continue
         pattern = ReusablePattern(
             workspace_id=context.workspace.id,
-            name=value.strip()[:255],
-            description=value.strip(),
+            name=name,
+            description=value,
             pattern_type="structure",
             source_content_ids=[str(analysis.external_content_id)],
             evidence={
-                "analysis_id": str(analysis.id),
+                "analysis_id": analysis_id_text,
                 "evidence_refs": analysis.evidence_refs,
             },
             created_by=context.membership.user_id,
         )
         db.add(pattern)
         patterns.append(pattern)
-    if not patterns:
+        existing_names.add(name)
+    if patterns:
+        db.commit()
+        response.status_code = status.HTTP_201_CREATED
+        return DataResponse(
+            data=[PatternRead.model_validate(item) for item in patterns],
+            meta=ResponseMeta(request_id=request.state.request_id),
+        )
+    if not unique_candidates:
         raise AppError(
             409,
             "PATTERN_SOURCE_EMPTY",
             "No reusable patterns found",
             "The analysis patterns were empty or invalid.",
         )
-    db.commit()
     return DataResponse(
-        data=[PatternRead.model_validate(item) for item in patterns],
+        data=[],
         meta=ResponseMeta(request_id=request.state.request_id),
     )
 

@@ -15,6 +15,7 @@ from app.jobs.handlers.comments import CommentFetchHandler
 from app.jobs.handlers.content_detail import ContentDetailHandler
 from app.jobs.handlers.discovery import DiscoverySearchHandler
 from app.jobs.handlers.generation import GenerationHandler
+from app.jobs.handlers.owned_channel_scan import OwnedChannelScanHandler
 from app.jobs.handlers.profile_scan import ProfileScanHandler
 from app.jobs.handlers.transcript import TranscriptHandler
 from app.jobs.service import claim_next_job, recover_stale_jobs, touch_process_heartbeat
@@ -51,6 +52,7 @@ async def process_one(
         worker_id,
         job_types=(
             "PROFILE_SCAN",
+            "OWNED_CHANNEL_SCAN",
             "CONTENT_DETAIL_FETCH",
             "AI_ANALYSIS",
             "TRANSCRIBE",
@@ -77,6 +79,17 @@ async def process_one(
     try:
         if job.job_type == "PROFILE_SCAN":
             handler = ProfileScanHandler(
+                db,
+                TikHubGateway(
+                    db,
+                    client,
+                    circuit_failure_threshold=circuit_failure_threshold,
+                    circuit_open_seconds=circuit_open_seconds,
+                ),
+                settings=settings,
+            )
+        elif job.job_type == "OWNED_CHANNEL_SCAN":
+            handler = OwnedChannelScanHandler(
                 db,
                 TikHubGateway(
                     db,

@@ -138,6 +138,7 @@ POST   /owned-channels
 GET    /owned-channels/{channel_id}
 PATCH  /owned-channels/{channel_id}
 DELETE /owned-channels/{channel_id}
+POST   /owned-channels/{channel_id}/scan
 ```
 
 定位单独更新，便于审计：
@@ -146,6 +147,20 @@ DELETE /owned-channels/{channel_id}
 GET  /owned-channels/{channel_id}/positioning
 PUT  /owned-channels/{channel_id}/positioning
 ```
+
+创建自有账号时若提供了 `external_id`，后端会立即入队一次基本信息扫描，通过
+TikHub 拉取账号昵称、handle、简介与头像并回填到
+`display_name`/`handle`/`bio`/`avatar_url`。`sync_status` 取值：
+
+- `idle`：尚未扫描（通常是因为未提供平台账号 ID）。
+- `pending`：扫描已入队，等待 worker 执行。
+- `syncing`：正在扫描。
+- `synced`：扫描成功，昵称/头像等基础信息已回填。
+- `error`：扫描失败或平台暂不支持，`sync_error` 记录具体原因。
+- `paused`：账号已停用，暂停扫描。
+
+`POST /owned-channels/{channel_id}/scan` 可手动触发重新扫描，返回 `202` 与
+`{ "job_id": "...", "status": "pending" }`，与对标账号的同步接口一致。
 
 ## 4. 对标账号
 
