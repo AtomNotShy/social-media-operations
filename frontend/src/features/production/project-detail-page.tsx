@@ -7,9 +7,13 @@ import {
   FilePenLine,
   FolderOpen,
   Image,
+  PencilLine,
+  Trash2,
   Video,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ErrorState } from "@/src/components/ui/error-state";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { StatusBadge } from "@/src/components/ui/status-badge";
@@ -18,12 +22,17 @@ import { downloadVideoArtifact } from "@/src/features/production/api";
 import {
   useAssets,
   useChannels,
+  useDeleteProject,
   useProject,
   useRequestVideo,
   useScripts,
   useTransitionProject,
   useVideoRuns,
 } from "@/src/features/production/queries";
+import {
+  DeleteProjectDialog,
+  EditProjectDialog,
+} from "@/src/features/production/project-dialogs";
 import { projectStatus } from "@/src/features/production/projects-page";
 import {
   InlineError,
@@ -48,6 +57,7 @@ export function ProjectDetailPage({
   workspaceId: string;
   projectId: string;
 }) {
+  const router = useRouter();
   const project = useProject(workspaceId, projectId);
   const channels = useChannels(workspaceId);
   const scripts = useScripts(workspaceId, projectId);
@@ -55,6 +65,9 @@ export function ProjectDetailPage({
   const videos = useVideoRuns(workspaceId, projectId);
   const requestVideo = useRequestVideo(workspaceId, projectId);
   const transition = useTransitionProject(workspaceId, projectId);
+  const remove = useDeleteProject(workspaceId, projectId);
+  const [editing, setEditing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const permission = useWorkspaceRole(workspaceId);
   if (project.isLoading) return <p>正在加载内容项目…</p>;
   if (project.error || !project.data)
@@ -76,12 +89,32 @@ export function ProjectDetailPage({
         title={item.title}
         description={`${channel?.display_name ?? "未知账号"} · 版本 ${item.version} · ${item.due_at ? `截止 ${new Date(item.due_at).toLocaleString("zh-CN")}` : "未设置截止时间"}`}
         actions={
-          <Link
-            className={secondaryButton}
-            href={`/w/${workspaceId}/content-projects`}
-          >
-            <ArrowLeft size={15} /> 返回项目
-          </Link>
+          <div className="flex gap-2">
+            {permission.canEdit ? (
+              <>
+                <button
+                  className={secondaryButton}
+                  onClick={() => setEditing(true)}
+                  type="button"
+                >
+                  <PencilLine size={15} /> 编辑
+                </button>
+                <button
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setDeleting(true)}
+                  type="button"
+                >
+                  <Trash2 size={15} /> 删除
+                </button>
+              </>
+            ) : null}
+            <Link
+              className={secondaryButton}
+              href={`/w/${workspaceId}/content-projects`}
+            >
+              <ArrowLeft size={15} /> 返回项目
+            </Link>
+          </div>
         }
       />
       <section className="mb-5 flex flex-col gap-4 rounded-xl border border-border bg-surface p-5 shadow-panel sm:flex-row sm:items-center">
@@ -235,6 +268,24 @@ export function ProjectDetailPage({
           </div>
         </dl>
       </section>
+      <EditProjectDialog
+        workspaceId={workspaceId}
+        project={item}
+        open={editing}
+        onClose={() => setEditing(false)}
+      />
+      <DeleteProjectDialog
+        project={item}
+        open={deleting}
+        pending={remove.isPending}
+        error={remove.error}
+        onClose={() => setDeleting(false)}
+        onConfirm={() =>
+          remove.mutate(undefined, {
+            onSuccess: () => router.push(`/w/${workspaceId}/content-projects`),
+          })
+        }
+      />
     </>
   );
 }

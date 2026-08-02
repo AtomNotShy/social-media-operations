@@ -416,6 +416,7 @@ GET    /content-projects
 POST   /content-projects
 GET    /content-projects/{project_id}
 PATCH  /content-projects/{project_id}
+DELETE /content-projects/{project_id}
 POST   /content-projects/{project_id}/transition
 ```
 

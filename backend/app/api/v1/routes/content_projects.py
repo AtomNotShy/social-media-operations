@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import uuid
 
 from fastapi import APIRouter, Depends, Request, status
@@ -11,7 +12,7 @@ from app.api.dependencies import (
     require_editor,
 )
 from app.core.errors import AppError
-from app.db.models import ContentProject
+from app.db.models import Asset, ContentProject, PublishPlan, ScriptVersion
 from app.modules.workflow.schemas import (
     ContentProjectCreate,
     ContentProjectRead,
@@ -175,6 +176,59 @@ def transition_project(
         expected_version=body.version,
         values={"status": body.to_status},
     )
+    return DataResponse(
+        data=ContentProjectRead.model_validate(project),
+        meta=ResponseMeta(request_id=request.state.request_id),
+    )
+
+
+@router.delete("/{project_id}", response_model=DataResponse[ContentProjectRead])
+def delete_project(
+    project_id: uuid.UUID,
+    request: Request,
+    context: WorkspaceContext = Depends(require_editor),
+    db: Session = Depends(get_db),
+) -> DataResponse:
+    project = get_project(
+        db,
+        workspace_id=context.workspace.id,
+        project_id=project_id,
+    )
+    active_plan = db.scalar(
+        select(PublishPlan.id).where(
+            PublishPlan.workspace_id == context.workspace.id,
+            PublishPlan.content_project_id == project.id,
+            PublishPlan.status.in_({"draft", "approved", "queued", "failed"}),
+        )
+    )
+    if active_plan is not None:
+        raise AppError(
+            409,
+            "PROJECT_HAS_ACTIVE_PLANS",
+            "Project has active publish plans",
+            "Cancel pending publish plans before deleting this content project.",
+        )
+    deleted_at = datetime.now(timezone.utc)
+    for script in db.scalars(
+        select(ScriptVersion).where(
+            ScriptVersion.workspace_id == context.workspace.id,
+            ScriptVersion.content_project_id == project.id,
+            ScriptVersion.deleted_at.is_(None),
+        )
+    ):
+        script.deleted_at = deleted_at
+    for asset in db.scalars(
+        select(Asset).where(
+            Asset.workspace_id == context.workspace.id,
+            Asset.content_project_id == project.id,
+            Asset.deleted_at.is_(None),
+        )
+    ):
+        asset.deleted_at = deleted_at
+    project.status = "archived"
+    project.deleted_at = deleted_at
+    project.version += 1
+    db.commit()
     return DataResponse(
         data=ContentProjectRead.model_validate(project),
         meta=ResponseMeta(request_id=request.state.request_id),

@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from app.db.models import AICostLedger, GenerationRun, ReviewInsight, ScriptVersion, SyncJob
 from app.jobs.worker import process_one
+from app.modules.generation.prompts import SCRIPT_GENERATION_PROMPT_REVISION
 from app.providers.ai.generation import FixtureContentGenerationProvider
 from app.providers.social.tikhub.client import TikHubHttpClient
 
@@ -82,7 +83,7 @@ def test_script_generation_is_audited_budgeted_and_append_only(
     assert requested.status_code == 202
     generation = requested.json()["data"]["generation"]
     assert generation["status"] == "queued"
-    assert generation["prompt_version"].endswith(":script-v1")
+    assert generation["prompt_version"].endswith(f":{SCRIPT_GENERATION_PROMPT_REVISION}")
 
     assert _run_generation_worker(app) is True
 

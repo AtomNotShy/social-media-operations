@@ -154,6 +154,14 @@ export async function updateProject(
   return data!.data;
 }
 
+export async function deleteProject(workspaceId: string, projectId: string) {
+  const { data } = await api.DELETE("/api/v1/content-projects/{project_id}", {
+    headers: workspaceHeaders(workspaceId),
+    params: { path: { project_id: projectId } },
+  });
+  return data!.data;
+}
+
 export async function transitionProject(
   workspaceId: string,
   projectId: string,

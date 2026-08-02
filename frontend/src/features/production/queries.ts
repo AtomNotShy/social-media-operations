@@ -21,6 +21,7 @@ import type {
   Asset,
   ContentProject,
   ContentProjectCreate,
+  ContentProjectUpdate,
   Experiment,
   ExperimentCreate,
   MarkPublished,
@@ -441,6 +442,91 @@ export function useCreateProject(workspaceId: string) {
       client.invalidateQueries({
         queryKey: ["workspaces", workspaceId, "content-projects"],
       }),
+  });
+}
+
+export function useUpdateProject(workspaceId: string, projectId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: ContentProjectUpdate) => {
+      if (workspaceId !== "demo")
+        return service.updateProject(workspaceId, projectId, input);
+      const current =
+        client.getQueryData<ContentProject>(
+          queryKeys.production.project(workspaceId, projectId),
+        ) ?? clone(demoProjects).find((item) => item.id === projectId);
+      if (!current) throw new Error("没有找到这个内容项目。");
+      if (input.version !== current.version)
+        throw new Error("项目已被其他成员修改，请刷新后重试。");
+      return {
+        ...current,
+        ...input,
+        version: current.version + 1,
+        updated_at: stamp(),
+      } as ContentProject;
+    },
+    onSuccess: (updated) => {
+      if (workspaceId === "demo") {
+        client.setQueriesData<ContentProject[]>(
+          { queryKey: ["workspaces", workspaceId, "content-projects"] },
+          (items) =>
+            Array.isArray(items)
+              ? items.map((item) => (item.id === projectId ? updated : item))
+              : items,
+        );
+        client.setQueryData(
+          queryKeys.production.project(workspaceId, projectId),
+          updated,
+        );
+        return;
+      }
+      client.setQueryData(
+        queryKeys.production.project(workspaceId, projectId),
+        updated,
+      );
+      client.invalidateQueries({
+        queryKey: ["workspaces", workspaceId, "content-projects"],
+      });
+    },
+  });
+}
+
+export function useDeleteProject(workspaceId: string, projectId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (workspaceId !== "demo")
+        return service.deleteProject(workspaceId, projectId);
+      const current =
+        client.getQueryData<ContentProject>(
+          queryKeys.production.project(workspaceId, projectId),
+        ) ?? clone(demoProjects).find((item) => item.id === projectId);
+      if (!current) throw new Error("没有找到这个内容项目。");
+      return {
+        ...current,
+        status: "archived",
+        version: current.version + 1,
+        updated_at: stamp(),
+      } as ContentProject;
+    },
+    onSuccess: () => {
+      if (workspaceId === "demo") {
+        client.setQueriesData<ContentProject[]>(
+          { queryKey: ["workspaces", workspaceId, "content-projects"] },
+          (items) =>
+            Array.isArray(items)
+              ? items.filter((item) => item.id !== projectId)
+              : items,
+        );
+      } else {
+        client.invalidateQueries({
+          queryKey: ["workspaces", workspaceId, "content-projects"],
+        });
+      }
+      client.removeQueries({
+        queryKey: queryKeys.production.project(workspaceId, projectId),
+      });
+    },
   });
 }
 

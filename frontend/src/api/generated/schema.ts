@@ -273,7 +273,8 @@ export interface paths {
         get: operations["get_project_route_api_v1_content_projects__project_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Project */
+        delete: operations["delete_project_api_v1_content_projects__project_id__delete"];
         options?: never;
         head?: never;
         /** Update Project */
@@ -5940,6 +5941,39 @@ export interface operations {
         };
     };
     get_project_route_api_v1_content_projects__project_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_ContentProjectRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_project_api_v1_content_projects__project_id__delete: {
         parameters: {
             query?: never;
             header?: {

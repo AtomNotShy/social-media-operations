@@ -19,6 +19,7 @@ from app.db.models import (
 from app.jobs.service import create_job
 from app.modules.ai_connections.service import ResolvedAIRoute, resolve_route
 from app.modules.analysis.budget import reserve_ai_budget
+from app.modules.generation.prompts import SCRIPT_GENERATION_PROMPT_REVISION
 
 
 def _hash(payload: dict) -> str:
@@ -188,7 +189,7 @@ def request_script_generation(
         ),
         "requested_by": str(requested_by),
     }
-    prompt_version = f"{settings.ai_prompt_version}:script-v1"
+    prompt_version = f"{settings.ai_prompt_version}:{SCRIPT_GENERATION_PROMPT_REVISION}"
     input_hash = _hash(
         {
             "payload": input_payload,

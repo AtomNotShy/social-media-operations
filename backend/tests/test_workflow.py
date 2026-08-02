@@ -194,3 +194,72 @@ def test_project_state_machine_and_append_only_scripts(
     assert transitioned.status_code == 200
     assert transitioned.json()["data"]["status"] == "producing"
     assert transitioned.json()["data"]["version"] == 4
+
+
+def test_project_delete_requires_no_active_plans_and_hides_project(
+    client,
+    auth_headers,
+    workspace,
+):
+    headers = _headers(auth_headers, workspace)
+    channel = _create_channel(client, headers)
+    project = client.post(
+        "/api/v1/content-projects",
+        headers=headers,
+        json={
+            "owned_channel_id": channel["id"],
+            "title": "待删除的短视频",
+        },
+    ).json()["data"]
+    client.post(
+        f"/api/v1/content-projects/{project['id']}/scripts",
+        headers=headers,
+        json={
+            "project_version": 1,
+            "body": "初稿内容",
+            "change_note": "首稿",
+        },
+    )
+    plan = client.post(
+        "/api/v1/publish-plans",
+        headers=headers,
+        json={
+            "content_project_id": project["id"],
+            "owned_channel_id": channel["id"],
+            "scheduled_at": "2026-09-01T10:00:00Z",
+            "publishing_mode": "manual",
+            "publish_payload": {"title": "待删除"},
+        },
+    ).json()["data"]
+
+    blocked = client.delete(
+        f"/api/v1/content-projects/{project['id']}",
+        headers=headers,
+    )
+    assert blocked.status_code == 409
+    assert blocked.json()["code"] == "PROJECT_HAS_ACTIVE_PLANS"
+
+    client.post(
+        f"/api/v1/publish-plans/{plan['id']}/cancel",
+        headers=headers,
+    )
+    deleted = client.delete(
+        f"/api/v1/content-projects/{project['id']}",
+        headers=headers,
+    )
+    assert deleted.status_code == 200
+    assert deleted.json()["data"]["status"] == "archived"
+    assert deleted.json()["data"]["version"] == 3
+
+    missing = client.get(
+        f"/api/v1/content-projects/{project['id']}",
+        headers=headers,
+    )
+    assert missing.status_code == 404
+    listed = client.get("/api/v1/content-projects", headers=headers).json()["data"]
+    assert all(item["id"] != project["id"] for item in listed)
+    scripts = client.get(
+        f"/api/v1/content-projects/{project['id']}/scripts",
+        headers=headers,
+    )
+    assert scripts.status_code == 404

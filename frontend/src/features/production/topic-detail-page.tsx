@@ -16,6 +16,7 @@ import {
 import type { Topic, TopicUpdate } from "@/src/features/production/types";
 import { topicStatus } from "@/src/features/production/topics-page";
 import { InlineError, inputClass, primaryButton, secondaryButton, textareaClass } from "@/src/features/production/ui";
+import { platformLabel } from "@/src/lib/format";
 
 export function TopicDetailPage({ workspaceId, topicId }: { workspaceId: string; topicId: string }) {
   const topic = useTopic(workspaceId, topicId);
@@ -61,7 +62,7 @@ function TopicForm({ current, canEdit, workspaceId }: { current: Topic; canEdit:
       >
         <section className="grid gap-4 rounded-xl border border-border bg-surface p-5 shadow-panel">
           <label className="text-sm font-medium">标题<input className={`${inputClass} mt-2`} disabled={!canEdit} onChange={(event) => setForm({ ...form, title: event.target.value })} value={form.title ?? ""} /></label>
-          <label className="text-sm font-medium">目标账号<select className={`${inputClass} mt-2`} disabled={!canEdit} onChange={(event) => setForm({ ...form, owned_channel_id: event.target.value || null })} value={form.owned_channel_id ?? ""}><option value="">未指定</option>{channels.data?.map((channel) => <option key={channel.id} value={channel.id}>{channel.display_name}</option>)}</select></label>
+          <label className="text-sm font-medium">目标账号<select className={`${inputClass} mt-2`} disabled={!canEdit} onChange={(event) => setForm({ ...form, owned_channel_id: event.target.value || null })} value={form.owned_channel_id ?? ""}><option value="">未指定</option>{channels.data?.map((channel) => <option key={channel.id} value={channel.id}>{channel.display_name} · {platformLabel(channel.platform)}</option>)}</select></label>
           {([["用户问题", "audience_problem"], ["切入角度", "angle"], ["开场钩子", "hook"]] as const).map(([label, key]) => <label className="text-sm font-medium" key={key}>{label}<textarea className={`${textareaClass} mt-2`} disabled={!canEdit} onChange={(event) => setForm({ ...form, [key]: event.target.value })} value={form[key] ?? ""} /></label>)}
           <InlineError error={update.error} />
           {canEdit ? <button className={primaryButton} disabled={update.isPending} type="submit"><Save size={15} /> 保存新版本</button> : null}

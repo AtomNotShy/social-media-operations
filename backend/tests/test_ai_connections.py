@@ -13,6 +13,7 @@ from app.db.models import (
     AIModelRoute,
     AnalysisRun,
     ExternalContent,
+    GenerationRun,
     SyncJob,
     WorkspaceInspiration,
 )
@@ -227,6 +228,73 @@ def test_openai_compatible_provider_maps_auth_failure_without_leaking_body():
         assert "bad-secret" not in exc.message
     else:
         raise AssertionError("Expected AIProviderRequestError")
+
+
+def test_openai_compatible_provider_script_prompt_enforces_craft_rules():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "body": "开场钩子。主体步骤。结尾动作。",
+                                    "structured_body": {
+                                        "hook": "开场钩子。",
+                                        "main_points": ["步骤一"],
+                                        "call_to_action": "结尾动作。",
+                                        "spoken_length_chars": 18,
+                                    },
+                                    "rationale": "钩子来自输入里的具体场景。",
+                                    "evidence_refs": ["project:1", "channel:1"],
+                                }
+                            )
+                        },
+                    }
+                ],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+            },
+        )
+
+    run = GenerationRun(
+        id=uuid.uuid4(),
+        workspace_id=uuid.uuid4(),
+        content_project_id=uuid.uuid4(),
+        generation_type="script_draft",
+        model_provider="deepseek",
+        model="deepseek-v4-flash",
+        prompt_version="l1-v1:script-v2",
+        input_hash="provider-script-test",
+        evidence_refs=["project:1", "channel:1"],
+    )
+    provider = OpenAICompatibleProvider(
+        base_url="https://api.deepseek.com",
+        api_key="secret-token",
+        model="deepseek-v4-flash",
+        timeout_seconds=30,
+        json_mode=True,
+        temperature=Decimal("0.6"),
+        max_tokens=4000,
+        input_cost_per_million_usd=Decimal("1"),
+        output_cost_per_million_usd=Decimal("2"),
+        transport=httpx.MockTransport(handler),
+    )
+
+    result = asyncio.run(provider.generate(run=run))
+
+    system_prompt = seen["body"]["messages"][0]["content"]
+    assert "Show, don't tell" in system_prompt
+    assert "Simplified Chinese (zh-CN)" in system_prompt
+    assert "Opening hook" in system_prompt
+    assert "micro-action" in system_prompt
+    assert "structured_body" in system_prompt
+    assert result.result["body"] == "开场钩子。主体步骤。结尾动作。"
 
 
 def test_configured_connection_runs_l1_end_to_end_through_worker(

@@ -25,6 +25,7 @@ import {
   secondaryButton,
   textareaClass,
 } from "@/src/features/production/ui";
+import { platformLabel } from "@/src/lib/format";
 
 const filters = [
   ["全部", ""],
@@ -257,7 +258,7 @@ function CreateTopicDialog({
             <option value="">稍后选择</option>
             {channels.data?.map((channel) => (
               <option key={channel.id} value={channel.id}>
-                {channel.display_name}
+                {channel.display_name} · {platformLabel(channel.platform)}
               </option>
             ))}
           </select>
