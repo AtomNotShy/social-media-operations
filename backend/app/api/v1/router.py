@@ -6,6 +6,7 @@ from app.api.v1.routes import (
     assets,
     automation,
     comments,
+    content_packages,
     content_projects,
     dashboard,
     discovery,
@@ -34,6 +35,7 @@ router.include_router(analysis.router)
 router.include_router(automation.router)
 router.include_router(assets.router)
 router.include_router(comments.router)
+router.include_router(content_packages.router)
 router.include_router(content_projects.router)
 router.include_router(dashboard.router)
 router.include_router(discovery.router)

@@ -7,14 +7,20 @@ import httpx
 
 from app.db.models import AnalysisRun, ExternalContent, GenerationRun, Transcript
 from app.modules.analysis.schemas import AnalysisL1Result, AnalysisL2Result
+from app.modules.content_packages.schemas import GeneratedContentPackageResult
 from app.modules.generation.schemas import GeneratedReviewResult, GeneratedScriptResult
 from app.modules.prompts.registry import (
     ANALYSIS_SYSTEM_PROMPT,
-    REVIEW_GENERATION_SYSTEM_PROMPT,
-    SCRIPT_GENERATION_SYSTEM_PROMPT,
+    resolve_prompt_asset,
 )
 from app.providers.ai.base import AIProviderRequestError, AnalysisProviderResult
 from app.providers.ai.generation import GenerationProviderResult
+
+_GENERATION_SCHEMAS = {
+    "script_draft": GeneratedScriptResult,
+    "review_summary": GeneratedReviewResult,
+    "content_package": GeneratedContentPackageResult,
+}
 
 
 def _trim(value: str | None, limit: int) -> str | None:
@@ -63,6 +69,7 @@ class OpenAICompatibleProvider:
         input_cost_per_million_usd: Decimal = Decimal("0"),
         output_cost_per_million_usd: Decimal = Decimal("0"),
         idempotency_key: str | None = None,
+        disable_thinking: bool = False,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
@@ -75,6 +82,7 @@ class OpenAICompatibleProvider:
         self.input_cost_per_million_usd = input_cost_per_million_usd
         self.output_cost_per_million_usd = output_cost_per_million_usd
         self.idempotency_key = idempotency_key
+        self.disable_thinking = disable_thinking
         self.transport = transport
 
     async def analyze(
@@ -138,18 +146,10 @@ class OpenAICompatibleProvider:
         )
 
     async def generate(self, *, run: GenerationRun) -> GenerationProviderResult:
-        schema = (
-            GeneratedScriptResult
-            if run.generation_type == "script_draft"
-            else GeneratedReviewResult
-        )
+        schema = _GENERATION_SCHEMAS.get(run.generation_type, GeneratedReviewResult)
         schema_json = json.dumps(schema.model_json_schema(), ensure_ascii=False)
         evidence_json = json.dumps(run.evidence_refs)
-        system_prompt = (
-            SCRIPT_GENERATION_SYSTEM_PROMPT
-            if run.generation_type == "script_draft"
-            else REVIEW_GENERATION_SYSTEM_PROMPT
-        )
+        system_prompt = resolve_prompt_asset(run.generation_type).system_prompt
         system_prompt = (
             f"{system_prompt}\n"
             f"The JSON Schema to satisfy exactly: {schema_json}\n"
@@ -212,6 +212,11 @@ class OpenAICompatibleProvider:
         }
         if self.json_mode:
             body["response_format"] = {"type": "json_object"}
+        if self.disable_thinking:
+            # DeepSeek V4 defaults to thinking mode and counts reasoning tokens
+            # toward max_tokens. Structured formatting tasks do not need
+            # reasoning, so disable it to avoid truncation and slow calls.
+            body["thinking"] = {"type": "disabled"}
         started = time.monotonic()
         response = await self._request("POST", "/chat/completions", json_body=body)
         latency_ms = round((time.monotonic() - started) * 1000)

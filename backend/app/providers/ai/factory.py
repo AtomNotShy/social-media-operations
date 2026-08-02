@@ -3,13 +3,20 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.db.models import AnalysisRun, GenerationRun
 from app.modules.ai_connections.service import resolve_run_route
+from app.modules.content_packages.schemas import CONTENT_PACKAGE_MIN_MAX_TOKENS
 from app.providers.ai.fixture import FixtureAnalysisProvider
 from app.providers.ai.gateway import AIGateway
 from app.providers.ai.generation import FixtureContentGenerationProvider
 from app.providers.ai.openai_compatible import OpenAICompatibleProvider
 
 
-def _compatible_provider(route, *, idempotency_key: str | None = None):
+def _compatible_provider(
+    route,
+    *,
+    idempotency_key: str | None = None,
+    max_tokens: int | None = None,
+    disable_thinking: bool = False,
+):
     return OpenAICompatibleProvider(
         base_url=route.base_url or "",
         api_key=route.api_key,
@@ -17,10 +24,11 @@ def _compatible_provider(route, *, idempotency_key: str | None = None):
         timeout_seconds=route.timeout_seconds,
         json_mode=route.json_mode,
         temperature=route.temperature,
-        max_tokens=route.max_tokens,
+        max_tokens=max_tokens if max_tokens is not None else route.max_tokens,
         input_cost_per_million_usd=route.input_cost_per_million_usd,
         output_cost_per_million_usd=route.output_cost_per_million_usd,
         idempotency_key=idempotency_key,
+        disable_thinking=disable_thinking,
     )
 
 
@@ -88,7 +96,17 @@ def generation_provider_for_run(
     if route.provider == "fixture":
         return FixtureContentGenerationProvider()
     idempotency_key = f"socialops:{run.workspace_id}:generation:{run.id}"
-    provider = _compatible_provider(route, idempotency_key=idempotency_key)
+    max_tokens = route.max_tokens
+    if run.generation_type == "content_package":
+        max_tokens = max(max_tokens, CONTENT_PACKAGE_MIN_MAX_TOKENS)
+    provider = _compatible_provider(
+        route,
+        idempotency_key=idempotency_key,
+        max_tokens=max_tokens,
+        disable_thinking=(
+            route.provider == "deepseek" and run.generation_type == "content_package"
+        ),
+    )
     return _gateway_for(
         provider,
         db=db,

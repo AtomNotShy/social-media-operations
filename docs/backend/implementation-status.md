@@ -9,6 +9,7 @@
 | P0 | 小红书、抖音、Bilibili、X、TikTok 链接导入/账号扫描 Adapter；小红书详情、评论与发现；Provider 证据、预算/缓存、任务调度与恢复 |
 | P1 | 评分证据冻结、分析/转写账本、DeepSeek/OpenAI/OpenAI-Compatible 真实模型适配器、工作区模型路由、加密凭据、严格结果 Schema、L2 门控、AI/ASR 预算预留与结算、模式库、趋势证据流 |
 | P1.5（AI 交互架构） | 官方模型定价目录（DeepSeek 快照自动计价，路由无需手填）、AI 网关（熔断/半开探测、按连接限流、工作区暂停门禁、稳定 Idempotency-Key）、attempt 级成本日志、worker 解耦 TikHub（无 TIKHUB_API_KEY 可独立跑 AI/ASR 任务） |
+| P1.6（内容包） | 内容包生成（`content_packages` 表 + `package-v1` 提示词 + API：生成/读取/编辑版本/冻结）、DeepSeek 内容包任务关闭 thinking 防截断；剪辑包视图与渲染适配器未做 |
 | P2 | 自有账号（创建即入队基本信息扫描，回填昵称/头像/简介并支持手动重新扫描）、选题、项目状态机、人工/AI 脚本追加版本、S3 直传与远端校验、审核排期、人工发布、生成式复盘与看板 |
 | P3 | 保存视图、统一关键词搜索、版本化运营实验、项目分组、幂等归因事件与证据化结果 |
 | P4 | 成员权限、最后 Owner 保护、写请求审计、Provider 健康/熔断、工作区外部调用紧急停机、进程心跳、Prometheus 指标/告警、生产配置门禁、容器、CI、Secret/依赖扫描、保留与备份恢复脚本 |
@@ -16,10 +17,10 @@
 当前本地证据：
 
 - Ruff 通过。
-- 193 项后端测试通过；2 项 PostgreSQL 集成测试和 1 项 PostgreSQL 性能测试在普通套件中跳过，并在 PostgreSQL 环境单独通过。
+- 199 项后端测试通过；2 项 PostgreSQL 集成测试和 1 项 PostgreSQL 性能测试在普通套件中跳过，并在 PostgreSQL 环境单独通过。
 - SQLite 空库可从 0001 顺序升级至 0024；PostgreSQL 16 容器已在线升级至 0024（0024 为官方定价回填数据迁移）。
 - SQLite 与 PostgreSQL 的 `alembic check` 均无模型/迁移漂移。
-- OpenAPI 可生成 112 条路径、146 个操作；文档契约均有自动覆盖，前端 TypeScript 类型检查与 66 项 Vitest 通过。
+- OpenAPI 可生成 115 条路径、151 个操作；文档契约均有自动覆盖，前端 TypeScript 类型检查与 66 项 Vitest 通过。
 - 非 root 生产镜像可构建并启动，API 对 PostgreSQL readiness 返回 `ok`。
 - 源码 Secret 扫描和哈希锁定依赖的 `pip-audit` 通过，当前无已知漏洞。
 - 真实 PostgreSQL 16 中写入 1000 条灵感后进行 30 次采样，列表 P95 为 55.50 ms，详情 P95 为 14.98 ms。
@@ -44,6 +45,9 @@
 - 熔断/限流/幂等已实现并由测试覆盖：连续失败阈值打开熔断、半开探测后关闭、
   AI_AUTH_FAILED 立即熔断、工作区暂停门禁生效、按连接 RPM 进程内限流（多 worker
   扩容前需换 Redis）；请求携带稳定 Idempotency-Key，运行已完成时直接复用结果。
+- 内容包 P0 已用真实 DeepSeek 验证：248 字脚本 → 5 分镜内容包（avatar_full→broll→
+  broll→comparison→cta），narration 与脚本逐字一致，标题/封面/话题/正文/素材/音频
+  提示齐全；17.6s、$0.001122。分镜/标题/封面的"能不能打"仍需人工审 3-5 条后定夺。
 - 前端仍有 1 项既有 rendered-html 失败（`/` 根重定向在本地构建下返回 200 而非
   307，`app/page.tsx` 未改动），与本次 AI 架构改动无关。
 - 实验归因已实现；官方发布、向量语义搜索和真实多供应商切换仍属于 P3 后续。当前统一搜索是可解释关键词匹配，不冒充语义检索。

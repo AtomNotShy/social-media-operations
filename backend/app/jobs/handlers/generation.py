@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.db.models import (
+    ContentPackage,
     ContentProject,
     GenerationRun,
     ReviewInsight,
@@ -20,6 +21,7 @@ from app.modules.analysis.budget import (
     open_ai_attempt,
     settle_ai_budget,
 )
+from app.modules.content_packages.schemas import GeneratedContentPackageResult
 from app.modules.generation.schemas import GeneratedReviewResult, GeneratedScriptResult
 from app.providers.ai.base import AIProviderRequestError
 from app.providers.ai.factory import generation_provider_for_run
@@ -88,7 +90,7 @@ class GenerationHandler:
                 message="No content generation provider is configured.",
                 retryable=False,
             )
-        if run.generation_type == "script_draft":
+        if run.generation_type in {"script_draft", "content_package"}:
             try:
                 self._validate_project_version(run)
             except JobExecutionError as exc:
@@ -111,11 +113,11 @@ class GenerationHandler:
         self.db.commit()
         try:
             output = await provider.generate(run=run)
-            schema = (
-                GeneratedScriptResult
-                if run.generation_type == "script_draft"
-                else GeneratedReviewResult
-            )
+            schema = {
+                "script_draft": GeneratedScriptResult,
+                "review_summary": GeneratedReviewResult,
+                "content_package": GeneratedContentPackageResult,
+            }.get(run.generation_type, GeneratedReviewResult)
             validated = schema.model_validate(output.result)
             evidence_refs = sorted(set(output.evidence_refs))
             if not set(run.evidence_refs).issubset(evidence_refs):
@@ -124,11 +126,12 @@ class GenerationHandler:
                     message="Generation output omitted required source evidence.",
                     retryable=False,
                 )
-            resource_id = (
-                self._persist_script(run, validated)
-                if run.generation_type == "script_draft"
-                else self._persist_review(run, validated)
-            )
+            if run.generation_type == "script_draft":
+                resource_id = self._persist_script(run, validated)
+            elif run.generation_type == "content_package":
+                resource_id = self._persist_content_package(run, validated)
+            else:
+                resource_id = self._persist_review(run, validated)
         except ValidationError as exc:
             self._fail(
                 run,
@@ -228,7 +231,7 @@ class GenerationHandler:
         if project.version != run.input_payload.get("project_version"):
             raise JobExecutionError(
                 code="VERSION_CONFLICT",
-                message="Content project changed before script generation started.",
+                message="Content project changed before generation started.",
                 retryable=False,
             )
 
@@ -272,6 +275,28 @@ class GenerationHandler:
         if project.status == "idea":
             project.status = "scripting"
         return script.id
+
+    def _persist_content_package(
+        self,
+        run: GenerationRun,
+        result: GeneratedContentPackageResult,
+    ) -> uuid.UUID:
+        package = ContentPackage(
+            workspace_id=run.workspace_id,
+            content_project_id=run.content_project_id,
+            script_version_id=uuid.UUID(str(run.input_payload["script"]["id"])),
+            generation_run_id=run.id,
+            schema_version=result.schema_version,
+            target_platform=result.target_platform,
+            status="draft",
+            version=1,
+            package=result.model_dump(mode="json"),
+            evidence_refs=sorted(set(result.evidence_refs)),
+            created_by=uuid.UUID(str(run.input_payload["requested_by"])),
+        )
+        self.db.add(package)
+        self.db.flush()
+        return package.id
 
     def _persist_review(
         self,

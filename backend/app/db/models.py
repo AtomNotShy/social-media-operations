@@ -911,6 +911,54 @@ class ScriptVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ContentPackage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Renderer-neutral production bundle produced from a frozen script.
+
+    The package JSON is the single source of truth consumed by both the manual
+    editing view and downstream render adapters (Replicast Storyboard or
+    HyperFrames composition).  Manual edits create a new version row; frozen
+    rows are never overwritten.
+    """
+
+    __tablename__ = "content_packages"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "content_project_id",
+            "target_platform",
+            "version",
+        ),
+        Index(
+            "ix_content_packages_project_platform",
+            "content_project_id",
+            "target_platform",
+            "status",
+        ),
+    )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    content_project_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("content_projects.id", ondelete="CASCADE"), nullable=False
+    )
+    script_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("script_versions.id", ondelete="SET NULL")
+    )
+    generation_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("generation_runs.id", ondelete="SET NULL"), index=True
+    )
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    target_platform: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="draft", nullable=False)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    package: Mapped[dict] = mapped_column(JSON_TYPE, nullable=False)
+    evidence_refs: Mapped[list] = mapped_column(JSON_TYPE, default=list, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+
 class AssetUploadIntent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "asset_upload_intents"
 

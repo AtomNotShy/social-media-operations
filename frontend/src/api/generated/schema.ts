@@ -244,6 +244,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/content-packages/{package_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Single Content Package */
+        get: operations["get_single_content_package_api_v1_content_packages__package_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Content Package */
+        patch: operations["patch_content_package_api_v1_content_packages__package_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/content-packages/{package_id}/freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Freeze Single Content Package */
+        post: operations["freeze_single_content_package_api_v1_content_packages__package_id__freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/content-projects": {
         parameters: {
             query?: never;
@@ -279,6 +314,24 @@ export interface paths {
         head?: never;
         /** Update Project */
         patch: operations["update_project_api_v1_content_projects__project_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/content-projects/{project_id}/content-packages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Project Content Packages */
+        get: operations["list_project_content_packages_api_v1_content_projects__project_id__content_packages_get"];
+        put?: never;
+        /** Generate Content Package */
+        post: operations["generate_content_package_api_v1_content_projects__project_id__content_packages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/content-projects/{project_id}/scripts": {
@@ -2754,6 +2807,160 @@ export interface components {
             /** Views */
             views: number | null;
         };
+        /** ContentPackageAssetRequirement */
+        ContentPackageAssetRequirement: {
+            /** Kind */
+            kind: string;
+            /** Query */
+            query: string;
+            /** Rights Note */
+            rights_note?: string | null;
+            /** Source Hint */
+            source_hint?: string | null;
+        };
+        /** ContentPackageAudio */
+        ContentPackageAudio: {
+            /** Music Ducking */
+            music_ducking?: string | null;
+            /** Music Mood */
+            music_mood?: string | null;
+            /** Voice Hint */
+            voice_hint: string;
+        };
+        /** ContentPackageCover */
+        ContentPackageCover: {
+            /** Headline */
+            headline: string;
+            /** Subheadline */
+            subheadline?: string | null;
+            /** Visual Hint */
+            visual_hint?: string | null;
+        };
+        /**
+         * ContentPackageEdit
+         * @description Partial manual edits; the edited copy gets a new version number.
+         */
+        ContentPackageEdit: {
+            /** Assets Required */
+            assets_required?: components["schemas"]["ContentPackageAssetRequirement"][] | null;
+            audio?: components["schemas"]["ContentPackageAudio"] | null;
+            cover?: components["schemas"]["ContentPackageCover"] | null;
+            /** Hashtags */
+            hashtags?: string[] | null;
+            /** Publish Caption */
+            publish_caption?: string | null;
+            /** Publish Timing Hint */
+            publish_timing_hint?: string | null;
+            /** Scenes */
+            scenes?: components["schemas"]["ContentPackageScene"][] | null;
+            /** Target Duration Seconds */
+            target_duration_seconds?: number | null;
+            /** Title Candidates */
+            title_candidates?: components["schemas"]["ContentPackageTitleCandidate"][] | null;
+        };
+        /** ContentPackageGenerateRequest */
+        ContentPackageGenerateRequest: {
+            /**
+             * Force
+             * @default false
+             */
+            force: boolean;
+            /** Project Version */
+            project_version: number;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Target Platform */
+            target_platform: string;
+        };
+        /** ContentPackageRead */
+        ContentPackageRead: {
+            /**
+             * Content Project Id
+             * Format: uuid
+             */
+            content_project_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Evidence Refs */
+            evidence_refs: unknown[];
+            /** Generation Run Id */
+            generation_run_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Package */
+            package: {
+                [key: string]: unknown;
+            };
+            /** Schema Version */
+            schema_version: number;
+            /** Script Version Id */
+            script_version_id: string | null;
+            /** Status */
+            status: string;
+            /** Target Platform */
+            target_platform: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version */
+            version: number;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /** ContentPackageScene */
+        ContentPackageScene: {
+            /** Asset Queries */
+            asset_queries?: string[];
+            /** Cta */
+            cta?: string | null;
+            /** Estimated Seconds */
+            estimated_seconds: number;
+            /** Evidence Refs */
+            evidence_refs?: string[];
+            /** Id */
+            id: string;
+            /**
+             * Layout
+             * @enum {string}
+             */
+            layout: "avatar_full" | "avatar_corner" | "broll" | "comparison" | "cta";
+            /** Narration Chunk */
+            narration_chunk: string;
+            /** On Screen Text */
+            on_screen_text?: string | null;
+            /** Subtitle */
+            subtitle: string;
+            /** Visual Hint */
+            visual_hint: string;
+        };
+        /** ContentPackageTitleCandidate */
+        ContentPackageTitleCandidate: {
+            /**
+             * Has Emoji
+             * @default false
+             */
+            has_emoji: boolean;
+            /** Length Chars */
+            length_chars: number;
+            /** Text */
+            text: string;
+        };
         /** ContentProjectCreate */
         ContentProjectCreate: {
             /** Due At */
@@ -2936,6 +3143,11 @@ export interface components {
         /** DataResponse[AutomationToday] */
         DataResponse_AutomationToday_: {
             data: components["schemas"]["AutomationToday"];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[ContentPackageRead] */
+        DataResponse_ContentPackageRead_: {
+            data: components["schemas"]["ContentPackageRead"];
             meta: components["schemas"]["ResponseMeta"];
         };
         /** DataResponse[ContentProjectRead] */
@@ -3167,6 +3379,12 @@ export interface components {
         DataResponse_list_ContentMetricSnapshotRead__: {
             /** Data */
             data: components["schemas"]["ContentMetricSnapshotRead"][];
+            meta: components["schemas"]["ResponseMeta"];
+        };
+        /** DataResponse[list[ContentPackageRead]] */
+        DataResponse_list_ContentPackageRead__: {
+            /** Data */
+            data: components["schemas"]["ContentPackageRead"][];
             meta: components["schemas"]["ResponseMeta"];
         };
         /** DataResponse[list[ContentProjectRead]] */
@@ -5898,6 +6116,109 @@ export interface operations {
             };
         };
     };
+    get_single_content_package_api_v1_content_packages__package_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                package_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_ContentPackageRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_content_package_api_v1_content_packages__package_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                package_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentPackageEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_ContentPackageRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    freeze_single_content_package_api_v1_content_packages__package_id__freeze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                package_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_ContentPackageRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_projects_api_v1_content_projects_get: {
         parameters: {
             query?: {
@@ -6056,6 +6377,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataResponse_ContentProjectRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_project_content_packages_api_v1_content_projects__project_id__content_packages_get: {
+        parameters: {
+            query?: {
+                target_platform?: string | null;
+            };
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_list_ContentPackageRead__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_content_package_api_v1_content_projects__project_id__content_packages_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentPackageGenerateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataResponse_GenerationAccepted_"];
                 };
             };
             /** @description Validation Error */
