@@ -11,6 +11,7 @@ from app.main import create_app
 @pytest.fixture
 def app():
     settings = Settings(
+        _env_file=None,
         app_env="test",
         auth_mode="development",
         database_url="sqlite:///:memory:",

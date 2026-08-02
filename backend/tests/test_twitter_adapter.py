@@ -385,9 +385,111 @@ def test_x_content_detail_real_response_contract():
     assert item.media == [
         {"type": "photo", "url": "https://pbs.twimg.com/media/GRfnwy5X0AAwIK2.jpg"}
     ]
+    assert item.original_content == {
+        "format": "x",
+        "blocks": [
+            {
+                "type": "paragraph",
+                "runs": [
+                    {
+                        "text": "The New York Times is attacking *your* freedom of speech! ",
+                        "style": "text",
+                    },
+                    {"text": "[图片]", "style": "media_placeholder"},
+                ],
+            },
+            {
+                "type": "image",
+                "url": "https://pbs.twimg.com/media/GRfnwy5X0AAwIK2.jpg",
+            },
+        ],
+    }
     assert item.published_at == datetime(2024, 7, 2, 15, 59, 23, tzinfo=timezone.utc)
     assert item.author["handle"] == "elonmusk"
     assert item.provider_metadata["quotes"] == 3934
+
+
+def test_x_content_detail_reconstructs_entities_and_quote():
+    item = TwitterAdapter().parse_content_detail(
+        _payload(
+            {
+                "tweet_id": "1900000000000000001",
+                "full_text": (
+                    "Read @elonmusk and #freedom today https://t.co/linkAbc1 "
+                    "https://t.co/linkAbc2"
+                ),
+                "created_at": "Wed Jan 14 05:46:38 +0000 2026",
+                "author": {
+                    "screen_name": "observer",
+                    "name": "Observer",
+                    "rest_id": "101",
+                },
+                "entities": {
+                    "urls": [
+                        {
+                            "url": "https://t.co/linkAbc1",
+                            "expanded_url": "https://example.com/article",
+                        }
+                    ],
+                    "media": [
+                        {
+                            "url": "https://t.co/linkAbc2",
+                            "media_url_https": "https://pbs.twimg.com/media/photo.jpg",
+                            "type": "photo",
+                        }
+                    ],
+                    "user_mentions": [{"screen_name": "elonmusk"}],
+                    "hashtags": [{"text": "freedom"}],
+                },
+                "quoted_tweet": {
+                    "tweet_id": "1800000000000000002",
+                    "full_text": "Quoted original text",
+                    "author": {
+                        "screen_name": "quoteduser",
+                        "name": "Quoted User",
+                        "rest_id": "202",
+                    },
+                    "media": {
+                        "photo": [
+                            {
+                                "media_url_https": "https://pbs.twimg.com/media/q.jpg",
+                                "id": "q1",
+                            }
+                        ]
+                    },
+                },
+            }
+        ),
+        fallback_external_id=None,
+    )
+
+    assert item.original_content is not None
+    paragraph = item.original_content["blocks"][0]
+    assert paragraph["type"] == "paragraph"
+    assert paragraph["runs"] == [
+        {"text": "Read ", "style": "text"},
+        {"text": "@elonmusk", "style": "mention"},
+        {"text": " and ", "style": "text"},
+        {"text": "#freedom", "style": "hashtag"},
+        {"text": " today ", "style": "text"},
+        {
+            "text": "https://example.com/article",
+            "style": "url",
+            "url": "https://example.com/article",
+        },
+        {"text": " ", "style": "text"},
+        {"text": "[图片]", "style": "media_placeholder"},
+    ]
+    assert item.original_content["blocks"][1] == {
+        "type": "image",
+        "url": "https://pbs.twimg.com/media/photo.jpg",
+    }
+    quote = item.original_content["blocks"][2]
+    assert quote["type"] == "quote"
+    assert quote["text"] == "Quoted original text"
+    assert quote["author"] == {"display_name": "Quoted User", "handle": "quoteduser"}
+    assert quote["url"] == "https://x.com/quoteduser/status/1800000000000000002"
+    assert quote["media_url"] == "https://pbs.twimg.com/media/q.jpg"
 
 
 def test_x_comments_timeline_shape_is_normalized():

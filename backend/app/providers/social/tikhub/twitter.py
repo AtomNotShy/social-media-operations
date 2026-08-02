@@ -154,6 +154,239 @@ def _article_cover_url(article: dict[str, Any]) -> str | None:
     return None
 
 
+def _tweet_entities(raw: dict[str, Any]) -> dict[str, Any]:
+    entities = raw.get("entities") if isinstance(raw.get("entities"), dict) else None
+    if entities is None:
+        note = raw.get("note") if isinstance(raw.get("note"), dict) else None
+        if note is not None:
+            entities = (
+                note.get("entities")
+                if isinstance(note.get("entities"), dict)
+                else None
+            )
+    if entities is None:
+        entities = {}
+    return {
+        "urls": entities.get("urls") if isinstance(entities.get("urls"), list) else [],
+        "media": entities.get("media") if isinstance(entities.get("media"), list) else [],
+        "mentions": (
+            entities.get("user_mentions")
+            if isinstance(entities.get("user_mentions"), list)
+            else entities.get("mentions")
+            if isinstance(entities.get("mentions"), list)
+            else []
+        ),
+        "hashtags": entities.get("hashtags") if isinstance(entities.get("hashtags"), list) else [],
+    }
+
+
+def _tweet_entity_items(
+    entities: dict[str, Any],
+) -> list[tuple[str, dict[str, Any]]]:
+    """Collect entity entries with a stable key used for replacement."""
+    items: list[tuple[str, dict[str, Any]]] = []
+    for entry in entities.get("urls", []):
+        if isinstance(entry, dict):
+            items.append(("url", entry))
+    for entry in entities.get("media", []):
+        if isinstance(entry, dict):
+            items.append(("media", entry))
+    for entry in entities.get("mentions", []):
+        if isinstance(entry, dict):
+            items.append(("mention", entry))
+    for entry in entities.get("hashtags", []):
+        if isinstance(entry, dict):
+            items.append(("hashtag", entry))
+    return items
+
+
+def _entity_range(entry: dict[str, Any]) -> list[int] | None:
+    indices = entry.get("indices")
+    if isinstance(indices, list) and len(indices) >= 2:
+        start, end = indices[0], indices[1]
+        if isinstance(start, int) and isinstance(end, int) and 0 <= start < end:
+            return [start, end]
+    return None
+
+
+def _tweet_runs(text: str, entities: dict[str, Any]) -> list[dict[str, Any]]:
+    """Reconstruct the tweet text as styled runs, expanding short links."""
+    if not isinstance(text, str) or not text.strip():
+        return []
+    items = [
+        (kind, entry, _entity_range(entry))
+        for kind, entry in _tweet_entity_items(entities)
+    ]
+    ranged = sorted(
+        (
+            (start, end, kind, entry)
+            for kind, entry, indices in items
+            if indices
+            for start, end in [indices]
+        ),
+        key=lambda item: (item[0], item[1]),
+    )
+    cursor = 0
+    runs: list[dict[str, Any]] = []
+    for start, end, kind, entry in ranged:
+        if start < cursor or start >= len(text):
+            continue
+        if start > cursor:
+            runs.append({"text": text[cursor:start], "style": "text"})
+        runs.append(_tweet_entity_run(kind, entry))
+        cursor = end
+    if cursor < len(text):
+        runs.append({"text": text[cursor:], "style": "text"})
+
+    for kind, entry, indices in items:
+        if indices is not None:
+            continue
+        needle = _entity_needle(kind, entry)
+        if not needle:
+            continue
+        runs = _replace_run_text(runs, needle, _tweet_entity_run(kind, entry))
+
+    merged: list[dict[str, Any]] = []
+    for run in runs:
+        if not isinstance(run.get("text"), str) or run["text"] == "":
+            continue
+        if merged and merged[-1].get("style") == run.get("style") == "text":
+            merged[-1]["text"] += run["text"]
+        else:
+            merged.append(dict(run))
+    return merged
+
+
+def _replace_run_text(
+    runs: list[dict[str, Any]],
+    needle: str,
+    replacement: dict[str, Any],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for run in runs:
+        text = run.get("text")
+        if not isinstance(text, str) or not needle or needle not in text:
+            out.append(run)
+            continue
+        head, _, tail = text.partition(needle)
+        if head:
+            out.append({"text": head, "style": "text"})
+        out.append(replacement)
+        if tail:
+            out.append({"text": tail, "style": "text"})
+    return out
+
+
+def _tweet_entity_run(kind: str, entry: dict[str, Any]) -> dict[str, Any]:
+    if kind == "url":
+        url = _first(entry, "expanded_url", "url")
+        if not isinstance(url, str) or not url:
+            url = _first(entry, "url", "expanded_url")
+        return {"text": str(url or ""), "style": "url", "url": str(url) if url else None}
+    if kind == "media":
+        media_type = str(_first(entry, "type") or "photo").lower()
+        label = {"video": "[视频]", "animated_gif": "[动图]"}.get(media_type, "[图片]")
+        return {"text": label, "style": "media_placeholder"}
+    if kind == "mention":
+        screen_name = _first(entry, "screen_name", "username", "name")
+        text = f"@{screen_name}" if isinstance(screen_name, str) and screen_name else "@用户"
+        return {"text": text, "style": "mention"}
+    if kind == "hashtag":
+        tag = _first(entry, "text", "tag")
+        text = f"#{tag}" if isinstance(tag, str) and tag else "#话题"
+        return {"text": text, "style": "hashtag"}
+    return {"text": str(_first(entry, "text") or ""), "style": "text"}
+
+
+def _entity_needle(kind: str, entry: dict[str, Any]) -> str | None:
+    if kind in {"url", "media"}:
+        url = _first(entry, "url")
+        return url if isinstance(url, str) and url else None
+    if kind == "mention":
+        screen_name = _first(entry, "screen_name", "username", "name")
+        return f"@{screen_name}" if isinstance(screen_name, str) and screen_name else None
+    if kind == "hashtag":
+        tag = _first(entry, "text", "tag")
+        return f"#{tag}" if isinstance(tag, str) and tag else None
+    return None
+
+
+def _quote_block(raw: dict[str, Any]) -> dict[str, Any] | None:
+    quote = None
+    for key in ("quoted_tweet", "quoted_status", "quote"):
+        candidate = raw.get(key)
+        if isinstance(candidate, dict):
+            quote = candidate
+            break
+    if quote is None:
+        return None
+    text = _first(quote, "full_text", "text", "body_text")
+    if not isinstance(text, str) or not text.strip():
+        return None
+    author = _author_dict(quote)
+    handle = author.get("handle") or "i"
+    tweet_id = _tweet_external_id(quote, None)
+    cover_url = None
+    for entry in _media_items(quote):
+        if entry.get("type") in {"photo", "image", "cover"}:
+            cover_url = entry.get("url")
+            break
+        if entry.get("type") == "video":
+            cover_url = entry.get("url")
+    return {
+        "type": "quote",
+        "text": text.strip(),
+        "author": {
+            "display_name": author.get("display_name"),
+            "handle": handle,
+        },
+        "url": f"https://x.com/{handle}/status/{tweet_id}" if tweet_id else None,
+        "media_url": cover_url,
+    }
+
+
+def _tweet_original_content(
+    raw: dict[str, Any],
+    *,
+    text: str | None,
+    media: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if not isinstance(text, str) or not text.strip():
+        return None
+    entities = _tweet_entities(raw)
+    runs = _tweet_runs(text, entities)
+    blocks: list[dict[str, Any]] = []
+    if runs:
+        blocks.append({"type": "paragraph", "runs": runs})
+    covers = [
+        entry["url"]
+        for entry in media
+        if entry.get("type") == "cover" and isinstance(entry.get("url"), str)
+    ]
+    for entry in media:
+        entry_type = entry.get("type")
+        if entry_type == "cover":
+            continue
+        if entry_type in {"photo", "image"}:
+            blocks.append({"type": "image", "url": entry.get("url")})
+        elif entry_type in {"video", "animated_gif"}:
+            blocks.append(
+                {
+                    "type": "video",
+                    "url": entry.get("url"),
+                    "cover_url": covers.pop(0) if covers else None,
+                    "duration_ms": entry.get("duration_ms"),
+                    "animated": entry_type == "animated_gif",
+                }
+            )
+    quote = _quote_block(raw)
+    if quote is not None:
+        blocks.append(quote)
+    if not blocks:
+        return None
+    return {"format": "x", "blocks": blocks}
+
+
 def _parse_tweet(
     raw: dict[str, Any], *, fallback_external_id: str | None = None
 ) -> NormalizedContent | None:
@@ -215,6 +448,11 @@ def _parse_tweet(
             shares=parse_count(_first(merged, "retweets", "retweet_count")),
         ),
         media=media,
+        original_content=_tweet_original_content(
+            merged,
+            text=text,
+            media=media,
+        ),
         provider_metadata={
             "provider": "tikhub",
             "conversation_id": _first(merged, "conversation_id"),

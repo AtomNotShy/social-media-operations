@@ -45,6 +45,10 @@ import {
   scoreReasonLabel,
 } from "@/src/features/inspirations/scoring-presentation";
 import { metricPresentation } from "@/src/features/inspirations/metric-presentation";
+import {
+  hasTranscribableVideo,
+  OriginalContent,
+} from "@/src/features/inspirations/original-content";
 import type {
   AnalysisRun,
   ContentMetricSnapshot,
@@ -159,6 +163,7 @@ export function InspirationDetailPage({
   const item = inspiration.data;
   const latestScore = evidence.scores.data?.[0];
   const latestTranscript = evidence.transcripts.data?.[0];
+  const transcribable = hasTranscribableVideo(item.content.media_manifest ?? []);
   const anyEvidenceError = [
     evidence.scores.error,
     evidence.metrics.error,
@@ -306,9 +311,9 @@ export function InspirationDetailPage({
               eyebrow="Source"
               title="原文与采集状态"
             />
-            <p className="mt-5 whitespace-pre-line text-sm leading-7 text-text">
-              {item.content.body_text || "当前内容源未提供可读取的正文。"}
-            </p>
+            <div className="mt-5">
+              <OriginalContent content={item.content} />
+            </div>
             <div className="mt-5 border-t border-border pt-5">
               <div className="grid gap-3 text-xs sm:grid-cols-2">
                 <Fact label="详情状态" value={detailStatusLabel(item.content.detail_status)} />
@@ -370,34 +375,36 @@ export function InspirationDetailPage({
             ) : null}
           </section>
 
-          <EvidenceSection
-            actionLabel="创建转写任务"
-            busy={action.isPending}
-            canEdit={permission.canEdit}
-            icon={FileAudio}
-            onAction={() => run("transcript")}
-            title="内容转写"
-          >
-            {evidence.transcripts.isLoading ? (
-              <LoadingLine />
-            ) : latestTranscript ? (
-              <div>
-                <StatusBadge
-                  label={latestTranscript.status}
-                  status={latestTranscript.status}
-                />
-                <p className="mt-4 whitespace-pre-line text-sm leading-7">
-                  {latestTranscript.text || "转写任务尚未产出文本。"}
-                </p>
-                <p className="mt-3 text-xs text-text-muted">
-                  {latestTranscript.provider} · {latestTranscript.model} ·
-                  置信度 {latestTranscript.confidence ?? "—"}
-                </p>
-              </div>
-            ) : (
-              <Absent text="还没有转写记录。" />
-            )}
-          </EvidenceSection>
+          {transcribable ? (
+            <EvidenceSection
+              actionLabel="创建转写任务"
+              busy={action.isPending}
+              canEdit={permission.canEdit}
+              icon={FileAudio}
+              onAction={() => run("transcript")}
+              title="内容转写"
+            >
+              {evidence.transcripts.isLoading ? (
+                <LoadingLine />
+              ) : latestTranscript ? (
+                <div>
+                  <StatusBadge
+                    label={latestTranscript.status}
+                    status={latestTranscript.status}
+                  />
+                  <p className="mt-4 whitespace-pre-line text-sm leading-7">
+                    {latestTranscript.text || "转写任务尚未产出文本。"}
+                  </p>
+                  <p className="mt-3 text-xs text-text-muted">
+                    {latestTranscript.provider} · {latestTranscript.model} ·
+                    置信度 {latestTranscript.confidence ?? "—"}
+                  </p>
+                </div>
+              ) : (
+                <Absent text="还没有转写记录。" />
+              )}
+            </EvidenceSection>
+          ) : null}
 
           <EvidenceSection
             actionLabel="抓取最新评论"

@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -82,6 +83,217 @@ def _first(mapping: dict[str, Any], *keys: str) -> Any:
         if value is not None and value != "":
             return value
     return None
+
+
+_XHS_HASHTAG_RE = re.compile(r"#([^#\r\n]+?)(?:\[话题\])?#")
+_XHS_INLINE_STYLES = {
+    "hash_tag": "hashtag",
+    "at": "mention",
+    "url": "url",
+    "strong": "bold",
+    "em": "italic",
+    "bold": "bold",
+    "italic": "italic",
+}
+
+
+def _xhs_inline_runs(block: dict[str, Any]) -> list[dict[str, Any]]:
+    inline_data = (
+        block.get("inline_data")
+        if isinstance(block.get("inline_data"), list)
+        else None
+    )
+    if inline_data:
+        runs: list[dict[str, Any]] = []
+        for inline in inline_data:
+            if not isinstance(inline, dict):
+                continue
+            text = _first(inline, "text", "content")
+            if not isinstance(text, str) or not text:
+                continue
+            inline_type = str(_first(inline, "type", "style") or "text").lower()
+            style = _XHS_INLINE_STYLES.get(inline_type, "text")
+            url = inline.get("url") if isinstance(inline.get("url"), str) else None
+            runs.append({"text": text, "style": style, "url": url})
+        return runs
+    text = _first(block, "text", "content", "desc")
+    if isinstance(text, str) and text.strip():
+        return [{"text": text, "style": "text"}]
+    return []
+
+
+def _xhs_image_urls(block: dict[str, Any]) -> list[str]:
+    urls: list[str] = []
+    candidates = (
+        block.get("image_list")
+        or block.get("images")
+        or block.get("pictures")
+        or block.get("image")
+        or []
+    )
+    if isinstance(candidates, dict):
+        candidates = [candidates]
+    if isinstance(candidates, list):
+        for image in candidates:
+            if isinstance(image, str):
+                urls.append(image)
+            elif isinstance(image, dict):
+                url = _first(
+                    image,
+                    "url_default",
+                    "url_pre",
+                    "url_size_large",
+                    "original",
+                    "url",
+                )
+                if isinstance(url, str) and url:
+                    urls.append(url)
+    url = _first(block, "url", "url_default", "url_pre", "original")
+    if isinstance(url, str) and url and url not in urls:
+        urls.append(url)
+    return urls
+
+
+def _xhs_cover_url(value: dict[str, Any]) -> str | None:
+    for key in ("cover", "cover_url", "image", "thumbnail"):
+        candidate = value.get(key)
+        if isinstance(candidate, dict):
+            url = _first(
+                candidate,
+                "url",
+                "url_default",
+                "url_pre",
+                "first_frame",
+                "thumbnail",
+            )
+            if isinstance(url, str) and url:
+                return url
+        elif isinstance(candidate, str) and candidate:
+            return candidate
+    return None
+
+
+def _xhs_content_blocks(raw: dict[str, Any]) -> list[dict[str, Any]] | None:
+    blocks_raw = raw.get("blocks")
+    if not isinstance(blocks_raw, list):
+        return None
+    blocks: list[dict[str, Any]] = []
+    for block in blocks_raw:
+        if not isinstance(block, dict):
+            continue
+        block_type = str(_first(block, "type", "block_type") or "").lower()
+        if block_type in {"paragraph", "text"}:
+            runs = _xhs_inline_runs(block)
+            if runs:
+                blocks.append({"type": "paragraph", "runs": runs})
+        elif block_type.startswith("heading"):
+            runs = _xhs_inline_runs(block)
+            if runs:
+                blocks.append({"type": "heading", "runs": runs})
+        elif block_type in {"image", "images", "carousel", "gallery", "img"}:
+            for url in _xhs_image_urls(block):
+                blocks.append({"type": "image", "url": url})
+        elif block_type in {"video", "video_block"}:
+            video = block.get("video") if isinstance(block.get("video"), dict) else block
+            url = _first(video, "master_url", "url", "play_url")
+            if isinstance(url, str) and url:
+                blocks.append(
+                    {
+                        "type": "video",
+                        "url": url,
+                        "cover_url": _xhs_cover_url(video) or _xhs_cover_url(block),
+                    }
+                )
+        elif block_type in {"divider", "hr"}:
+            blocks.append({"type": "divider"})
+    return blocks or None
+
+
+def _xhs_desc_runs(text: str) -> list[dict[str, Any]]:
+    runs: list[dict[str, Any]] = []
+    cursor = 0
+    for match in _XHS_HASHTAG_RE.finditer(text):
+        if match.start() > cursor:
+            runs.append({"text": text[cursor : match.start()], "style": "text"})
+        runs.append({"text": f"#{match.group(1)}#", "style": "hashtag"})
+        cursor = match.end()
+    if cursor < len(text):
+        runs.append({"text": text[cursor:], "style": "text"})
+    return runs or [{"text": text, "style": "text"}]
+
+
+def _xhs_desc_paragraphs(
+    text: str | None,
+    *,
+    title: str | None,
+) -> list[dict[str, Any]]:
+    if not isinstance(text, str) or not text.strip():
+        return []
+    lines = [line.strip() for line in text.splitlines()]
+    if (
+        title
+        and isinstance(title, str)
+        and title.strip()
+        and lines
+        and lines[0] == title.strip()
+    ):
+        lines = lines[1:]
+    paragraphs: list[dict[str, Any]] = []
+    for line in lines:
+        if not line:
+            continue
+        paragraphs.append({"type": "paragraph", "runs": _xhs_desc_runs(line)})
+    return paragraphs
+
+
+def _xhs_media_blocks(media: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    covers = [
+        entry["url"]
+        for entry in media
+        if entry.get("type") == "cover" and isinstance(entry.get("url"), str)
+    ]
+    for entry in media:
+        entry_type = entry.get("type")
+        url = entry.get("url")
+        if entry_type == "cover":
+            continue
+        if entry_type in {"image", "photo"} and isinstance(url, str):
+            blocks.append({"type": "image", "url": url})
+        elif entry_type == "video" and isinstance(url, str):
+            blocks.append(
+                {
+                    "type": "video",
+                    "url": url,
+                    "cover_url": covers.pop(0) if covers else None,
+                }
+            )
+    return blocks
+
+
+def _xhs_original_content(
+    raw: dict[str, Any],
+    *,
+    title: str | None,
+    desc: str | None,
+    media: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    blocks = _xhs_content_blocks(raw)
+    if blocks is None:
+        blocks = _xhs_desc_paragraphs(desc, title=title)
+    if not blocks:
+        return None
+    existing_urls = {
+        block.get("url")
+        for block in blocks
+        if block.get("type") in {"image", "video"}
+        and isinstance(block.get("url"), str)
+    }
+    for media_block in _xhs_media_blocks(media):
+        if media_block.get("url") and media_block["url"] not in existing_urls:
+            blocks.append(media_block)
+            existing_urls.add(media_block["url"])
+    return {"format": "xhs", "blocks": blocks}
 
 
 def _parse_time(value: Any) -> datetime | None:
@@ -360,13 +572,15 @@ class XiaohongshuAppV2Adapter:
             duration_seconds = parse_count(_first(capa, "duration"))
             if duration_seconds is not None:
                 duration_ms = duration_seconds * 1000
+        title = _first(raw, "title", "display_title")
+        desc = _first(raw, "desc", "description", "body_text")
         return NormalizedContent(
             platform=self.platform,
             external_id=note_id,
             canonical_url=f"https://www.xiaohongshu.com/explore/{note_id}",
             content_type=content_type,
-            title=_first(raw, "title", "display_title"),
-            body_text=_first(raw, "desc", "description", "body_text"),
+            title=title,
+            body_text=desc,
             published_at=_parse_time(_first(raw, "time", "create_time", "published_at")),
             duration_ms=duration_ms,
             author={
@@ -402,6 +616,12 @@ class XiaohongshuAppV2Adapter:
                 ),
             ),
             media=media,
+            original_content=_xhs_original_content(
+                raw,
+                title=title,
+                desc=desc,
+                media=media,
+            ),
             provider_metadata={
                 "provider": "tikhub",
                 "provider_request_id": payload.get("request_id"),

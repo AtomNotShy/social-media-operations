@@ -135,6 +135,7 @@
 | `media_manifest` | jsonb | 媒体元数据 |
 | `content_hash` | text nullable | 内容版本 Hash |
 | `detail_status` | text | `summary/detail` |
+| `original_content` | jsonb nullable | 结构化原文（按平台还原正文、媒体位置与引用），无则回退 `body_text` |
 | `comments_hydrated_at` | timestamptz nullable | 最近评论增强时间 |
 | `first_seen_at` | timestamptz | 首次发现 |
 | `last_seen_at` | timestamptz | 最近确认存在 |

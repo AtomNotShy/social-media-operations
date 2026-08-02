@@ -56,6 +56,33 @@ def _seed_video_inspiration(app, workspace):
         return str(inspiration.id), content.id
 
 
+def _seed_text_inspiration(app, workspace):
+    workspace_id = UUID(workspace["id"])
+    with app.state.database.session_factory() as db:
+        content = ExternalContent(
+            workspace_id=workspace_id,
+            platform="xiaohongshu",
+            external_id="analysis-text",
+            canonical_url="https://www.xiaohongshu.com/explore/analysis-text",
+            content_type="note",
+            title="A text-only note",
+            body_text="Pure text content without any video.",
+            author_snapshot={},
+            media_manifest=[],
+            content_hash="content-version-text",
+        )
+        db.add(content)
+        db.flush()
+        inspiration = WorkspaceInspiration(
+            workspace_id=workspace_id,
+            external_content_id=content.id,
+            source="test",
+        )
+        db.add(inspiration)
+        db.commit()
+        return str(inspiration.id), content.id
+
+
 def test_analysis_and_transcript_reject_unconfigured_providers(
     client,
     app,
@@ -79,6 +106,24 @@ def test_analysis_and_transcript_reject_unconfigured_providers(
     assert analysis.json()["code"] == "AI_NOT_CONFIGURED"
     assert transcript.status_code == 409
     assert transcript.json()["code"] == "ASR_NOT_CONFIGURED"
+
+
+def test_transcript_rejects_text_only_content_before_asr_configuration(
+    client,
+    app,
+    auth_headers,
+    workspace,
+):
+    inspiration_id, _ = _seed_text_inspiration(app, workspace)
+    headers = _headers(auth_headers, workspace)
+
+    transcript = client.post(
+        f"/api/v1/inspirations/{inspiration_id}/transcribe",
+        headers=headers,
+    )
+
+    assert transcript.status_code == 409
+    assert transcript.json()["code"] == "TRANSCRIPT_SOURCE_MISSING"
 
 
 def test_analysis_and_transcript_requests_are_deduplicated(

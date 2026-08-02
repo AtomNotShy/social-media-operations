@@ -92,7 +92,10 @@ def test_duplicate_url_import_reuses_active_job_then_fresh_content(
 
     inspirations = client.get("/api/v1/inspirations", headers=headers)
     assert inspirations.status_code == 200
-    assert inspirations.json()["data"][0]["content"]["detail_status"] == "detail"
+    content = inspirations.json()["data"][0]["content"]
+    assert content["detail_status"] == "detail"
+    assert content["original_content"]["format"] == "xhs"
+    assert content["original_content"]["blocks"][0]["type"] == "paragraph"
 
     with app.state.database.session_factory() as db:
         assert db.scalar(select(func.count()).select_from(SyncJob)) == 1

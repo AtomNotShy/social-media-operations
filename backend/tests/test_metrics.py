@@ -54,6 +54,7 @@ def test_database_metrics_use_bounded_labels_without_workspace_ids(
 
 def test_metrics_token_is_required_when_configured():
     settings = Settings(
+        _env_file=None,
         app_env="test",
         auth_mode="development",
         database_url="sqlite:///:memory:",
@@ -74,6 +75,7 @@ def test_metrics_token_is_required_when_configured():
 
 def test_metrics_can_be_disabled():
     settings = Settings(
+        _env_file=None,
         app_env="test",
         auth_mode="development",
         database_url="sqlite:///:memory:",

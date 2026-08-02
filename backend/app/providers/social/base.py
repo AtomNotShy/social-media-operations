@@ -50,6 +50,7 @@ class NormalizedContent:
     metrics: ContentMetrics
     media: list[dict[str, Any]] = field(default_factory=list)
     provider_metadata: dict[str, Any] = field(default_factory=dict)
+    original_content: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)

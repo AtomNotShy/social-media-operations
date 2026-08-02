@@ -88,6 +88,7 @@ class ExternalContentRead(BaseModel):
     duration_ms: int | None
     author_snapshot: dict
     media_manifest: list
+    original_content: dict | None = None
     detail_status: str
     first_seen_at: datetime
     last_seen_at: datetime

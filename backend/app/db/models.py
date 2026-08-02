@@ -269,6 +269,7 @@ class ExternalContent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     media_manifest: Mapped[list] = mapped_column(JSON_TYPE, default=list, nullable=False)
     content_hash: Mapped[str | None] = mapped_column(String(64))
     detail_status: Mapped[str] = mapped_column(String(16), default="summary", nullable=False)
+    original_content: Mapped[dict | None] = mapped_column(JSON_TYPE)
     comments_hydrated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

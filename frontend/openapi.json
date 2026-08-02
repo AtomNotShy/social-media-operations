@@ -4570,6 +4570,18 @@
             "title": "Media Manifest",
             "type": "array"
           },
+          "original_content": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Content"
+          },
           "platform": {
             "title": "Platform",
             "type": "string"

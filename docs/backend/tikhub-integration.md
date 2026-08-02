@@ -327,6 +327,15 @@ TikHub 提供 endpoint 信息和价格计算能力，可定期同步价格目录
     "shares": 5
   },
   "media": [],
+  "original_content": {
+    "format": "xhs",
+    "blocks": [
+      {
+        "type": "paragraph",
+        "runs": [{"text": "正文", "style": "text"}]
+      }
+    ]
+  },
   "provider_metadata": {
     "provider": "tikhub",
     "endpoint_key": "xhs.content_detail",
@@ -399,4 +408,3 @@ TikHub 提供 endpoint 信息和价格计算能力，可定期同步价格目录
 - [TikHub API 文档](https://docs.tikhub.io/)
 - [TikHub 小红书接口说明](https://tikhub.io/xiaohongshu-api)
 - [TikHub 价格说明](https://tikhub.io/pricing)
-

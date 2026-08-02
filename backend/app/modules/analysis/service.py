@@ -252,13 +252,6 @@ def request_transcript(
     inspiration_id: uuid.UUID,
     settings: Settings,
 ) -> tuple[Transcript, bool]:
-    if settings.asr_provider == "disabled" or settings.asr_model == "disabled":
-        raise AppError(
-            409,
-            "ASR_NOT_CONFIGURED",
-            "Transcription provider is not configured",
-            "Configure an approved ASR provider and model before creating transcript jobs.",
-        )
     content = inspiration_content(
         db,
         workspace_id=workspace_id,
@@ -275,6 +268,13 @@ def request_transcript(
             "TRANSCRIPT_SOURCE_MISSING",
             "No transcribable media",
             "Hydrate a video source before requesting transcription.",
+        )
+    if settings.asr_provider == "disabled" or settings.asr_model == "disabled":
+        raise AppError(
+            409,
+            "ASR_NOT_CONFIGURED",
+            "Transcription provider is not configured",
+            "Configure an approved ASR provider and model before creating transcript jobs.",
         )
     input_hash = _hash(
         {

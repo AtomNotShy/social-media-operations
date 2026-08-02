@@ -150,6 +150,7 @@ def upsert_external_content(
             duration_ms=item.duration_ms,
             author_snapshot=item.author,
             media_manifest=item.media,
+            original_content=item.original_content,
             content_hash=content_hash,
             detail_status=detail_status,
             latest_provider_fetch_id=provider_fetch_id,
@@ -168,6 +169,8 @@ def upsert_external_content(
         content.duration_ms = item.duration_ms
         content.author_snapshot = item.author
         content.media_manifest = item.media
+        if item.original_content is not None:
+            content.original_content = item.original_content
         content.content_hash = content_hash
         content.detail_status = "detail" if detail_status == "detail" else content.detail_status
         content.latest_provider_fetch_id = provider_fetch_id

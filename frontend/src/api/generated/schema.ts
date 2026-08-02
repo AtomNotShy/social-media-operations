@@ -3542,6 +3542,10 @@ export interface components {
             last_seen_at: string;
             /** Media Manifest */
             media_manifest: unknown[];
+            /** Original Content */
+            original_content?: {
+                [key: string]: unknown;
+            } | null;
             /** Platform */
             platform: string;
             /** Published At */
