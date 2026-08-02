@@ -413,6 +413,9 @@ M(p) = reach_proxy(p) / max(follower_snapshot, 1)
 
 ## 10. AI 分析
 
+> 交互架构（官方定价目录、熔断/限流/幂等、worker 解耦）见
+> [AI 交互架构](./ai-architecture.md)。
+
 ### 10.1 L1 输出
 
 严格 JSON：

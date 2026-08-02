@@ -2153,6 +2153,12 @@ export interface components {
             default_base_url: string | null;
             /** Label */
             label: string;
+            /** Model Pricing */
+            model_pricing?: components["schemas"]["AIProviderModelPricing"][];
+            /** Pricing Catalog Version */
+            pricing_catalog_version?: string | null;
+            /** Pricing Source Url */
+            pricing_source_url?: string | null;
             /**
              * Provider
              * @enum {string}
@@ -2160,6 +2166,26 @@ export interface components {
             provider: "deepseek" | "openai" | "openai_compatible";
             /** Suggested Models */
             suggested_models: string[];
+        };
+        /** AIProviderModelPricing */
+        AIProviderModelPricing: {
+            /** Cache Hit Input Cost Per Million Usd */
+            cache_hit_input_cost_per_million_usd?: string | null;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Input Cost Per Million Usd */
+            input_cost_per_million_usd: string;
+            /** Model */
+            model: string;
+            /** Notes */
+            notes?: string | null;
+            /** Output Cost Per Million Usd */
+            output_cost_per_million_usd: string;
+            /** Recommended Max Tokens */
+            recommended_max_tokens?: number | null;
         };
         /** AISettingsRead */
         AISettingsRead: {

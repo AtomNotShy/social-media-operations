@@ -1,6 +1,7 @@
 import hashlib
 import json
 import uuid
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -18,8 +19,19 @@ from app.db.models import (
 )
 from app.jobs.service import create_job
 from app.modules.ai_connections.service import ResolvedAIRoute, resolve_route
-from app.modules.analysis.budget import reserve_ai_budget
-from app.modules.generation.prompts import SCRIPT_GENERATION_PROMPT_REVISION
+from app.modules.analysis.budget import (
+    estimate_generation_cost_usd,
+    reserve_ai_budget,
+)
+from app.modules.generation.evidence import (
+    EVIDENCE_CONTEXT_VERSION,
+    MAX_EVIDENCE_BODY_CHARS,
+    resolve_topic_evidence,
+)
+from app.modules.prompts.registry import (
+    REVIEW_GENERATION_PROMPT_REVISION,
+    SCRIPT_GENERATION_PROMPT_REVISION,
+)
 
 
 def _hash(payload: dict) -> str:
@@ -72,6 +84,7 @@ def _queue_generation(
     *,
     run: GenerationRun,
     settings: Settings,
+    estimated_cost_usd: Decimal,
 ) -> None:
     job, _ = create_job(
         db,
@@ -90,9 +103,15 @@ def _queue_generation(
         resource_id=run.id,
         provider=run.model_provider,
         model=run.model,
-        estimated_cost_usd=settings.ai_generation_estimated_cost_usd,
+        estimated_cost_usd=estimated_cost_usd,
     )
     db.flush()
+
+
+def _trim(value: str | None, limit: int = MAX_EVIDENCE_BODY_CHARS) -> str | None:
+    if value is None:
+        return None
+    return value if len(value) <= limit else f"{value[:limit]}\n[truncated]"
 
 
 def request_script_generation(
@@ -149,11 +168,17 @@ def request_script_generation(
         .order_by(ScriptVersion.version_no.desc())
         .limit(1)
     )
+    source_materials = resolve_topic_evidence(
+        db,
+        workspace_id=workspace_id,
+        evidence_refs=topic.evidence_refs if topic is not None else [],
+    )
     input_payload = {
         "project_id": str(project.id),
         "project_version": project.version,
         "project_title": project.title,
         "instruction": instruction,
+        "source_materials": source_materials,
         "topic": (
             {
                 "id": str(topic.id),
@@ -197,6 +222,7 @@ def request_script_generation(
             "model": route.model,
             "ai_connection_id": str(route.connection_id) if route.connection_id else None,
             "prompt_version": prompt_version,
+            "evidence_context": EVIDENCE_CONTEXT_VERSION,
         }
     )
     reusable = _reusable_generation(
@@ -211,6 +237,8 @@ def request_script_generation(
     evidence_refs = [f"project:{project.id}", f"channel:{project.owned_channel_id}"]
     if topic is not None:
         evidence_refs.append(f"topic:{topic.id}")
+    for unit in source_materials:
+        evidence_refs.append(unit["ref"])
     if latest_script is not None:
         evidence_refs.append(f"script:{latest_script.id}")
     run = GenerationRun(
@@ -227,7 +255,18 @@ def request_script_generation(
     )
     db.add(run)
     db.flush()
-    _queue_generation(db, run=run, settings=settings)
+    _queue_generation(
+        db,
+        run=run,
+        settings=settings,
+        estimated_cost_usd=estimate_generation_cost_usd(
+            provider=route.provider,
+            model=route.model,
+            input_cost_per_million_usd=route.input_cost_per_million_usd,
+            output_cost_per_million_usd=route.output_cost_per_million_usd,
+            payload=input_payload,
+        ),
+    )
     return run, False
 
 
@@ -262,7 +301,17 @@ def request_review_generation(
             "Publish record not found",
             "Publish record not found.",
         )
-    record, _, project = row
+    record, plan, project = row
+    latest_script = db.scalar(
+        select(ScriptVersion)
+        .where(
+            ScriptVersion.workspace_id == workspace_id,
+            ScriptVersion.content_project_id == project.id,
+            ScriptVersion.deleted_at.is_(None),
+        )
+        .order_by(ScriptVersion.version_no.desc())
+        .limit(1)
+    )
     input_payload = {
         "publish_record_id": str(record.id),
         "content_project_id": str(project.id),
@@ -270,9 +319,19 @@ def request_review_generation(
         "review_window": review_window,
         "metrics": metrics,
         "primary_metric": primary_metric,
+        "publish_payload": plan.publish_payload or {},
+        "script": (
+            {
+                "id": str(latest_script.id),
+                "version_no": latest_script.version_no,
+                "body": _trim(latest_script.body),
+            }
+            if latest_script is not None
+            else None
+        ),
         "requested_by": str(requested_by),
     }
-    prompt_version = f"{settings.ai_prompt_version}:review-v1"
+    prompt_version = f"{settings.ai_prompt_version}:{REVIEW_GENERATION_PROMPT_REVISION}"
     input_hash = _hash(
         {
             "payload": input_payload,
@@ -280,6 +339,7 @@ def request_review_generation(
             "model": route.model,
             "ai_connection_id": str(route.connection_id) if route.connection_id else None,
             "prompt_version": prompt_version,
+            "evidence_context": EVIDENCE_CONTEXT_VERSION,
         }
     )
     reusable = _reusable_generation(
@@ -291,6 +351,9 @@ def request_review_generation(
     )
     if reusable is not None:
         return reusable, True
+    evidence_refs = [f"publish_record:{record.id}", f"project:{project.id}"]
+    if latest_script is not None:
+        evidence_refs.append(f"script:{latest_script.id}")
     run = GenerationRun(
         workspace_id=workspace_id,
         content_project_id=project.id,
@@ -302,9 +365,20 @@ def request_review_generation(
         prompt_version=prompt_version,
         input_hash=input_hash,
         input_payload=input_payload,
-        evidence_refs=[f"publish_record:{record.id}", f"project:{project.id}"],
+        evidence_refs=evidence_refs,
     )
     db.add(run)
     db.flush()
-    _queue_generation(db, run=run, settings=settings)
+    _queue_generation(
+        db,
+        run=run,
+        settings=settings,
+        estimated_cost_usd=estimate_generation_cost_usd(
+            provider=route.provider,
+            model=route.model,
+            input_cost_per_million_usd=route.input_cost_per_million_usd,
+            output_cost_per_million_usd=route.output_cost_per_million_usd,
+            payload=input_payload,
+        ),
+    )
     return run, False

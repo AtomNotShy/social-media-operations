@@ -12,6 +12,13 @@ from app.core.config import Settings
 from app.core.errors import AppError
 from app.db.models import AIConnection, AIModelRoute
 from app.modules.ai_connections.crypto import decrypt_api_key, encrypt_api_key
+from app.modules.ai_connections.pricing import (
+    PRICING_CATALOG_VERSION,
+    PRICING_SOURCE_URL,
+    effective_route_prices,
+    official_model_prices,
+    official_price_for,
+)
 from app.modules.ai_connections.schemas import (
     AIConnectionCreate,
     AIConnectionRead,
@@ -19,6 +26,7 @@ from app.modules.ai_connections.schemas import (
     AIModelRouteRead,
     AIModelRouteUpsert,
     AIProviderCatalogItem,
+    AIProviderModelPricing,
 )
 
 DEFAULT_BASE_URLS = {
@@ -41,9 +49,22 @@ class ResolvedAIRoute:
     max_tokens: int
     input_cost_per_million_usd: Decimal
     output_cost_per_million_usd: Decimal
+    rate_limit_rpm: int = 0
 
 
 def provider_catalog() -> list[AIProviderCatalogItem]:
+    model_pricing = [
+        AIProviderModelPricing(
+            model=item.model,
+            input_cost_per_million_usd=item.input_cost_per_million_usd,
+            output_cost_per_million_usd=item.output_cost_per_million_usd,
+            cache_hit_input_cost_per_million_usd=item.cache_hit_input_cost_per_million_usd,
+            currency=item.currency,
+            recommended_max_tokens=item.recommended_max_tokens,
+            notes=item.notes,
+        )
+        for item in official_model_prices()
+    ]
     return [
         AIProviderCatalogItem(
             provider="deepseek",
@@ -51,6 +72,9 @@ def provider_catalog() -> list[AIProviderCatalogItem]:
             default_base_url=DEFAULT_BASE_URLS["deepseek"],
             suggested_models=["deepseek-v4-flash", "deepseek-v4-pro"],
             custom_base_url=False,
+            model_pricing=model_pricing,
+            pricing_source_url=PRICING_SOURCE_URL,
+            pricing_catalog_version=PRICING_CATALOG_VERSION,
         ),
         AIProviderCatalogItem(
             provider="openai",
@@ -272,17 +296,33 @@ def upsert_route(
             connection_id=connection.id,
         )
         db.add(route)
+    official = official_price_for(connection.provider, body.model)
+    if official is not None:
+        # Official providers/models are priced by the built-in catalog; the
+        # operator cannot type prices for DeepSeek official models.  Custom
+        # OpenAI-compatible endpoints keep their own prices below.
+        input_price = official.input_cost_per_million_usd
+        output_price = official.output_cost_per_million_usd
+    else:
+        input_price = body.input_cost_per_million_usd
+        output_price = body.output_cost_per_million_usd
     route.connection_id = connection.id
     route.model = body.model.strip()
     route.temperature = body.temperature
     route.max_tokens = body.max_tokens
-    route.input_cost_per_million_usd = body.input_cost_per_million_usd
-    route.output_cost_per_million_usd = body.output_cost_per_million_usd
+    route.input_cost_per_million_usd = input_price
+    route.output_cost_per_million_usd = output_price
     db.flush()
     return route
 
 
 def route_read(route: AIModelRoute, connection: AIConnection) -> AIModelRouteRead:
+    input_price, output_price = effective_route_prices(
+        provider=connection.provider,
+        model=route.model,
+        stored_input_cost_per_million_usd=route.input_cost_per_million_usd,
+        stored_output_cost_per_million_usd=route.output_cost_per_million_usd,
+    )
     return AIModelRouteRead(
         task_type=route.task_type,
         connection_id=connection.id,
@@ -291,8 +331,8 @@ def route_read(route: AIModelRoute, connection: AIConnection) -> AIModelRouteRea
         model=route.model,
         temperature=route.temperature,
         max_tokens=route.max_tokens,
-        input_cost_per_million_usd=route.input_cost_per_million_usd,
-        output_cost_per_million_usd=route.output_cost_per_million_usd,
+        input_cost_per_million_usd=input_price,
+        output_cost_per_million_usd=output_price,
         configured=connection.enabled
         and (
             connection.encrypted_api_key is not None
@@ -370,6 +410,12 @@ def resolve_route(
             "AI API key is not configured",
             f"Add an API key to the {connection.name} connection.",
         )
+    input_price, output_price = effective_route_prices(
+        provider=connection.provider,
+        model=route.model,
+        stored_input_cost_per_million_usd=route.input_cost_per_million_usd,
+        stored_output_cost_per_million_usd=route.output_cost_per_million_usd,
+    )
     return ResolvedAIRoute(
         connection_id=connection.id,
         provider=connection.provider,
@@ -380,8 +426,9 @@ def resolve_route(
         json_mode=bool(connection.capabilities.get("json_mode", True)),
         temperature=route.temperature,
         max_tokens=route.max_tokens,
-        input_cost_per_million_usd=route.input_cost_per_million_usd,
-        output_cost_per_million_usd=route.output_cost_per_million_usd,
+        input_cost_per_million_usd=input_price,
+        output_cost_per_million_usd=output_price,
+        rate_limit_rpm=int(connection.capabilities.get("rate_limit_rpm", 0) or 0),
     )
 
 
@@ -435,6 +482,16 @@ def resolve_run_route(
             "AI API key is not configured",
             f"Add an API key to the {connection.name} connection.",
         )
+    input_price, output_price = effective_route_prices(
+        provider=connection.provider,
+        model=model,
+        stored_input_cost_per_million_usd=(
+            route.input_cost_per_million_usd if route is not None else Decimal("0")
+        ),
+        stored_output_cost_per_million_usd=(
+            route.output_cost_per_million_usd if route is not None else Decimal("0")
+        ),
+    )
     return ResolvedAIRoute(
         connection_id=connection.id,
         provider=connection.provider,
@@ -445,12 +502,9 @@ def resolve_run_route(
         json_mode=bool(connection.capabilities.get("json_mode", True)),
         temperature=route.temperature if route is not None else Decimal("0.2"),
         max_tokens=route.max_tokens if route is not None else 2000,
-        input_cost_per_million_usd=(
-            route.input_cost_per_million_usd if route is not None else Decimal("0")
-        ),
-        output_cost_per_million_usd=(
-            route.output_cost_per_million_usd if route is not None else Decimal("0")
-        ),
+        input_cost_per_million_usd=input_price,
+        output_cost_per_million_usd=output_price,
+        rate_limit_rpm=int(connection.capabilities.get("rate_limit_rpm", 0) or 0),
     )
 
 

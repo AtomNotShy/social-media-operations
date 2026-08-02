@@ -570,6 +570,35 @@
             "title": "Label",
             "type": "string"
           },
+          "model_pricing": {
+            "items": {
+              "$ref": "#/components/schemas/AIProviderModelPricing"
+            },
+            "title": "Model Pricing",
+            "type": "array"
+          },
+          "pricing_catalog_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Catalog Version"
+          },
+          "pricing_source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Source Url"
+          },
           "provider": {
             "enum": [
               "deepseek",
@@ -595,6 +624,70 @@
           "custom_base_url"
         ],
         "title": "AIProviderCatalogItem",
+        "type": "object"
+      },
+      "AIProviderModelPricing": {
+        "properties": {
+          "cache_hit_input_cost_per_million_usd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Hit Input Cost Per Million Usd"
+          },
+          "currency": {
+            "default": "USD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "input_cost_per_million_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Input Cost Per Million Usd",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "output_cost_per_million_usd": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Output Cost Per Million Usd",
+            "type": "string"
+          },
+          "recommended_max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Max Tokens"
+          }
+        },
+        "required": [
+          "model",
+          "input_cost_per_million_usd",
+          "output_cost_per_million_usd"
+        ],
+        "title": "AIProviderModelPricing",
         "type": "object"
       },
       "AISettingsRead": {

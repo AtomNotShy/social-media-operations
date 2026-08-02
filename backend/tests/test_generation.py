@@ -5,9 +5,18 @@ from datetime import datetime, timezone
 import httpx
 from sqlalchemy import select
 
-from app.db.models import AICostLedger, GenerationRun, ReviewInsight, ScriptVersion, SyncJob
+from app.db.models import (
+    AIAttemptLog,
+    AICostLedger,
+    ExternalContent,
+    GenerationRun,
+    ReviewInsight,
+    ScriptVersion,
+    SyncJob,
+    WorkspaceInspiration,
+)
 from app.jobs.worker import process_one
-from app.modules.generation.prompts import SCRIPT_GENERATION_PROMPT_REVISION
+from app.modules.prompts.registry import SCRIPT_GENERATION_PROMPT_REVISION
 from app.providers.ai.generation import FixtureContentGenerationProvider
 from app.providers.social.tikhub.client import TikHubHttpClient
 
@@ -108,9 +117,170 @@ def test_script_generation_is_audited_budgeted_and_append_only(
     with app.state.database.session_factory() as db:
         run = db.get(GenerationRun, uuid.UUID(generation["id"]))
         ledger = db.scalar(select(AICostLedger).where(AICostLedger.sync_job_id == run.sync_job_id))
+        job = db.get(SyncJob, run.sync_job_id)
+        attempt = db.scalar(
+            select(AIAttemptLog).where(
+                AIAttemptLog.sync_job_id == run.sync_job_id,
+                AIAttemptLog.attempt_no == job.attempt,
+            )
+        )
         assert ledger.status == "settled"
         assert ledger.resource_type == "generation"
+        assert attempt is not None
+        assert attempt.status == "succeeded"
+        assert attempt.model == "fixture-generation"
+        assert attempt.cost_usd == 0
         assert db.scalar(select(ScriptVersion).where(ScriptVersion.generation_run_id == run.id))
+
+
+def test_script_generation_resolves_topic_source_materials(
+    client,
+    app,
+    auth_headers,
+    workspace,
+):
+    app.state.settings.ai_provider = "fixture"
+    app.state.settings.ai_model = "fixture-generation"
+    headers = _headers(auth_headers, workspace)
+    channel = client.post(
+        "/api/v1/owned-channels",
+        headers=headers,
+        json={
+            "platform": "xiaohongshu",
+            "display_name": "Source channel",
+            "positioning": "Oral English learning",
+        },
+    ).json()["data"]
+    with app.state.database.session_factory() as db:
+        content = ExternalContent(
+            workspace_id=uuid.UUID(workspace["id"]),
+            platform="x",
+            external_id="source-oral-english",
+            canonical_url="https://x.com/source/status/1",
+            content_type="article",
+            title="每天练口语的原文",
+            body_text="原文正文：外教课一年两万，GPT Live 当陪练，Obsidian 记复盘。",
+            author_snapshot={"handle": "source", "display_name": "Source"},
+            media_manifest=[],
+        )
+        db.add(content)
+        db.flush()
+        inspiration = WorkspaceInspiration(
+            workspace_id=uuid.UUID(workspace["id"]),
+            external_content_id=content.id,
+            source="manual_url",
+        )
+        db.add(inspiration)
+        db.commit()
+        inspiration_id = str(inspiration.id)
+        content_id = str(content.id)
+
+    topic = client.post(
+        f"/api/v1/topics/from-inspiration/{inspiration_id}",
+        headers=headers,
+        json={
+            "owned_channel_id": channel["id"],
+            "title": "每天练口语，却总觉得没进步？",
+            "angle": "用 GPT Live + Obsidian 把每次开口变成可追踪的成长记录",
+            "hook": "谁还不知道GPT可以这么用",
+        },
+    ).json()["data"]
+    project = client.post(
+        "/api/v1/content-projects",
+        headers=headers,
+        json={
+            "owned_channel_id": channel["id"],
+            "topic_id": topic["id"],
+            "title": topic["title"],
+        },
+    ).json()["data"]
+
+    requested = client.post(
+        f"/api/v1/content-projects/{project['id']}/scripts/generate",
+        headers=headers,
+        json={"project_version": project["version"]},
+    )
+    assert requested.status_code == 202
+    generation = requested.json()["data"]["generation"]
+
+    with app.state.database.session_factory() as db:
+        run = db.get(GenerationRun, uuid.UUID(generation["id"]))
+        materials = run.input_payload["source_materials"]
+        assert [unit["ref"] for unit in materials] == [f"content:{content_id}"]
+        assert (
+            materials[0]["body"]
+            == "原文正文：外教课一年两万，GPT Live 当陪练，Obsidian 记复盘。"
+        )
+        assert materials[0]["title"] == "每天练口语的原文"
+        assert f"content:{content_id}" in run.evidence_refs
+        assert run.input_payload["topic"]["evidence_refs"] == [
+            f"inspiration:{inspiration_id}",
+            f"content:{content_id}",
+        ]
+
+    assert _run_generation_worker(app) is True
+    completed = client.get(
+        f"/api/v1/generation-runs/{generation['id']}",
+        headers=headers,
+    ).json()["data"]
+    assert completed["status"] == "succeeded"
+    assert f"content:{content_id}" in completed["evidence_refs"]
+
+
+def test_script_generation_rejects_unresolvable_topic_evidence(
+    client,
+    app,
+    auth_headers,
+    workspace,
+):
+    app.state.settings.ai_provider = "fixture"
+    app.state.settings.ai_model = "fixture-generation"
+    headers = _headers(auth_headers, workspace)
+    channel = client.post(
+        "/api/v1/owned-channels",
+        headers=headers,
+        json={
+            "platform": "xiaohongshu",
+            "display_name": "Dangling channel",
+        },
+    ).json()["data"]
+    missing_content_id = uuid.uuid4()
+    topic = client.post(
+        "/api/v1/topics",
+        headers=headers,
+        json={
+            "owned_channel_id": channel["id"],
+            "title": "悬空证据选题",
+            "evidence_refs": [f"content:{missing_content_id}"],
+        },
+    ).json()["data"]
+    project = client.post(
+        "/api/v1/content-projects",
+        headers=headers,
+        json={
+            "owned_channel_id": channel["id"],
+            "topic_id": topic["id"],
+            "title": topic["title"],
+        },
+    ).json()["data"]
+
+    response = client.post(
+        f"/api/v1/content-projects/{project['id']}/scripts/generate",
+        headers=headers,
+        json={"project_version": project["version"]},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "EVIDENCE_UNAVAILABLE"
+    with app.state.database.session_factory() as db:
+            assert (
+                db.scalar(
+                    select(GenerationRun).where(
+                        GenerationRun.content_project_id == uuid.UUID(project["id"])
+                    )
+                )
+                is None
+            )
 
 
 def test_generation_emergency_stop_rejects_before_job_creation(
@@ -219,6 +389,10 @@ def test_review_generation_creates_evidence_backed_review(
     with app.state.database.session_factory() as db:
         run = db.get(GenerationRun, uuid.UUID(generation_id))
         job = db.get(SyncJob, run.sync_job_id)
+        assert run.input_payload["script"]["body"] == "Manual approved script."
+        assert run.input_payload["script"]["version_no"] == 1
+        assert run.input_payload["publish_payload"]["title"] == "Published fixture"
+        assert f"script:{script['id']}" in run.evidence_refs
         review = db.scalar(
             select(ReviewInsight).where(ReviewInsight.publish_record_id == uuid.UUID(record["id"]))
         )

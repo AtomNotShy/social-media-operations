@@ -235,6 +235,7 @@ export function AISettingsPanel({
                   canManage={canManage}
                   connections={settings.data.connections}
                   key={`${taskType}:${route?.connection_id}:${route?.model}`}
+                  providers={settings.data.providers}
                   route={route}
                   taskType={taskType}
                   workspaceId={workspaceId}
@@ -265,12 +266,14 @@ function RouteEditor({
   taskType,
   route,
   connections,
+  providers,
   canManage,
 }: {
   workspaceId: string;
   taskType: AITaskType;
   route?: AIModelRoute;
   connections: AIConnection[];
+  providers: AISettings["providers"];
   canManage: boolean;
 }) {
   const update = useUpdateAIModelRoute(workspaceId);
@@ -286,6 +289,15 @@ function RouteEditor({
     output_cost_per_million_usd:
       route?.output_cost_per_million_usd ?? "0",
   });
+  const selectedConnection = connections.find(
+    (item) => item.id === value.connection_id,
+  );
+  const selectedCatalog = providers.find(
+    (item) => item.provider === selectedConnection?.provider,
+  );
+  const modelPricing = selectedCatalog?.model_pricing?.find(
+    (item) => item.model === value.model.trim(),
+  );
 
   return (
     <form
@@ -359,6 +371,13 @@ function RouteEditor({
           )}
           保存
         </button>
+      ) : null}
+      {modelPricing ? (
+        <p className="text-[10px] leading-4 text-text-muted lg:col-start-2 lg:col-span-4">
+          官方定价（{selectedCatalog?.pricing_catalog_version}）：输入 $
+          {modelPricing.input_cost_per_million_usd}/M · 输出 $
+          {modelPricing.output_cost_per_million_usd}/M，保存后由系统维护，无需手填。
+        </p>
       ) : null}
       <div className="lg:col-start-2 lg:col-span-4">
         <InlineError error={update.error} />
@@ -501,6 +520,31 @@ function CreateConnectionDialog({
             ))}
           </datalist>
         </label>
+        {(() => {
+          const pricing = selected?.model_pricing?.find(
+            (item) => item.model === model.trim(),
+          );
+          if (!pricing) return null;
+          return (
+            <div className="rounded-md bg-surface-subtle p-3 text-[11px] leading-5 text-text-muted">
+              <p className="font-semibold text-text">
+                官方定价（{selected?.pricing_catalog_version}）
+              </p>
+              <p>
+                输入 ${pricing.input_cost_per_million_usd}/M · 输出 $
+                {pricing.output_cost_per_million_usd}/M
+                {pricing.cache_hit_input_cost_per_million_usd
+                  ? ` · 缓存命中输入 $${pricing.cache_hit_input_cost_per_million_usd}/M`
+                  : ""}
+              </p>
+              {pricing.notes ? <p>{pricing.notes}</p> : null}
+              <p>
+                来源：{" "}
+                <span className="break-all">{selected?.pricing_source_url}</span>
+              </p>
+            </div>
+          );
+        })()}
         <InlineError error={create.error} />
         <button
           className={primaryButton}

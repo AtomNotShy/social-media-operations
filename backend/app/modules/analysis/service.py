@@ -17,8 +17,7 @@ from app.db.models import (
 from app.jobs.service import create_job
 from app.modules.ai_connections.service import resolve_route
 from app.modules.analysis.budget import reserve_ai_budget
-
-ANALYSIS_PROMPT_LOCALE_REVISION = "zh-cn-v1"
+from app.modules.prompts.registry import resolve_prompt_asset
 
 
 def inspiration_content(
@@ -173,11 +172,7 @@ def request_analysis(
         workspace_id=workspace_id,
         content_id=content.id,
     )
-    prompt_version = (
-        f"{settings.ai_prompt_version}:{ANALYSIS_PROMPT_LOCALE_REVISION}"
-        if level == "l1"
-        else f"{settings.ai_prompt_version}:l2:{ANALYSIS_PROMPT_LOCALE_REVISION}"
-    )
+    prompt_version = f"{settings.ai_prompt_version}:{resolve_prompt_asset(level).revision}"
     input_hash = _hash(
         {
             "content_version": _content_version(content),

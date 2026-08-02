@@ -706,6 +706,39 @@ class AICostLedger(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class AIAttemptLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Per-attempt accounting for a single provider call inside an AI run."""
+
+    __tablename__ = "ai_attempt_logs"
+    __table_args__ = (
+        Index("ix_ai_attempt_logs_run", "workspace_id", "run_type", "run_id"),
+        UniqueConstraint("sync_job_id", "attempt_no"),
+    )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    run_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    run_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    sync_job_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("sync_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    attempt_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    model: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    input_tokens: Mapped[int | None] = mapped_column(BigInteger)
+    output_tokens: Mapped[int | None] = mapped_column(BigInteger)
+    cost_usd: Mapped[Decimal] = mapped_column(
+        Numeric(12, 6), default=Decimal("0"), nullable=False
+    )
+    latency_ms: Mapped[int | None] = mapped_column(Integer)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class DiscoverySearch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "discovery_searches"
     __table_args__ = (

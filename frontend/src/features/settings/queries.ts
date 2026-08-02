@@ -188,6 +188,18 @@ export function useUpdateAIModelRoute(workspaceId: string) {
         (item) => item.id === input.connection_id,
       );
       if (!connection) throw new Error("请选择可用的 AI 连接。");
+      const provider = settings?.providers.find(
+        (item) => item.provider === connection.provider,
+      );
+      const pricing = provider?.model_pricing?.find(
+        (item) => item.model === input.model.trim(),
+      );
+      const inputPrice = pricing
+        ? String(pricing.input_cost_per_million_usd)
+        : String(input.input_cost_per_million_usd);
+      const outputPrice = pricing
+        ? String(pricing.output_cost_per_million_usd)
+        : String(input.output_cost_per_million_usd);
       return {
         task_type: taskType,
         connection_id: connection.id,
@@ -196,12 +208,8 @@ export function useUpdateAIModelRoute(workspaceId: string) {
         model: input.model,
         temperature: String(input.temperature),
         max_tokens: input.max_tokens,
-        input_cost_per_million_usd: String(
-          input.input_cost_per_million_usd,
-        ),
-        output_cost_per_million_usd: String(
-          input.output_cost_per_million_usd,
-        ),
+        input_cost_per_million_usd: inputPrice,
+        output_cost_per_million_usd: outputPrice,
         configured: true,
       } satisfies AIModelRoute;
     },

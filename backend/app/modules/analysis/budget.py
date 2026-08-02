@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -7,7 +8,93 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
-from app.db.models import AICostLedger, Workspace
+from app.db.models import AIAttemptLog, AICostLedger, Workspace
+
+
+def open_ai_attempt(
+    db: Session,
+    *,
+    workspace_id: uuid.UUID,
+    run_type: str,
+    run_id: uuid.UUID,
+    sync_job_id: uuid.UUID,
+    attempt_no: int,
+    provider: str,
+    model: str,
+) -> None:
+    db.add(
+        AIAttemptLog(
+            workspace_id=workspace_id,
+            run_type=run_type,
+            run_id=run_id,
+            sync_job_id=sync_job_id,
+            attempt_no=attempt_no,
+            provider=provider,
+            model=model,
+            status="started",
+            started_at=datetime.now(timezone.utc),
+        )
+    )
+
+
+def close_ai_attempt(
+    db: Session,
+    *,
+    sync_job_id: uuid.UUID,
+    attempt_no: int,
+    status: str,
+    error_code: str | None = None,
+    error_message: str | None = None,
+    input_tokens: int | None = None,
+    output_tokens: int | None = None,
+    cost_usd: Decimal | None = None,
+    latency_ms: int | None = None,
+) -> None:
+    attempt = db.scalar(
+        select(AIAttemptLog)
+        .where(
+            AIAttemptLog.sync_job_id == sync_job_id,
+            AIAttemptLog.attempt_no == attempt_no,
+        )
+        .with_for_update()
+    )
+    if attempt is None:
+        return
+    attempt.status = status
+    attempt.error_code = error_code
+    attempt.error_message = error_message
+    attempt.input_tokens = input_tokens
+    attempt.output_tokens = output_tokens
+    attempt.cost_usd = cost_usd if cost_usd is not None else Decimal("0")
+    attempt.latency_ms = latency_ms
+    attempt.finished_at = datetime.now(timezone.utc)
+    db.flush()
+
+
+def estimate_generation_cost_usd(
+    *,
+    provider: str,
+    model: str,
+    input_cost_per_million_usd: Decimal,
+    output_cost_per_million_usd: Decimal,
+    payload: dict,
+    expected_output_tokens: int = 800,
+) -> Decimal:
+    """Estimate a generation run's cost from the assembled context size.
+
+    Chinese text is roughly two characters per token; using a conservative one
+    character per token overestimates input tokens and keeps the reservation on
+    the safe side of the workspace daily budget.
+    """
+    payload_chars = len(json.dumps(payload, ensure_ascii=False, default=str))
+    input_tokens = max(1, payload_chars)
+    input_cost = (
+        Decimal(input_tokens) * input_cost_per_million_usd / Decimal(1_000_000)
+    )
+    output_cost = (
+        Decimal(expected_output_tokens) * output_cost_per_million_usd / Decimal(1_000_000)
+    )
+    return (input_cost + output_cost).quantize(Decimal("0.000001"))
 
 
 def reserve_ai_budget(

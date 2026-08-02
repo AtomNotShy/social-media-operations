@@ -81,6 +81,107 @@ def test_owner_configures_masked_encrypted_deepseek_connection(
     assert "sk-sensitive" not in settings.text
 
 
+def test_deepseek_routes_always_use_official_catalog_pricing(client, auth_headers, workspace):
+    headers = _headers(auth_headers, workspace)
+    response = client.post(
+        "/api/v1/ai/connections",
+        headers=headers,
+        json={
+            "name": "DeepSeek Official",
+            "provider": "deepseek",
+            "api_key": "sk-official-1234",
+            "model": "deepseek-v4-flash",
+            "use_for": ["l1", "l2", "generation"],
+            "input_cost_per_million_usd": "0",
+            "output_cost_per_million_usd": "0",
+        },
+    )
+
+    assert response.status_code == 201
+    settings = client.get("/api/v1/ai/settings", headers=headers)
+    assert settings.status_code == 200
+    data = settings.json()["data"]
+    routes = {route["task_type"]: route for route in data["routes"]}
+    assert len(routes) == 3
+    for route in routes.values():
+        assert route["input_cost_per_million_usd"] == "0.14"
+        assert route["output_cost_per_million_usd"] == "0.28"
+
+    deepseek_catalog = next(
+        item for item in data["providers"] if item["provider"] == "deepseek"
+    )
+    flash_pricing = next(
+        item for item in deepseek_catalog["model_pricing"] if item["model"] == "deepseek-v4-flash"
+    )
+    assert flash_pricing["input_cost_per_million_usd"] == "0.14"
+    assert flash_pricing["output_cost_per_million_usd"] == "0.28"
+    assert flash_pricing["cache_hit_input_cost_per_million_usd"] == "0.0028"
+    assert deepseek_catalog["pricing_source_url"].startswith("https://api-docs.deepseek.com")
+    assert deepseek_catalog["pricing_catalog_version"] == "deepseek-2026-07-23"
+
+
+def test_openai_compatible_route_keeps_operator_prices(client, auth_headers, workspace):
+    headers = _headers(auth_headers, workspace)
+    response = client.post(
+        "/api/v1/ai/connections",
+        headers=headers,
+        json={
+            "name": "Custom Gateway",
+            "provider": "openai_compatible",
+            "api_key": "sk-custom-1234",
+            "base_url": "https://llm.example.test/v1",
+            "model": "custom-model",
+            "use_for": ["generation"],
+            "input_cost_per_million_usd": "0.75",
+            "output_cost_per_million_usd": "1.50",
+        },
+    )
+    assert response.status_code == 201
+    settings = client.get("/api/v1/ai/settings", headers=headers)
+    route = settings.json()["data"]["routes"][0]
+    assert route["input_cost_per_million_usd"] in {"0.75", "0.750000"}
+    assert route["output_cost_per_million_usd"] in {"1.50", "1.500000"}
+
+
+def test_resolve_route_uses_official_pricing_even_for_stale_zero_rows(
+    client,
+    app,
+    auth_headers,
+    workspace,
+):
+    headers = _headers(auth_headers, workspace)
+    created = client.post(
+        "/api/v1/ai/connections",
+        headers=headers,
+        json={
+            "name": "DeepSeek Stale",
+            "provider": "deepseek",
+            "api_key": "sk-stale-1234",
+            "model": "deepseek-v4-pro",
+            "use_for": ["l2"],
+        },
+    ).json()["data"]
+    connection_id = created["id"]
+
+    # Simulate a pre-catalog row whose prices were never backfilled.
+    with app.state.database.session_factory() as db:
+        route = db.scalar(
+            select(AIModelRoute).where(AIModelRoute.connection_id == uuid.UUID(connection_id))
+        )
+        route.input_cost_per_million_usd = Decimal("0")
+        route.output_cost_per_million_usd = Decimal("0")
+        db.commit()
+        resolved = resolve_route(
+            db,
+            workspace_id=uuid.UUID(workspace["id"]),
+            task_type="l2",
+            settings=app.state.settings,
+            include_secret=True,
+        )
+    assert resolved.input_cost_per_million_usd == Decimal("0.435")
+    assert resolved.output_cost_per_million_usd == Decimal("0.87")
+
+
 def test_blank_key_preserves_and_explicit_clear_removes_secret(
     client,
     app,
@@ -230,6 +331,76 @@ def test_openai_compatible_provider_maps_auth_failure_without_leaking_body():
         raise AssertionError("Expected AIProviderRequestError")
 
 
+def test_openai_compatible_provider_sends_stable_idempotency_key():
+    seen: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["idempotency_key"] = request.headers.get("Idempotency-Key")
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "summary": "ok",
+                                    "factors": ["a"],
+                                    "confidence": 0.8,
+                                    "caveats": [],
+                                    "life": "evergreen",
+                                    "life_reason": "stable",
+                                    "recommended_for_l2": False,
+                                }
+                            )
+                        },
+                    }
+                ],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 5},
+            },
+        )
+
+    content = ExternalContent(
+        id=uuid.uuid4(),
+        workspace_id=uuid.uuid4(),
+        platform="xiaohongshu",
+        external_id="idem-test",
+        canonical_url="https://www.xiaohongshu.com/explore/idem-test",
+        content_type="note",
+        title="Idempotency test",
+        body_text="Source body",
+        author_snapshot={},
+        media_manifest=[],
+    )
+    run = AnalysisRun(
+        id=uuid.uuid4(),
+        workspace_id=content.workspace_id,
+        external_content_id=content.id,
+        analysis_level="l1",
+        model_provider="deepseek",
+        model="deepseek-v4-flash",
+        prompt_version="l1-v1",
+        input_hash="idem-test",
+        evidence_refs=[f"content:{content.id}"],
+    )
+    provider = OpenAICompatibleProvider(
+        base_url="https://api.deepseek.com",
+        api_key="secret-token",
+        model="deepseek-v4-flash",
+        timeout_seconds=30,
+        json_mode=True,
+        temperature=Decimal("0.2"),
+        max_tokens=2000,
+        idempotency_key=f"socialops:{run.workspace_id}:analysis:{run.id}",
+        transport=httpx.MockTransport(handler),
+    )
+
+    asyncio.run(provider.analyze(run=run, content=content, transcript=None, metrics=None))
+
+    assert seen["idempotency_key"] == f"socialops:{run.workspace_id}:analysis:{run.id}"
+
+
 def test_openai_compatible_provider_script_prompt_enforces_craft_rules():
     seen = {}
 
@@ -294,6 +465,7 @@ def test_openai_compatible_provider_script_prompt_enforces_craft_rules():
     assert "Opening hook" in system_prompt
     assert "micro-action" in system_prompt
     assert "structured_body" in system_prompt
+    assert "source_materials" in system_prompt
     assert result.result["body"] == "开场钩子。主体步骤。结尾动作。"
 
 

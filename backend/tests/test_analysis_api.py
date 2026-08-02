@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 
 from app.db.models import (
+    AIAttemptLog,
     AICostLedger,
     AnalysisRun,
     ContentScore,
@@ -436,3 +437,12 @@ def test_worker_rejects_invalid_ai_output(
         job = db.get(SyncJob, UUID(accepted["sync_job_id"]))
         assert job.status == "dead"
         assert job.last_error_code == "AI_OUTPUT_INVALID"
+        attempt = db.scalar(
+            select(AIAttemptLog).where(
+                AIAttemptLog.sync_job_id == job.id,
+                AIAttemptLog.attempt_no == job.attempt,
+            )
+        )
+        assert attempt is not None
+        assert attempt.status == "failed"
+        assert attempt.error_code == "AI_OUTPUT_INVALID"

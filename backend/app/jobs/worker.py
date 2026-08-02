@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import socket
+from contextlib import AsyncExitStack
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -31,13 +32,30 @@ from app.providers.social.tikhub.client import TikHubHttpClient
 from app.providers.social.tikhub.errors import TikHubError
 from app.providers.social.tikhub.gateway import TikHubGateway
 
+ALL_JOB_TYPES = (
+    "PROFILE_SCAN",
+    "OWNED_CHANNEL_SCAN",
+    "CONTENT_DETAIL_FETCH",
+    "AI_ANALYSIS",
+    "TRANSCRIBE",
+    "CONTENT_GENERATION",
+    "COMMENT_FETCH",
+    "DISCOVERY_SEARCH",
+)
+AI_JOB_TYPES = (
+    "AI_ANALYSIS",
+    "TRANSCRIBE",
+    "CONTENT_GENERATION",
+)
+
 
 async def process_one(
     db: Session,
     *,
-    client: TikHubHttpClient,
+    client: TikHubHttpClient | None,
     worker_id: str,
     lock_timeout_seconds: int = 300,
+    job_types: tuple[str, ...] | None = None,
     analysis_provider: AnalysisProvider | None = None,
     generation_provider: ContentGenerationProvider | None = None,
     transcript_provider: TranscriptProvider | None = None,
@@ -50,16 +68,7 @@ async def process_one(
     job = claim_next_job(
         db,
         worker_id,
-        job_types=(
-            "PROFILE_SCAN",
-            "OWNED_CHANNEL_SCAN",
-            "CONTENT_DETAIL_FETCH",
-            "AI_ANALYSIS",
-            "TRANSCRIBE",
-            "CONTENT_GENERATION",
-            "COMMENT_FETCH",
-            "DISCOVERY_SEARCH",
-        ),
+        job_types=job_types,
     )
     if job is None:
         touch_process_heartbeat(
@@ -78,6 +87,12 @@ async def process_one(
     db.commit()
     try:
         if job.job_type == "PROFILE_SCAN":
+            if client is None:
+                raise JobExecutionError(
+                    code="TIKHUB_NOT_CONFIGURED",
+                    message="TIKHUB_API_KEY is not configured on this worker.",
+                    retryable=False,
+                )
             handler = ProfileScanHandler(
                 db,
                 TikHubGateway(
@@ -89,6 +104,12 @@ async def process_one(
                 settings=settings,
             )
         elif job.job_type == "OWNED_CHANNEL_SCAN":
+            if client is None:
+                raise JobExecutionError(
+                    code="TIKHUB_NOT_CONFIGURED",
+                    message="TIKHUB_API_KEY is not configured on this worker.",
+                    retryable=False,
+                )
             handler = OwnedChannelScanHandler(
                 db,
                 TikHubGateway(
@@ -100,6 +121,12 @@ async def process_one(
                 settings=settings,
             )
         elif job.job_type == "CONTENT_DETAIL_FETCH":
+            if client is None:
+                raise JobExecutionError(
+                    code="TIKHUB_NOT_CONFIGURED",
+                    message="TIKHUB_API_KEY is not configured on this worker.",
+                    retryable=False,
+                )
             handler = ContentDetailHandler(
                 db,
                 TikHubGateway(
@@ -117,6 +144,12 @@ async def process_one(
         elif job.job_type == "CONTENT_GENERATION":
             handler = GenerationHandler(db, generation_provider, settings=settings)
         elif job.job_type == "COMMENT_FETCH":
+            if client is None:
+                raise JobExecutionError(
+                    code="TIKHUB_NOT_CONFIGURED",
+                    message="TIKHUB_API_KEY is not configured on this worker.",
+                    retryable=False,
+                )
             handler = CommentFetchHandler(
                 db,
                 TikHubGateway(
@@ -127,6 +160,12 @@ async def process_one(
                 ),
             )
         elif job.job_type == "DISCOVERY_SEARCH":
+            if client is None:
+                raise JobExecutionError(
+                    code="TIKHUB_NOT_CONFIGURED",
+                    message="TIKHUB_API_KEY is not configured on this worker.",
+                    retryable=False,
+                )
             handler = DiscoverySearchHandler(
                 db,
                 TikHubGateway(
@@ -203,23 +242,25 @@ async def process_one(
 
 
 async def run_worker(settings: Settings, *, once: bool = False) -> None:
-    if not settings.tikhub_api_key:
-        raise RuntimeError("TIKHUB_API_KEY is required to run the worker")
     database = Database(settings.database_url)
-    async with httpx.AsyncClient(
-        base_url=settings.tikhub_base_url.rstrip("/"),
-        headers={
-            "Authorization": f"Bearer {settings.tikhub_api_key.strip()}",
-            "Accept": "application/json",
-            "User-Agent": "social-ops-backend/0.1",
-        },
-        follow_redirects=False,
-    ) as http_client:
-        client = TikHubHttpClient(
-            base_url=settings.tikhub_base_url,
-            api_key=settings.tikhub_api_key,
-            client=http_client,
-        )
+    async with AsyncExitStack() as exit_stack:
+        client: TikHubHttpClient | None = None
+        if settings.tikhub_api_key:
+            http_client = httpx.AsyncClient(
+                base_url=settings.tikhub_base_url.rstrip("/"),
+                headers={
+                    "Authorization": f"Bearer {settings.tikhub_api_key.strip()}",
+                    "Accept": "application/json",
+                    "User-Agent": "social-ops-backend/0.1",
+                },
+                follow_redirects=False,
+            )
+            await exit_stack.enter_async_context(http_client)
+            client = TikHubHttpClient(
+                base_url=settings.tikhub_base_url,
+                api_key=settings.tikhub_api_key,
+                client=http_client,
+            )
         analysis_provider = FixtureAnalysisProvider() if settings.ai_provider == "fixture" else None
         generation_provider = (
             FixtureContentGenerationProvider() if settings.ai_provider == "fixture" else None
@@ -228,6 +269,7 @@ async def run_worker(settings: Settings, *, once: bool = False) -> None:
             FixtureTranscriptProvider() if settings.asr_provider == "fixture" else None
         )
         worker_id = f"{socket.gethostname()}:{id(asyncio.current_task())}"
+        claimable_job_types = ALL_JOB_TYPES if client is not None else AI_JOB_TYPES
         try:
             while True:
                 with database.session_factory() as db:
@@ -236,6 +278,7 @@ async def run_worker(settings: Settings, *, once: bool = False) -> None:
                         client=client,
                         worker_id=worker_id,
                         lock_timeout_seconds=settings.job_lock_timeout_seconds,
+                        job_types=claimable_job_types,
                         analysis_provider=analysis_provider,
                         generation_provider=generation_provider,
                         transcript_provider=transcript_provider,

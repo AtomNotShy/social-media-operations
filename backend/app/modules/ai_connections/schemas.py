@@ -15,6 +15,19 @@ class AIProviderCatalogItem(BaseModel):
     default_base_url: str | None
     suggested_models: list[str]
     custom_base_url: bool
+    model_pricing: list["AIProviderModelPricing"] = Field(default_factory=list)
+    pricing_source_url: str | None = None
+    pricing_catalog_version: str | None = None
+
+
+class AIProviderModelPricing(BaseModel):
+    model: str
+    input_cost_per_million_usd: Decimal
+    output_cost_per_million_usd: Decimal
+    cache_hit_input_cost_per_million_usd: Decimal | None = None
+    currency: str = "USD"
+    recommended_max_tokens: int | None = None
+    notes: str | None = None
 
 
 class AIConnectionCreate(BaseModel):
