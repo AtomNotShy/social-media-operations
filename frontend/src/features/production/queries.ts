@@ -6,6 +6,7 @@ import * as service from "@/src/features/production/api";
 import {
   demoAssets,
   demoChannels,
+  demoContentPackages,
   demoExperiments,
   demoPerformance,
   demoPlans,
@@ -19,6 +20,9 @@ import {
 } from "@/src/features/production/fixtures";
 import type {
   Asset,
+  ContentPackage,
+  ContentPackageEdit,
+  ContentPackageGenerateInput,
   ContentProject,
   ContentProjectCreate,
   ContentProjectUpdate,
@@ -671,6 +675,122 @@ export function useGenerateScript(workspaceId: string, projectId: string) {
         queryKey: queryKeys.production.scripts(workspaceId, projectId),
       });
       client.invalidateQueries({ queryKey: queryKeys.jobs.all(workspaceId) });
+    },
+  });
+}
+
+export function useContentPackages(
+  workspaceId: string,
+  projectId: string,
+) {
+  return useQuery({
+    queryKey: queryKeys.production.contentPackages(workspaceId, projectId),
+    queryFn: async () => {
+      const items =
+        workspaceId === "demo"
+          ? clone(demoContentPackages)
+          : await service.listContentPackages(workspaceId, projectId);
+      return items.filter(
+        (item) => item.content_project_id === projectId,
+      );
+    },
+  });
+}
+
+export function useGenerateContentPackage(
+  workspaceId: string,
+  projectId: string,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ContentPackageGenerateInput) => {
+      if (workspaceId !== "demo") {
+        return service.generateContentPackage(workspaceId, projectId, input);
+      }
+      return Promise.resolve({
+        generation: {
+          id: crypto.randomUUID(),
+          status: "queued",
+        },
+        reused: false,
+      } as unknown as Awaited<
+        ReturnType<typeof service.generateContentPackage>
+      >);
+    },
+    onSuccess: () => {
+      client.invalidateQueries({
+        queryKey: queryKeys.production.contentPackages(workspaceId, projectId),
+      });
+      client.invalidateQueries({ queryKey: queryKeys.jobs.all(workspaceId) });
+    },
+  });
+}
+
+export function useEditContentPackage(
+  workspaceId: string,
+  projectId: string,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      packageId,
+      input,
+    }: {
+      packageId: string;
+      input: ContentPackageEdit;
+    }) => {
+      if (workspaceId !== "demo") {
+        return service.editContentPackage(workspaceId, packageId, input);
+      }
+      const current = client.getQueryData<ContentPackage[]>(
+        queryKeys.production.contentPackages(workspaceId, projectId),
+      );
+      const source = current?.find((item) => item.id === packageId);
+      if (!source) throw new Error("内容包不存在。");
+      const payload = { ...source.package } as Record<string, unknown>;
+      Object.entries(input as Record<string, unknown>).forEach(
+        ([key, value]) => {
+          if (value !== undefined) payload[key] = value;
+        },
+      );
+      const nextVersion =
+        Math.max(0, ...(current ?? []).map((item) => item.version)) + 1;
+      return {
+        ...source,
+        id: crypto.randomUUID(),
+        version: nextVersion,
+        status: "draft",
+        package: payload,
+        updated_at: stamp(),
+      } satisfies ContentPackage;
+    },
+    onSuccess: (updated) => {
+      client.setQueryData<ContentPackage[]>(
+        queryKeys.production.contentPackages(workspaceId, projectId),
+        (items = []) => [updated, ...items],
+      );
+    },
+  });
+}
+
+export function useFreezeContentPackage(
+  workspaceId: string,
+  projectId: string,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (packageId: string) => {
+      if (workspaceId !== "demo") {
+        return service.freezeContentPackage(workspaceId, packageId);
+      }
+      return Promise.resolve({ id: packageId, status: "frozen" }) as unknown as ReturnType<
+        typeof service.freezeContentPackage
+      >;
+    },
+    onSuccess: () => {
+      client.invalidateQueries({
+        queryKey: queryKeys.production.contentPackages(workspaceId, projectId),
+      });
     },
   });
 }

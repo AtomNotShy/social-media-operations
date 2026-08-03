@@ -1,5 +1,7 @@
 import { api, workspaceHeaders } from "@/src/api/client";
 import type {
+  ContentPackageEdit,
+  ContentPackageGenerateInput,
   ContentProjectCreate,
   ContentProjectUpdate,
   ExperimentCreate,
@@ -223,6 +225,78 @@ export async function generateScript(
         instruction: instruction || null,
         force: false,
       },
+    },
+  );
+  return data!.data;
+}
+
+export async function listContentPackages(
+  workspaceId: string,
+  projectId: string,
+  targetPlatform?: string,
+) {
+  const { data } = await api.GET(
+    "/api/v1/content-projects/{project_id}/content-packages",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: {
+        path: { project_id: projectId },
+        query: targetPlatform ? { target_platform: targetPlatform } : undefined,
+      },
+    },
+  );
+  return data?.data ?? [];
+}
+
+export async function generateContentPackage(
+  workspaceId: string,
+  projectId: string,
+  input: ContentPackageGenerateInput,
+) {
+  const { data } = await api.POST(
+    "/api/v1/content-projects/{project_id}/content-packages",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: { path: { project_id: projectId } },
+      body: input,
+    },
+  );
+  return data!.data;
+}
+
+export async function getContentPackage(
+  workspaceId: string,
+  packageId: string,
+) {
+  const { data } = await api.GET("/api/v1/content-packages/{package_id}", {
+    headers: workspaceHeaders(workspaceId),
+    params: { path: { package_id: packageId } },
+  });
+  return data!.data;
+}
+
+export async function editContentPackage(
+  workspaceId: string,
+  packageId: string,
+  input: ContentPackageEdit,
+) {
+  const { data } = await api.PATCH("/api/v1/content-packages/{package_id}", {
+    headers: workspaceHeaders(workspaceId),
+    params: { path: { package_id: packageId } },
+    body: input,
+  });
+  return data!.data;
+}
+
+export async function freezeContentPackage(
+  workspaceId: string,
+  packageId: string,
+) {
+  const { data } = await api.POST(
+    "/api/v1/content-packages/{package_id}/freeze",
+    {
+      headers: workspaceHeaders(workspaceId),
+      params: { path: { package_id: packageId } },
     },
   );
   return data!.data;

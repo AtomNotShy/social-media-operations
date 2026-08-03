@@ -13,6 +13,48 @@ export type ContentProjectUpdate =
   components["schemas"]["ContentProjectUpdate"];
 export type ScriptVersion = components["schemas"]["ScriptVersionRead"];
 export type ScriptCreate = components["schemas"]["ScriptCreate"];
+export type ContentPackage = components["schemas"]["ContentPackageRead"];
+export type ContentPackageEdit = components["schemas"]["ContentPackageEdit"];
+export type ContentPackageGenerateInput =
+  components["schemas"]["ContentPackageGenerateRequest"];
+export type ContentPackageScene = components["schemas"]["ContentPackageScene"];
+export type ContentPackageTitleCandidate =
+  components["schemas"]["ContentPackageTitleCandidate"];
+
+export type ContentPackagePayload = {
+  schema_version: number;
+  target_platform: string;
+  content_type: string;
+  target_duration_seconds: number;
+  narration: {
+    full_text: string;
+    spoken_length_chars: number;
+    estimated_duration_seconds: number;
+  };
+  scenes: ContentPackageScene[];
+  title_candidates: ContentPackageTitleCandidate[];
+  cover: {
+    headline: string;
+    subheadline: string | null;
+    visual_hint: string | null;
+  };
+  hashtags: string[];
+  publish_caption: string;
+  assets_required: Array<{
+    kind: string;
+    query: string;
+    source_hint: string | null;
+    rights_note: string | null;
+  }>;
+  audio: {
+    voice_hint: string;
+    music_mood: string | null;
+    music_ducking: string | null;
+  };
+  publish_timing_hint: string | null;
+  evidence_refs: string[];
+};
+
 export type Asset = components["schemas"]["AssetRead"];
 export type VideoRun = components["schemas"]["VideoRunRead"];
 export type VideoRunCreate = components["schemas"]["VideoRunCreate"];

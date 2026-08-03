@@ -205,6 +205,14 @@ export const queryKeys = {
         projectId,
         "scripts",
       ] as const,
+    contentPackages: (workspaceId: string, projectId: string) =>
+      [
+        "workspaces",
+        workspaceId,
+        "content-projects",
+        projectId,
+        "content-packages",
+      ] as const,
     assets: (workspaceId: string, projectId?: string) =>
       ["workspaces", workspaceId, "assets", projectId || undefined] as const,
     videos: (workspaceId: string, projectId: string) =>

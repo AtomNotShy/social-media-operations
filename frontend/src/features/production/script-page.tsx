@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { ErrorState } from "@/src/components/ui/error-state";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { useWorkspaceRole } from "@/src/features/identity/queries";
+import { ContentPackagePanel } from "@/src/features/production/content-package-panel";
 import {
   useGenerateScript,
   useProject,
@@ -80,6 +81,7 @@ function ScriptEditor({
   const [body, setBody] = useState(initial?.body ?? "");
   const [note, setNote] = useState("");
   const [instruction, setInstruction] = useState("");
+  const [tab, setTab] = useState<"script" | "package">("script");
   const active = ordered.find((item) => item.version_no === selected) ?? initial;
   const dirty = body !== (active?.body ?? "");
   const conflict =
@@ -101,6 +103,39 @@ function ScriptEditor({
         eyebrow="脚本工作台"
         title={project.title}
       />
+      <div className="mb-4 flex gap-1 rounded-xl border border-border bg-surface p-1 shadow-panel">
+        <button
+          className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium ${
+            tab === "script"
+              ? "bg-primary-50 text-primary-700"
+              : "text-text-muted hover:bg-surface-subtle"
+          }`}
+          onClick={() => setTab("script")}
+          type="button"
+        >
+          脚本编辑
+        </button>
+        <button
+          className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium ${
+            tab === "package"
+              ? "bg-primary-50 text-primary-700"
+              : "text-text-muted hover:bg-surface-subtle"
+          }`}
+          onClick={() => setTab("package")}
+          type="button"
+        >
+          内容包
+        </button>
+      </div>
+      {tab === "package" ? (
+        <ContentPackagePanel
+          canEdit={canEdit}
+          project={project}
+          projectId={project.id}
+          scripts={initialScripts}
+          workspaceId={workspaceId}
+        />
+      ) : null}
       {conflict ? (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>检测到版本冲突，本地草稿已保留。</strong>
@@ -121,6 +156,7 @@ function ScriptEditor({
           生成任务已进入队列（Job {generate.data.jobId.slice(0, 8)}…）。完成后刷新版本列表；当前草稿不受影响。
         </div>
       ) : null}
+      {tab === "script" ? (
       <div className="grid gap-4 xl:grid-cols-[230px_minmax(0,1fr)_300px]">
         <aside className="rounded-xl border border-border bg-surface p-3">
           <p className="px-2 py-2 text-xs font-semibold">版本历史</p>
@@ -252,7 +288,7 @@ function ScriptEditor({
           </div>
         </aside>
       </div>
+      ) : null}
     </>
   );
 }
-
